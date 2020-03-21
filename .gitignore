@@ -1,0 +1,10 @@
+# Gradle
+.gradle
+build
+
+# JetBrains
+.idea
+*.iml
+
+# Kotlintest
+.kotlintest
