@@ -2,21 +2,17 @@
 
 package io.ivana.api.web.v1
 
-import com.nhaarman.mockitokotlin2.reset
 import com.nhaarman.mockitokotlin2.verify
 import com.nhaarman.mockitokotlin2.whenever
 import io.ivana.api.security.AccessTokenCookieName
-import io.ivana.api.security.AuthenticationService
 import io.ivana.api.security.BadCredentialsException
 import io.ivana.api.security.Jwt
 import io.ivana.dto.CredentialsDto
 import io.ivana.dto.ErrorDto
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
 import java.net.InetAddress
@@ -25,14 +21,6 @@ import javax.servlet.http.Cookie
 @SpringBootTest
 @AutoConfigureMockMvc
 internal class LoginControllerTest : AbstractControllerTest() {
-    @MockBean
-    private lateinit var authService: AuthenticationService
-
-    @BeforeEach
-    fun beforeEach() {
-        reset(authService)
-    }
-
     @Nested
     inner class login {
         private val creds = CredentialsDto(
@@ -69,7 +57,7 @@ internal class LoginControllerTest : AbstractControllerTest() {
                 uri = LoginEndpoint,
                 reqContent = mapper.writeValueAsString(creds),
                 status = HttpStatus.NO_CONTENT,
-                cookies = listOf(localCookie)
+                respCookies = listOf(localCookie)
             )
             verify(authService).authenticate(creds.username, creds.password, ip)
         }
@@ -80,10 +68,10 @@ internal class LoginControllerTest : AbstractControllerTest() {
             callAndExpect(
                 method = HttpMethod.POST,
                 uri = LoginEndpoint,
-                headers = RpHeaders,
+                reqHeaders = RpHeaders,
                 reqContent = mapper.writeValueAsString(creds),
                 status = HttpStatus.NO_CONTENT,
-                cookies = listOf(rpCookie)
+                respCookies = listOf(rpCookie)
             )
             verify(authService).authenticate(creds.username, creds.password, ip)
         }
@@ -109,7 +97,7 @@ internal class LoginControllerTest : AbstractControllerTest() {
                 method = HttpMethod.GET,
                 uri = LogoutEndpoint,
                 status = HttpStatus.NO_CONTENT,
-                cookies = listOf(localCookie)
+                respCookies = listOf(localCookie)
             )
         }
 
@@ -118,9 +106,9 @@ internal class LoginControllerTest : AbstractControllerTest() {
             callAndExpect(
                 method = HttpMethod.GET,
                 uri = LogoutEndpoint,
-                headers = RpHeaders,
+                reqHeaders = RpHeaders,
                 status = HttpStatus.NO_CONTENT,
-                cookies = listOf(rpCookie)
+                respCookies = listOf(rpCookie)
             )
         }
 

@@ -1,7 +1,11 @@
 package io.ivana.api.web.v1
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.nhaarman.mockitokotlin2.reset
+import io.ivana.api.security.AuthenticationService
+import org.junit.jupiter.api.BeforeEach
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
@@ -18,12 +22,9 @@ import javax.servlet.http.Cookie
 @Suppress("SpringJavaAutowiredMembersInspection")
 internal abstract class AbstractControllerTest {
     protected companion object {
-        const val Host = "localhost:8080"
+        const val Host = "localhost"
         const val ForwardedHost = "ivana.io"
 
-        val StdHeaders = mapOf(
-            HttpHeaders.HOST to listOf(Host)
-        )
         val RpHeaders = mapOf(
             "X-Forwarded-Host" to listOf(ForwardedHost),
             "X-Forwarded-Proto" to listOf("https")
@@ -36,6 +37,14 @@ internal abstract class AbstractControllerTest {
     @Autowired
     protected lateinit var mvc: MockMvc
 
+    @MockBean
+    protected lateinit var authService: AuthenticationService
+
+    @BeforeEach
+    fun beforeEach() {
+        reset(authService)
+    }
+
     protected fun callAndExpect(
         method: HttpMethod,
         uri: String,
@@ -43,20 +52,22 @@ internal abstract class AbstractControllerTest {
         reqContent: String? = null,
         respDto: Any? = null,
         contentType: MediaType = MediaType.APPLICATION_JSON,
-        headers: Map<String, List<String>> = mapOf(),
-        cookies: List<Cookie> = listOf()
+        reqHeaders: Map<String, List<String>> = mapOf(),
+        reqCookies: List<Cookie> = listOf(),
+        respCookies: List<Cookie> = listOf()
     ) {
         val request = request(method, uri)
-            .headers(HttpHeaders(LinkedMultiValueMap(headers + StdHeaders)))
+            .headers(HttpHeaders(LinkedMultiValueMap(reqHeaders)))
         if (reqContent != null) {
             request
                 .contentType(contentType)
                 .content(reqContent)
         }
+        reqCookies.forEach { request.cookie(it) }
         val result = mvc.perform(request)
             .andDo(MockMvcResultHandlers.print())
             .andExpect(status().`is`(status.value()))
-        cookies.forEach { result.andExpect(cookie().`is`(it)) }
+        respCookies.forEach { result.andExpect(cookie().`is`(it)) }
         if (respDto != null) {
             result.andExpect(content().json(mapper.writeValueAsString(respDto)))
         }

@@ -117,7 +117,7 @@ internal class AuthenticationServiceTest {
         fun `should throw exception if user does not exist`() {
             every { userRepo.fetchByName(user.name) } returns null
             val exception = assertThrows<UsernameNotFoundException> { service.loadUserByUsername(user.name) }
-            exception.shouldHaveMessage("User '${user.name}' does not exist")
+            exception shouldHaveMessage "User '${user.name}' does not exist"
             verify { userRepo.fetchByName(user.name) }
             confirmVerified(userRepo)
         }
@@ -129,6 +129,27 @@ internal class AuthenticationServiceTest {
             principal shouldBe expectedPrincipal
             verify { userRepo.fetchByName(user.name) }
             confirmVerified(userRepo)
+        }
+    }
+
+    @Nested
+    inner class usernameFromJwt {
+        private val expectedUsername = "admin"
+        private val jwt = JWT.create()
+            .withSubject(expectedUsername)
+            .sign(Algorithm.HMAC512(props.secret))
+
+        @Test
+        fun `should throw exception if jwt is invalid`() {
+            val jwt = "jwt"
+            val exception = assertThrows<BadJwtException> { service.usernameFromJwt(jwt) }
+            exception shouldHaveMessage "Unable to parse '$jwt' as JWT"
+        }
+
+        @Test
+        fun `should return username from jwt`() {
+            val username = service.usernameFromJwt(jwt)
+            username shouldBe expectedUsername
         }
     }
 }

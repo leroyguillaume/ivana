@@ -1,8 +1,5 @@
 package io.ivana.api.security
 
-import com.auth0.jwt.JWT
-import com.auth0.jwt.algorithms.Algorithm
-import io.ivana.api.config.AuthenticationProperties
 import org.springframework.http.HttpHeaders
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
@@ -14,19 +11,18 @@ import javax.servlet.http.HttpServletResponse
 
 class JwtAuthenticationFilter(
     authManager: AuthenticationManager,
-    private val props: AuthenticationProperties
+    private val authService: AuthenticationService
 ) : BasicAuthenticationFilter(authManager) {
     override fun doFilterInternal(req: HttpServletRequest, resp: HttpServletResponse, chain: FilterChain) {
         val jwt = accessToken(req)
         if (jwt != null) {
-            val username = JWT.require(Algorithm.HMAC512(props.secret))
-                .build()
-                .verify(jwt)
-                .subject
-            if (username != null) {
+            try {
+                val username = authService.usernameFromJwt(jwt)
                 SecurityContextHolder.getContext().authentication = UsernamePasswordAuthenticationToken(
                     username, null, emptyList()
                 )
+            } catch (exception: BadJwtException) {
+
             }
         }
         chain.doFilter(req, resp)

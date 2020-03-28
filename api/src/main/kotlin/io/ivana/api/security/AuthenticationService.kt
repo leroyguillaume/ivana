@@ -42,4 +42,13 @@ class AuthenticationService(
 
     override fun loadUserByUsername(username: String) = userRepo.fetchByName(username)?.let { UserPrincipal(it) }
         ?: throw UsernameNotFoundException("User '$username' does not exist")
+
+    fun usernameFromJwt(jwt: String) = try {
+        JWT.require(Algorithm.HMAC512(props.secret))
+            .build()
+            .verify(jwt)
+            .subject
+    } catch (exception: Exception) {
+        throw BadJwtException("Unable to parse '$jwt' as JWT", exception)
+    }
 }

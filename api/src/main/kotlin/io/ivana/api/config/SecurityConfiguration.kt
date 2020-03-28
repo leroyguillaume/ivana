@@ -18,7 +18,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 @Configuration
 class SecurityConfiguration(
     private val authService: AuthenticationService,
-    private val props: AuthenticationProperties,
     private val mapper: ObjectMapper
 ) : WebSecurityConfigurerAdapter() {
     @Bean
@@ -33,7 +32,7 @@ class SecurityConfiguration(
             .exceptionHandling()
             .authenticationEntryPoint(CustomAuthenticationEntryPoint(mapper))
             .and()
-            .addFilter(JwtAuthenticationFilter(authenticationManager(), props))
+            .addFilter(JwtAuthenticationFilter(authenticationManager(), authService))
             .authorizeRequests()
             .antMatchers(HttpMethod.POST, LoginEndpoint).permitAll()
             .antMatchers(HttpMethod.GET, LogoutEndpoint).permitAll()

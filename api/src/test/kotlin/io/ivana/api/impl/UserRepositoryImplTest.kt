@@ -5,17 +5,20 @@ package io.ivana.api.impl
 import io.ivana.core.EventSource
 import io.ivana.core.User
 import io.ivana.core.UserEvent
+import io.ivana.core.UserEventRepository
 import io.kotlintest.matchers.types.shouldBeNull
 import io.kotlintest.shouldBe
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import java.util.*
 
+@SpringBootTest
 internal class UserRepositoryImplTest {
-    private val jdbc = jdbcTemplate()
-    private val eventRepo = UserEventRepositoryImpl(jdbc)
     private val pwdEncoder = BCryptPasswordEncoder()
     private val creationEventContent = UserEvent.Creation.Content(
         name = "admin",
@@ -23,12 +26,17 @@ internal class UserRepositoryImplTest {
     )
     private val creationEventSource = EventSource.System
 
+    @Autowired
+    private lateinit var jdbc: JdbcTemplate
+
     private lateinit var repo: UserRepositoryImpl
+    private lateinit var eventRepo: UserEventRepository
     private lateinit var creationEvent: UserEvent.Creation
     private lateinit var createdUser: User
 
     @BeforeEach
     fun beforeEach() {
+        eventRepo = UserEventRepositoryImpl(jdbc)
         repo = UserRepositoryImpl(jdbc)
 
         cleanDb(jdbc)

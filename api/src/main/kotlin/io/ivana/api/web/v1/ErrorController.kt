@@ -3,6 +3,7 @@ package io.ivana.api.web.v1
 import com.fasterxml.jackson.databind.JsonMappingException
 import com.fasterxml.jackson.module.kotlin.MissingKotlinParameterException
 import io.ivana.api.security.BadCredentialsException
+import io.ivana.api.security.BadJwtException
 import io.ivana.dto.ErrorDto
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
@@ -20,10 +21,6 @@ class ErrorController {
     private companion object {
         val Logger = LoggerFactory.getLogger(ErrorController::class.java)
     }
-
-    @ExceptionHandler(BadCredentialsException::class)
-    @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    fun handleBadCredentialsException(exception: BadCredentialsException) = ErrorDto.Unauthorized
 
     @ExceptionHandler(Exception::class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -52,6 +49,10 @@ class ErrorController {
     @ExceptionHandler(NoHandlerFoundException::class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     fun handleNotFound(exception: NoHandlerFoundException) = ErrorDto.NotFound
+
+    @ExceptionHandler(value = [BadCredentialsException::class, BadJwtException::class])
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    fun handleUnauthorized(exception: Exception) = ErrorDto.Unauthorized
 
     private fun List<JsonMappingException.Reference>.toHumanReadablePath() = map { it.fieldName }
         .reduce { field1, field2 -> "$field1.$field2" }

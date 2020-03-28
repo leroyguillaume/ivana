@@ -9,14 +9,20 @@ import io.kotlintest.shouldBe
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import java.net.InetAddress
 import java.time.Instant
 import java.util.*
 
+@SpringBootTest
 internal class UserEventRepositoryImplTest {
-    private val jdbc = jdbcTemplate()
     private val pwdEncoder = BCryptPasswordEncoder()
+
+    @Autowired
+    private lateinit var jdbc: JdbcTemplate
 
     private lateinit var repo: UserEventRepositoryImpl
 
