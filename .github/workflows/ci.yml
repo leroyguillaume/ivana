@@ -1,0 +1,26 @@
+name: CI
+
+on: [push]
+
+jobs:
+  ci:
+    name: CI
+    runs-on: ubuntu-latest
+    container:
+      image: gradle:6.2-jdk11
+    services:
+      postgres:
+        image: postgres:11
+        env:
+          POSTGRES_DB: ivana
+          POSTGRES_USER: ivana
+          POSTGRES_PASSWORD: ivana
+        ports:
+          - 5432:5432
+
+    steps:
+      - uses: actions/checkout@v1
+      - name: Buid
+        run: gradle assemble
+      - name: Test
+        run: gradle clean check -Pdatabase.host=postgres -Pdatabase.port=${{ job.services.postgres.ports[5432] }}

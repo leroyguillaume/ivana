@@ -8,4 +8,16 @@ dependencies {
 
     // Kotlin
     implementation(kotlin("stdlib-jdk8"))
+
+    // Kotlintest
+    val kotlintestVersion = "3.4.2"
+    testImplementation("io.kotlintest:kotlintest-core:$kotlintestVersion")
+
+    // Jackson
+    implementation("com.fasterxml.jackson.core:jackson-databind")
+    testImplementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+
+    // JUnit
+    testImplementation("org.junit.jupiter:junit-jupiter-api")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
 }

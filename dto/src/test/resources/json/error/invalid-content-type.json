@@ -1,0 +1,6 @@
+{
+  "code": "invalid_content_type",
+  "supportedContentTypes": [
+    "application/json"
+  ]
+}

@@ -1,0 +1,11 @@
+version: '3'
+
+services:
+  postgresql:
+    image: postgres:11
+    environment:
+      POSTGRES_DB: ivana
+      POSTGRES_USER: ivana
+      POSTGRES_PASSWORD: ivana
+    ports:
+      - 5432:5432

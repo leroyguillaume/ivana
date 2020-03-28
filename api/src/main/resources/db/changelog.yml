@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - logicalFilePath: changelog.yml
+  - changeSet:
+      id: v1.0.0
+      author: Guillaume 'Francis' Leroy
+      changes:
+        - sqlFile:
+            path: v1/001-utils.sql
+            splitStatements: false
+            relativeToChangelogFile: true
+        - sqlFile:
+            path: v1/002-user.sql
+            splitStatements: false
+            relativeToChangelogFile: true

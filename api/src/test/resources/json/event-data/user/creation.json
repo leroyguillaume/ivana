@@ -1,0 +1,9 @@
+{
+  "source": {
+    "type": "system"
+  },
+  "content": {
+    "name": "admin",
+    "hashedPwd": "foo123"
+  }
+}
