@@ -2,6 +2,8 @@ package io.ivana.api.security
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
+import com.auth0.jwt.exceptions.JWTDecodeException
+import com.auth0.jwt.exceptions.JWTVerificationException
 import io.ivana.api.config.AuthenticationProperties
 import io.ivana.core.EventSource
 import io.ivana.core.UserEventRepository
@@ -51,7 +53,9 @@ class AuthenticationService(
             .verify(jwt)
             .subject
         loadUserByUsername(username)
-    } catch (exception: Exception) {
-        throw BadJwtException("Unable to parse '$jwt' as JWT", exception)
+    } catch (exception: JWTDecodeException) {
+        throw BadJwtException("Unable to decode JWT ('$jwt')", exception)
+    } catch (exception: JWTVerificationException) {
+        throw BadJwtException("Unable to verify JWT ('$jwt')", exception)
     }
 }

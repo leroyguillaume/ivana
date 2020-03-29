@@ -151,14 +151,33 @@ internal class AuthenticationServiceTest {
         fun `should throw exception if jwt is invalid`() {
             val jwt = "jwt"
             val exception = assertThrows<BadJwtException> { service.principalFromJwt(jwt) }
-            exception shouldHaveMessage "Unable to parse '$jwt' as JWT"
+            exception shouldHaveMessage "Unable to decode JWT ('$jwt')"
+        }
+
+        @Test
+        fun `should throw exception if jwt is corrupted`() {
+            val jwt = JWT.create()
+                .withSubject(expectedPrincipal.username)
+                .sign(Algorithm.HMAC512(props.secret.reversed()))
+            val exception = assertThrows<BadJwtException> { service.principalFromJwt(jwt) }
+            exception shouldHaveMessage "Unable to verify JWT ('$jwt')"
+        }
+
+        @Test
+        fun `should throw exception if jwt is expired`() {
+            val jwt = JWT.create()
+                .withSubject(expectedPrincipal.username)
+                .withExpiresAt(Date.from(Instant.EPOCH))
+                .sign(Algorithm.HMAC512(props.secret))
+            val exception = assertThrows<BadJwtException> { service.principalFromJwt(jwt) }
+            exception shouldHaveMessage "Unable to verify JWT ('$jwt')"
         }
 
         @Test
         fun `should throw exception if user does not exist`() {
             every { userRepo.fetchByName(expectedPrincipal.username) } returns null
             val exception = assertThrows<UsernameNotFoundException> { service.principalFromJwt(jwt) }
-            exception shouldHaveMessage "User '$expectedPrincipal' does not exist"
+            exception shouldHaveMessage "User '${expectedPrincipal.username}' does not exist"
             verify { userRepo.fetchByName(expectedPrincipal.username) }
             confirmVerified(userRepo)
         }
