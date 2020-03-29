@@ -5,5 +5,6 @@ import java.util.*
 data class User(
     override val id: UUID,
     val name: String,
-    val hashedPwd: String
+    val hashedPwd: String,
+    val role: Role
 ) : Entity

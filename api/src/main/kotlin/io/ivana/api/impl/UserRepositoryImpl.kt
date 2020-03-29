@@ -15,6 +15,7 @@ class UserRepositoryImpl(
         const val TableName = "\"user\""
         const val NameColumnName = "name"
         const val PasswordColumnName = "password"
+        const val RoleColumnName = "role"
     }
 
     override val tableName = TableName
@@ -24,6 +25,14 @@ class UserRepositoryImpl(
     override fun entityFromResultSet(rs: ResultSet) = User(
         id = rs.getObject(IdColumnName, UUID::class.java),
         name = rs.getString(NameColumnName),
-        hashedPwd = rs.getString(PasswordColumnName)
+        hashedPwd = rs.getString(PasswordColumnName),
+        role = rs.getRole()
     )
+
+    private fun ResultSet.getRole() = getString(RoleColumnName).let { type ->
+        RoleData.values()
+            .find { it.sqlValue == type }
+            ?.role
+            ?: throw UnknownPhotoTypeException("Unknown role '$type'")
+    }
 }

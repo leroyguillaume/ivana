@@ -3,6 +3,7 @@
 package io.ivana.api.impl
 
 import io.ivana.core.EntityNotFoundException
+import io.ivana.core.Role
 import io.ivana.core.User
 import io.ivana.core.UserRepository
 import io.kotlintest.matchers.throwable.shouldHaveMessage
@@ -33,7 +34,8 @@ internal class UserServiceImplTest {
         private val expectedUser = User(
             id = UUID.randomUUID(),
             name = "admin",
-            hashedPwd = "foo123"
+            hashedPwd = "changeit",
+            role = Role.SuperAdmin
         )
 
         @Test

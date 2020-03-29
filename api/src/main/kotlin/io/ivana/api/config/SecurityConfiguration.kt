@@ -2,6 +2,7 @@ package io.ivana.api.config
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.ivana.api.security.AuthenticationService
+import io.ivana.api.security.CustomAccessDeniedHandler
 import io.ivana.api.security.CustomAuthenticationEntryPoint
 import io.ivana.api.security.JwtAuthenticationFilter
 import io.ivana.api.web.v1.LoginEndpoint
@@ -31,6 +32,7 @@ class SecurityConfiguration(
             .httpBasic().disable()
             .exceptionHandling()
             .authenticationEntryPoint(CustomAuthenticationEntryPoint(mapper))
+            .accessDeniedHandler(CustomAccessDeniedHandler(mapper))
             .and()
             .addFilter(JwtAuthenticationFilter(authenticationManager(), authService))
             .authorizeRequests()

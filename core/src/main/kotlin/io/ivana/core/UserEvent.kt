@@ -12,7 +12,8 @@ sealed class UserEvent : Event {
     ) : UserEvent() {
         data class Content(
             val name: String,
-            val hashedPwd: String
+            val hashedPwd: String,
+            val role: Role
         )
 
         override val number = 1L

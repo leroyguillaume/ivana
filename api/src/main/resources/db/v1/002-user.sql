@@ -1,6 +1,8 @@
 -- @formatter:off
 CREATE TYPE user_event_type AS enum ('creation', 'login');
 
+CREATE TYPE user_role AS enum ('user', 'admin', 'super_admin');
+
 CREATE TABLE user_event
 (
     date       timestamp WITH TIME ZONE NOT NULL DEFAULT now(),
@@ -15,7 +17,8 @@ CREATE TABLE "user"
 (
     id       uuid         NOT NULL PRIMARY KEY,
     name     varchar(50)  NOT NULL UNIQUE,
-    password varchar(100) NOT NULL
+    password varchar(100) NOT NULL,
+    role     user_role    NOT NULL
 );
 
 CREATE FUNCTION next_user_event_number(id uuid) RETURNS bigint
@@ -35,7 +38,8 @@ BEGIN
     (
         event.subject_id,
         event.data #>> '{content,name}',
-        event.data #>> '{content,hashedPwd}'
+        event.data #>> '{content,hashedPwd}',
+        (event.data #>> '{content,role}')::user_role
     );
 END;
 $$;
@@ -63,5 +67,5 @@ VALUES
     uuid_generate_v4(),
     1,
     'creation',
-    ('{"source":{"type":"system"},"content":{"name":"admin","hashedPwd":"$2y$10$JgMWTivQui3cBsGIYcVltO4NEw4QdbXtMtfrlJfCZfSjqEX3uHyyO"}}')::jsonb
+    ('{"source":{"type":"system"},"content":{"name":"admin","hashedPwd":"$2y$10$JgMWTivQui3cBsGIYcVltO4NEw4QdbXtMtfrlJfCZfSjqEX3uHyyO","role":"super_admin"}}')::jsonb
 );

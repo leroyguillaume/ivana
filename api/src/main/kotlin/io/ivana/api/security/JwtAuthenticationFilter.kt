@@ -3,6 +3,7 @@ package io.ivana.api.security
 import org.springframework.http.HttpHeaders
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.core.context.SecurityContextHolder
+import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter
 import javax.servlet.FilterChain
 import javax.servlet.http.HttpServletRequest
@@ -19,6 +20,8 @@ class JwtAuthenticationFilter(
                 val principal = authService.principalFromJwt(jwt)
                 SecurityContextHolder.getContext().authentication = CustomAuthentication(principal)
             } catch (exception: BadJwtException) {
+
+            } catch (exception: UsernameNotFoundException) {
 
             }
         }

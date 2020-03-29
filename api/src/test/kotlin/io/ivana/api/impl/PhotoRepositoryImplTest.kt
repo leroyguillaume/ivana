@@ -20,7 +20,8 @@ internal class PhotoRepositoryImplTest {
     private val pwdEncoder = BCryptPasswordEncoder()
     private val userCreationEventContent = UserEvent.Creation.Content(
         name = "admin",
-        hashedPwd = pwdEncoder.encode("changeit")
+        hashedPwd = pwdEncoder.encode("changeit"),
+        role = Role.SuperAdmin
     )
     private val photoUploadEventContent = PhotoEvent.Upload.Content(
         type = Photo.Type.Jpg,
@@ -49,7 +50,8 @@ internal class PhotoRepositoryImplTest {
         createdUser = User(
             id = userCreationEvent.subjectId,
             name = userCreationEvent.content.name,
-            hashedPwd = userCreationEvent.content.hashedPwd
+            hashedPwd = userCreationEvent.content.hashedPwd,
+            role = userCreationEvent.content.role
         )
         uploadEvent = eventRepo.saveUploadEvent(
             content = photoUploadEventContent,

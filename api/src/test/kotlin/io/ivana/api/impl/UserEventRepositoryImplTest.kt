@@ -3,6 +3,7 @@
 package io.ivana.api.impl
 
 import io.ivana.core.EventSource
+import io.ivana.core.Role
 import io.ivana.core.UserEvent
 import io.kotlintest.matchers.types.shouldBeNull
 import io.kotlintest.shouldBe
@@ -49,7 +50,8 @@ internal class UserEventRepositoryImplTest {
             val expectedEvent = repo.saveCreationEvent(
                 content = UserEvent.Creation.Content(
                     name = "admin",
-                    hashedPwd = pwdEncoder.encode("changeit")
+                    hashedPwd = pwdEncoder.encode("changeit"),
+                    role = Role.SuperAdmin
                 ),
                 source = EventSource.System
             )
@@ -74,7 +76,8 @@ internal class UserEventRepositoryImplTest {
                 source = EventSource.System,
                 content = UserEvent.Creation.Content(
                     name = "admin",
-                    hashedPwd = pwdEncoder.encode("changeit")
+                    hashedPwd = pwdEncoder.encode("changeit"),
+                    role = Role.SuperAdmin
                 )
             )
         }

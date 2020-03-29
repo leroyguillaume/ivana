@@ -21,7 +21,8 @@ internal class PhotoEventRepositoryImplTest {
     private val pwdEncoder = BCryptPasswordEncoder()
     private val userCreationEventContent = UserEvent.Creation.Content(
         name = "admin",
-        hashedPwd = pwdEncoder.encode("changeit")
+        hashedPwd = pwdEncoder.encode("changeit"),
+        role = Role.SuperAdmin
     )
 
     @Autowired
@@ -42,7 +43,8 @@ internal class PhotoEventRepositoryImplTest {
         createdUser = User(
             id = creationEvent.subjectId,
             name = creationEvent.content.name,
-            hashedPwd = creationEvent.content.hashedPwd
+            hashedPwd = creationEvent.content.hashedPwd,
+            role = creationEvent.content.role
         )
     }
 

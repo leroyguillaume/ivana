@@ -2,10 +2,7 @@
 
 package io.ivana.api.impl
 
-import io.ivana.core.EventSource
-import io.ivana.core.User
-import io.ivana.core.UserEvent
-import io.ivana.core.UserEventRepository
+import io.ivana.core.*
 import io.kotlintest.matchers.types.shouldBeNull
 import io.kotlintest.shouldBe
 import org.junit.jupiter.api.BeforeEach
@@ -22,7 +19,8 @@ internal class UserRepositoryImplTest {
     private val pwdEncoder = BCryptPasswordEncoder()
     private val creationEventContent = UserEvent.Creation.Content(
         name = "admin",
-        hashedPwd = pwdEncoder.encode("changeit")
+        hashedPwd = pwdEncoder.encode("changeit"),
+        role = Role.SuperAdmin
     )
 
     @Autowired
@@ -43,7 +41,8 @@ internal class UserRepositoryImplTest {
         createdUser = User(
             id = creationEvent.subjectId,
             name = creationEvent.content.name,
-            hashedPwd = creationEvent.content.hashedPwd
+            hashedPwd = creationEvent.content.hashedPwd,
+            role = creationEvent.content.role
         )
     }
 

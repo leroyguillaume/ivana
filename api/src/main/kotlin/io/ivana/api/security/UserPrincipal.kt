@@ -1,13 +1,12 @@
 package io.ivana.api.security
 
 import io.ivana.core.User
-import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails
 
 data class UserPrincipal(
     val user: User
 ) : UserDetails {
-    override fun getAuthorities() = emptySet<GrantedAuthority>()
+    override fun getAuthorities() = setOf(RoleGrantedAuthority(user.role))
 
     override fun isEnabled() = true
 

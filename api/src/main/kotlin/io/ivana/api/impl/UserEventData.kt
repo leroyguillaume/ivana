@@ -7,7 +7,8 @@ internal sealed class UserEventData : EventData {
     ) : UserEventData() {
         data class Content(
             val name: String,
-            val hashedPwd: String
+            val hashedPwd: String,
+            val role: RoleData
         )
     }
 

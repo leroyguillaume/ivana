@@ -4,6 +4,7 @@
   },
   "content": {
     "name": "admin",
-    "hashedPwd": "hashedPwd"
+    "hashedPwd": "hashedPwd",
+    "role": "super_admin"
   }
 }

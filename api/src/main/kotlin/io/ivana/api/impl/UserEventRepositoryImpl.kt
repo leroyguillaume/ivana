@@ -30,7 +30,8 @@ class UserEventRepositoryImpl(
                 source = source.toData(),
                 content = UserEventData.Creation.Content(
                     name = content.name,
-                    hashedPwd = content.hashedPwd
+                    hashedPwd = content.hashedPwd,
+                    role = content.role.toRoleData()
                 )
             )
         )
@@ -52,7 +53,8 @@ class UserEventRepositoryImpl(
                 source = data.source.toSource(),
                 content = UserEvent.Creation.Content(
                     name = data.content.name,
-                    hashedPwd = data.content.hashedPwd
+                    hashedPwd = data.content.hashedPwd,
+                    role = data.content.role.role
                 )
             )
         }

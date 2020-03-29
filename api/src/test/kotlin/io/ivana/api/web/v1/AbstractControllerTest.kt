@@ -8,6 +8,7 @@ import io.ivana.api.security.AccessTokenCookieName
 import io.ivana.api.security.AuthenticationService
 import io.ivana.api.security.UserPrincipal
 import io.ivana.core.PhotoService
+import io.ivana.core.Role
 import io.ivana.core.User
 import org.junit.jupiter.api.BeforeEach
 import org.springframework.beans.factory.annotation.Autowired
@@ -45,7 +46,8 @@ internal abstract class AbstractControllerTest {
         User(
             id = UUID.randomUUID(),
             name = "admin",
-            hashedPwd = "hashedPwd"
+            hashedPwd = "hashedPwd",
+            role = Role.SuperAdmin
         )
     )
 
