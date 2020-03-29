@@ -3,16 +3,15 @@ package io.ivana.api.impl
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.ivana.core.Event
 import io.ivana.core.EventRepository
-import org.postgresql.util.PGobject
-import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.ResultSetExtractor
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.jdbc.support.GeneratedKeyHolder
-import java.time.Instant
 import java.time.OffsetDateTime
 import java.util.*
 
 abstract class AbstractEventRepository<E : Event, T : EventType> constructor(
-    protected val jdbc: JdbcTemplate,
+    protected val jdbc: NamedParameterJdbcTemplate,
     protected val mapper: ObjectMapper
 ) : EventRepository<E> {
     protected companion object {
@@ -30,13 +29,14 @@ abstract class AbstractEventRepository<E : Event, T : EventType> constructor(
         """
         SELECT *
         FROM $tableName
-        WHERE $SubjectIdColumnName = ? AND $NumberColumnName = ?
+        WHERE $SubjectIdColumnName = :$SubjectIdColumnName AND $NumberColumnName = :$NumberColumnName
         """,
+        MapSqlParameterSource(mapOf(SubjectIdColumnName to subjectId, NumberColumnName to number)),
         ResultSetExtractor { rs ->
             if (rs.next()) {
                 val rawEvent = RawEvent(
                     type = eventTypeFromSqlType(rs.getString(TypeColumnName)),
-                    date = rs.getObject(DateColumnName, OffsetDateTime::class.java).toInstant(),
+                    date = rs.getObject(DateColumnName, OffsetDateTime::class.java),
                     subjectId = subjectId,
                     number = rs.getLong(NumberColumnName),
                     jsonData = rs.getString(DataColumnName)
@@ -45,21 +45,20 @@ abstract class AbstractEventRepository<E : Event, T : EventType> constructor(
             } else {
                 null
             }
-        },
-        subjectId, number
+        }
     )
 
     @Suppress("SqlResolve", "UNCHECKED_CAST")
     internal inline fun <reified EE : E> insert(subjectId: UUID, type: T, data: EventData): EE {
         val keyHolder = GeneratedKeyHolder()
-        jdbc.update(
+        jdbc.jdbcTemplate.update(
             { connection ->
                 connection.prepareStatement(
                     """
                     INSERT INTO $tableName ($SubjectIdColumnName, $NumberColumnName, $TypeColumnName, $DataColumnName)
                     VALUES (?, next_${tableName}_number(?), ?::${type.sqlType}, ?::jsonb)
                     """,
-                    arrayOf(DateColumnName, NumberColumnName, DataColumnName)
+                    arrayOf(NumberColumnName)
                 ).apply {
                     setObject(1, subjectId)
                     setObject(2, subjectId)
@@ -70,14 +69,7 @@ abstract class AbstractEventRepository<E : Event, T : EventType> constructor(
             keyHolder
         )
         val keys = keyHolder.keys!!
-        val rawEvent = RawEvent(
-            type = type,
-            date = (keys[DateColumnName] as Date).toInstant(),
-            subjectId = subjectId,
-            number = keys[NumberColumnName] as Long,
-            jsonData = (keys[DataColumnName] as PGobject).value
-        )
-        return rawEvent.toEvent() as EE
+        return fetch(subjectId, keys[NumberColumnName] as Long) as EE
     }
 
     protected fun eventTypeFromSqlType(sqlEventType: String) = eventTypes
@@ -86,7 +78,7 @@ abstract class AbstractEventRepository<E : Event, T : EventType> constructor(
 
     internal data class RawEvent<T : EventType>(
         val type: T,
-        val date: Instant,
+        val date: OffsetDateTime,
         val subjectId: UUID,
         val number: Long,
         val jsonData: String

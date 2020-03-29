@@ -11,10 +11,10 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.jdbc.core.JdbcTemplate
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import java.net.InetAddress
-import java.time.Instant
+import java.time.OffsetDateTime
 import java.util.*
 
 @SpringBootTest
@@ -22,7 +22,7 @@ internal class UserEventRepositoryImplTest {
     private val pwdEncoder = BCryptPasswordEncoder()
 
     @Autowired
-    private lateinit var jdbc: JdbcTemplate
+    private lateinit var jdbc: NamedParameterJdbcTemplate
 
     private lateinit var repo: UserEventRepositoryImpl
 
@@ -49,7 +49,7 @@ internal class UserEventRepositoryImplTest {
             val expectedEvent = repo.saveCreationEvent(
                 content = UserEvent.Creation.Content(
                     name = "admin",
-                    hashedPwd = pwdEncoder.encode("foo123")
+                    hashedPwd = pwdEncoder.encode("changeit")
                 ),
                 source = EventSource.System
             )
@@ -69,12 +69,12 @@ internal class UserEventRepositoryImplTest {
     inner class saveCreationEvent {
         private val expectedEvent = UUID.randomUUID().let { id ->
             UserEvent.Creation(
-                date = Instant.now(),
+                date = OffsetDateTime.now(),
                 subjectId = id,
                 source = EventSource.System,
                 content = UserEvent.Creation.Content(
                     name = "admin",
-                    hashedPwd = pwdEncoder.encode("foo123")
+                    hashedPwd = pwdEncoder.encode("changeit")
                 )
             )
         }
@@ -93,7 +93,7 @@ internal class UserEventRepositoryImplTest {
     inner class saveLoginEvent {
         private val expectedEvent = UUID.randomUUID().let { id ->
             UserEvent.Login(
-                date = Instant.now(),
+                date = OffsetDateTime.now(),
                 subjectId = id,
                 number = 1,
                 source = EventSource.User(id, InetAddress.getByName("127.0.0.1"))

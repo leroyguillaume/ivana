@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.jdbc.core.JdbcTemplate
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import java.util.*
 
@@ -22,12 +22,11 @@ internal class UserRepositoryImplTest {
     private val pwdEncoder = BCryptPasswordEncoder()
     private val creationEventContent = UserEvent.Creation.Content(
         name = "admin",
-        hashedPwd = pwdEncoder.encode("foo123")
+        hashedPwd = pwdEncoder.encode("changeit")
     )
-    private val creationEventSource = EventSource.System
 
     @Autowired
-    private lateinit var jdbc: JdbcTemplate
+    private lateinit var jdbc: NamedParameterJdbcTemplate
 
     private lateinit var repo: UserRepositoryImpl
     private lateinit var eventRepo: UserEventRepository
@@ -40,7 +39,7 @@ internal class UserRepositoryImplTest {
         repo = UserRepositoryImpl(jdbc)
 
         cleanDb(jdbc)
-        creationEvent = eventRepo.saveCreationEvent(creationEventContent, creationEventSource)
+        creationEvent = eventRepo.saveCreationEvent(creationEventContent, EventSource.System)
         createdUser = User(
             id = creationEvent.subjectId,
             name = creationEvent.content.name,

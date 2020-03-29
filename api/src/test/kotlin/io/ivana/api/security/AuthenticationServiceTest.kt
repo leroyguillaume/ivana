@@ -21,6 +21,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import java.net.InetAddress
 import java.time.Clock
 import java.time.Instant
+import java.time.OffsetDateTime
 import java.util.*
 
 internal class AuthenticationServiceTest {
@@ -57,7 +58,7 @@ internal class AuthenticationServiceTest {
             expirationInSeconds = props.expirationInSeconds
         )
         private val loginEvent = UserEvent.Login(
-            date = Instant.now(),
+            date = OffsetDateTime.now(),
             subjectId = user.id,
             number = 1,
             source = EventSource.User(user.id, InetAddress.getByName("127.0.0.1"))
@@ -133,23 +134,42 @@ internal class AuthenticationServiceTest {
     }
 
     @Nested
-    inner class usernameFromJwt {
-        private val expectedUsername = "admin"
+    inner class principalFromJwt {
+        private val expectedPrincipal = UserPrincipal(
+            User(
+                id = UUID.randomUUID(),
+                name = "admin",
+                hashedPwd = "hashedPwd"
+            )
+        )
+
         private val jwt = JWT.create()
-            .withSubject(expectedUsername)
+            .withSubject(expectedPrincipal.username)
             .sign(Algorithm.HMAC512(props.secret))
 
         @Test
         fun `should throw exception if jwt is invalid`() {
             val jwt = "jwt"
-            val exception = assertThrows<BadJwtException> { service.usernameFromJwt(jwt) }
+            val exception = assertThrows<BadJwtException> { service.principalFromJwt(jwt) }
             exception shouldHaveMessage "Unable to parse '$jwt' as JWT"
         }
 
         @Test
+        fun `should throw exception if user does not exist`() {
+            every { userRepo.fetchByName(expectedPrincipal.username) } returns null
+            val exception = assertThrows<UsernameNotFoundException> { service.principalFromJwt(jwt) }
+            exception shouldHaveMessage "User '$expectedPrincipal' does not exist"
+            verify { userRepo.fetchByName(expectedPrincipal.username) }
+            confirmVerified(userRepo)
+        }
+
+        @Test
         fun `should return username from jwt`() {
-            val username = service.usernameFromJwt(jwt)
-            username shouldBe expectedUsername
+            every { userRepo.fetchByName(expectedPrincipal.username) } returns expectedPrincipal.user
+            val principal = service.principalFromJwt(jwt)
+            principal shouldBe expectedPrincipal
+            verify { userRepo.fetchByName(expectedPrincipal.username) }
+            confirmVerified(userRepo)
         }
     }
 }

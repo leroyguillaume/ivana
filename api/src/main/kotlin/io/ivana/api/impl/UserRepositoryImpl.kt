@@ -2,14 +2,14 @@ package io.ivana.api.impl
 
 import io.ivana.core.User
 import io.ivana.core.UserRepository
-import org.springframework.jdbc.core.JdbcTemplate
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Repository
 import java.sql.ResultSet
 import java.util.*
 
 @Repository
 class UserRepositoryImpl(
-    jdbc: JdbcTemplate
+    jdbc: NamedParameterJdbcTemplate
 ) : UserRepository, AbstractEntityRepository<User>(jdbc) {
     internal companion object {
         const val TableName = "\"user\""

@@ -6,13 +6,13 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import io.ivana.core.EventSource
 import io.ivana.core.UserEvent
 import io.ivana.core.UserEventRepository
-import org.springframework.jdbc.core.JdbcTemplate
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Repository
 import java.util.*
 
 @Repository
 class UserEventRepositoryImpl(
-    jdbc: JdbcTemplate,
+    jdbc: NamedParameterJdbcTemplate,
     mapper: ObjectMapper = ObjectMapper().registerModule(KotlinModule())
 ) : UserEventRepository, AbstractEventRepository<UserEvent, UserEventType>(jdbc, mapper) {
     internal companion object {

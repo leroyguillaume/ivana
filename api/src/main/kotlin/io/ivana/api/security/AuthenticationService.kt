@@ -11,6 +11,7 @@ import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.security.crypto.bcrypt.BCrypt
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import java.net.InetAddress
 import java.time.Clock
 import java.util.*
@@ -26,6 +27,7 @@ class AuthenticationService(
         val Logger = LoggerFactory.getLogger(AuthenticationService::class.java)
     }
 
+    @Transactional
     fun authenticate(username: String, pwd: String, ip: InetAddress): Jwt {
         val user = userRepo.fetchByName(username) ?: throw BadCredentialsException("User '$username' does not exist")
         if (!BCrypt.checkpw(pwd, user.hashedPwd)) {
@@ -43,11 +45,12 @@ class AuthenticationService(
     override fun loadUserByUsername(username: String) = userRepo.fetchByName(username)?.let { UserPrincipal(it) }
         ?: throw UsernameNotFoundException("User '$username' does not exist")
 
-    fun usernameFromJwt(jwt: String) = try {
-        JWT.require(Algorithm.HMAC512(props.secret))
+    fun principalFromJwt(jwt: String) = try {
+        val username = JWT.require(Algorithm.HMAC512(props.secret))
             .build()
             .verify(jwt)
             .subject
+        loadUserByUsername(username)
     } catch (exception: Exception) {
         throw BadJwtException("Unable to parse '$jwt' as JWT", exception)
     }

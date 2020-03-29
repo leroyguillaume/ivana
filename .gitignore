@@ -2,6 +2,9 @@
 .gradle
 build
 
+# Ivana
+api/data
+
 # JetBrains
 .idea
 *.iml

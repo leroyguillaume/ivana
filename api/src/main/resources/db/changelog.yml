@@ -12,3 +12,7 @@ databaseChangeLog:
             path: v1/002-user.sql
             splitStatements: false
             relativeToChangelogFile: true
+        - sqlFile:
+            path: v1/003-photo.sql
+            splitStatements: false
+            relativeToChangelogFile: true

@@ -19,8 +19,7 @@ CREATE TABLE "user"
 );
 
 CREATE FUNCTION next_user_event_number(id uuid) RETURNS bigint
-    LANGUAGE SQL
-AS
+    LANGUAGE SQL AS
 $$
 SELECT COALESCE(MAX(number), 0) + 1
 FROM user_event
@@ -28,8 +27,7 @@ WHERE subject_id = $1;
 $$;
 
 CREATE PROCEDURE insert_user_from_creation_event(event record)
-    LANGUAGE plpgsql
-AS
+    LANGUAGE plpgsql AS
 $$
 BEGIN
     INSERT INTO "user"
@@ -43,8 +41,7 @@ END;
 $$;
 
 CREATE FUNCTION user_update() RETURNS trigger
-    LANGUAGE plpgsql
-AS
+    LANGUAGE plpgsql AS
 $$
 BEGIN
     CASE WHEN new.type = 'creation' THEN CALL insert_user_from_creation_event(new);

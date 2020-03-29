@@ -2,7 +2,6 @@ package io.ivana.api.security
 
 import org.springframework.http.HttpHeaders
 import org.springframework.security.authentication.AuthenticationManager
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter
 import javax.servlet.FilterChain
@@ -17,10 +16,8 @@ class JwtAuthenticationFilter(
         val jwt = accessToken(req)
         if (jwt != null) {
             try {
-                val username = authService.usernameFromJwt(jwt)
-                SecurityContextHolder.getContext().authentication = UsernamePasswordAuthenticationToken(
-                    username, null, emptyList()
-                )
+                val principal = authService.principalFromJwt(jwt)
+                SecurityContextHolder.getContext().authentication = CustomAuthentication(principal)
             } catch (exception: BadJwtException) {
 
             }

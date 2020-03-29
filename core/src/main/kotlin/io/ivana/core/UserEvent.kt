@@ -1,11 +1,11 @@
 package io.ivana.core
 
-import java.time.Instant
+import java.time.OffsetDateTime
 import java.util.*
 
 sealed class UserEvent : Event {
     data class Creation(
-        override val date: Instant,
+        override val date: OffsetDateTime,
         override val subjectId: UUID,
         override val source: EventSource,
         val content: Content
@@ -19,7 +19,7 @@ sealed class UserEvent : Event {
     }
 
     data class Login(
-        override val date: Instant,
+        override val date: OffsetDateTime,
         override val subjectId: UUID,
         override val number: Long,
         override val source: EventSource.User

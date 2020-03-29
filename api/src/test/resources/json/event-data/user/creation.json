@@ -4,6 +4,6 @@
   },
   "content": {
     "name": "admin",
-    "hashedPwd": "foo123"
+    "hashedPwd": "hashedPwd"
   }
 }

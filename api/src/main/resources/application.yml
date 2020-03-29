@@ -1,6 +1,10 @@
 auth:
   secret: changeit
 
+ivana:
+  data-dir: ./data
+  compression-quality: 0.3
+
 spring:
   datasource:
     url: ${database.jdbcUrl}

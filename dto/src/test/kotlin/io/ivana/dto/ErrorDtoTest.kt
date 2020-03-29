@@ -1,8 +1,16 @@
 package io.ivana.dto
 
 import org.junit.jupiter.api.Nested
+import java.net.URI
 
 internal class ErrorDtoTest {
+    @Nested
+    inner class DuplicateResource : JsonTest(
+        filename = "error/duplicate-resource.json",
+        expectedValue = ErrorDto.DuplicateResource(URI("/v1/photo/61f11547-a340-441c-bce7-551234d5d361")),
+        deserializeAs = typeOf<ErrorDto>()
+    )
+
     @Nested
     inner class Forbidden : JsonTest(
         filename = "error/forbidden.json",
@@ -14,13 +22,6 @@ internal class ErrorDtoTest {
     inner class InternalError : JsonTest(
         filename = "error/internal-error.json",
         expectedValue = ErrorDto.InternalError,
-        deserializeAs = typeOf<ErrorDto>()
-    )
-
-    @Nested
-    inner class InvalidContentType : JsonTest(
-        filename = "error/invalid-content-type.json",
-        expectedValue = ErrorDto.InvalidContentType(setOf("application/json")),
         deserializeAs = typeOf<ErrorDto>()
     )
 
@@ -49,6 +50,13 @@ internal class ErrorDtoTest {
     inner class Unauthorized : JsonTest(
         filename = "error/unauthorized.json",
         expectedValue = ErrorDto.Unauthorized,
+        deserializeAs = typeOf<ErrorDto>()
+    )
+
+    @Nested
+    inner class UnsupportedMediaType : JsonTest(
+        filename = "error/unsupported-media-type.json",
+        expectedValue = ErrorDto.UnsupportedMediaType(setOf("application/json")),
         deserializeAs = typeOf<ErrorDto>()
     )
 }

@@ -2,7 +2,13 @@ package io.ivana.api.web.v1
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.nhaarman.mockitokotlin2.reset
+import com.nhaarman.mockitokotlin2.verify
+import com.nhaarman.mockitokotlin2.whenever
+import io.ivana.api.security.AccessTokenCookieName
 import io.ivana.api.security.AuthenticationService
+import io.ivana.api.security.UserPrincipal
+import io.ivana.core.PhotoService
+import io.ivana.core.User
 import org.junit.jupiter.api.BeforeEach
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.mock.mockito.MockBean
@@ -10,13 +16,16 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
+import org.springframework.mock.web.MockMultipartFile
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.ResultMatcher
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.request
 import org.springframework.test.web.servlet.result.CookieResultMatchers
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
 import org.springframework.util.LinkedMultiValueMap
+import java.util.*
 import javax.servlet.http.Cookie
 
 @Suppress("SpringJavaAutowiredMembersInspection")
@@ -31,6 +40,15 @@ internal abstract class AbstractControllerTest {
         )
     }
 
+    protected val jwt = "jwt"
+    protected val principal = UserPrincipal(
+        User(
+            id = UUID.randomUUID(),
+            name = "admin",
+            hashedPwd = "hashedPwd"
+        )
+    )
+
     @Autowired
     protected lateinit var mapper: ObjectMapper
 
@@ -40,9 +58,26 @@ internal abstract class AbstractControllerTest {
     @MockBean
     protected lateinit var authService: AuthenticationService
 
+    @MockBean
+    protected lateinit var photoService: PhotoService
+
     @BeforeEach
     fun beforeEach() {
         reset(authService)
+    }
+
+    protected fun accessTokenCookie() = Cookie(AccessTokenCookieName, jwt).apply {
+        domain = Host
+        maxAge = 60
+        isHttpOnly = true
+        path = "/"
+        secure = false
+    }
+
+    protected fun authenticated(block: () -> Unit) {
+        whenever(authService.principalFromJwt(jwt)).thenReturn(principal)
+        block()
+        verify(authService).principalFromJwt(jwt)
     }
 
     protected fun callAndExpect(
@@ -65,6 +100,27 @@ internal abstract class AbstractControllerTest {
         }
         reqCookies.forEach { request.cookie(it) }
         val result = mvc.perform(request)
+            .andDo(MockMvcResultHandlers.print())
+            .andExpect(status().`is`(status.value()))
+        respCookies.forEach { result.andExpect(cookie().`is`(it)) }
+        if (respDto != null) {
+            result.andExpect(content().json(mapper.writeValueAsString(respDto)))
+        }
+    }
+
+    protected fun callAndExpect(
+        uri: String,
+        status: HttpStatus,
+        files: List<MockMultipartFile>,
+        respDto: Any? = null,
+        reqHeaders: Map<String, List<String>> = mapOf(),
+        reqCookies: List<Cookie> = listOf(),
+        respCookies: List<Cookie> = listOf()
+    ) {
+        val request = multipart(uri)
+        files.forEach { request.file(it) }
+        reqCookies.forEach { request.cookie(it) }
+        val result = mvc.perform(request.headers(HttpHeaders(LinkedMultiValueMap(reqHeaders))))
             .andDo(MockMvcResultHandlers.print())
             .andExpect(status().`is`(status.value()))
         respCookies.forEach { result.andExpect(cookie().`is`(it)) }

@@ -14,7 +14,7 @@ internal class UserEventDataTest {
             EventSourceData.System,
             UserEventData.Creation.Content(
                 name = "admin",
-                hashedPwd = "foo123"
+                hashedPwd = "hashedPwd"
             )
         ),
         deserializeAs = typeOf<UserEventData.Creation>()

@@ -1,0 +1,6 @@
+{
+  "code": "unsupported_media_type",
+  "supportedMediaTypes": [
+    "application/json"
+  ]
+}

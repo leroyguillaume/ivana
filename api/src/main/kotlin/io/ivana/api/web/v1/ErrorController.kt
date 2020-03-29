@@ -14,6 +14,7 @@ import org.springframework.web.HttpMediaTypeNotSupportedException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestControllerAdvice
+import org.springframework.web.multipart.MultipartException
 import org.springframework.web.servlet.NoHandlerFoundException
 
 @RestControllerAdvice
@@ -29,15 +30,9 @@ class ErrorController {
         return ErrorDto.InternalError
     }
 
-    @ExceptionHandler(HttpMediaTypeNotSupportedException::class)
-    @ResponseStatus(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
-    fun handleInvalidContentType(exception: HttpMediaTypeNotSupportedException) = ErrorDto.InvalidContentType(
-        setOf(MediaType.APPLICATION_JSON_VALUE)
-    )
-
-    @ExceptionHandler(HttpMessageNotReadableException::class)
+    @ExceptionHandler(value = [HttpMessageNotReadableException::class, MultipartException::class])
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    fun handleMalformedRequest(exception: HttpMessageNotReadableException) = ErrorDto.MalformedRequest
+    fun handleMalformedRequest() = ErrorDto.MalformedRequest
 
     @ExceptionHandler(HttpMessageConversionException::class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -53,6 +48,12 @@ class ErrorController {
     @ExceptionHandler(value = [BadCredentialsException::class, BadJwtException::class])
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     fun handleUnauthorized(exception: Exception) = ErrorDto.Unauthorized
+
+    @ExceptionHandler(HttpMediaTypeNotSupportedException::class)
+    @ResponseStatus(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
+    fun handleUnsupportedMediaType(exception: HttpMediaTypeNotSupportedException) = ErrorDto.UnsupportedMediaType(
+        setOf(MediaType.APPLICATION_JSON_VALUE)
+    )
 
     private fun List<JsonMappingException.Reference>.toHumanReadablePath() = map { it.fieldName }
         .reduce { field1, field2 -> "$field1.$field2" }

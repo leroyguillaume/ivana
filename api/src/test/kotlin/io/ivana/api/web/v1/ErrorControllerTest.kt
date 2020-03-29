@@ -2,7 +2,6 @@ package io.ivana.api.web.v1
 
 import com.nhaarman.mockitokotlin2.verify
 import com.nhaarman.mockitokotlin2.whenever
-import io.ivana.api.security.AccessTokenCookieName
 import io.ivana.api.security.BadJwtException
 import io.ivana.api.security.Bearer
 import io.ivana.dto.ErrorDto
@@ -13,15 +12,12 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
-import javax.servlet.http.Cookie
 
 @SpringBootTest
 @AutoConfigureMockMvc
 internal class ErrorControllerTest : AbstractControllerTest() {
     @Test
-    fun `should return 404 if endpoint does not exist (auth by header)`() {
-        val jwt = "jwt"
-        whenever(authService.usernameFromJwt(jwt)).thenReturn("admin")
+    fun `should return 404 if endpoint does not exist (auth by header)`() = authenticated {
         callAndExpect(
             method = HttpMethod.GET,
             uri = "/",
@@ -29,21 +25,17 @@ internal class ErrorControllerTest : AbstractControllerTest() {
             status = HttpStatus.NOT_FOUND,
             respDto = ErrorDto.NotFound
         )
-        verify(authService).usernameFromJwt(jwt)
     }
 
     @Test
-    fun `should return 404 if endpoint does not exist (auth by cookie)`() {
-        val jwt = "jwt"
-        whenever(authService.usernameFromJwt(jwt)).thenReturn("admin")
+    fun `should return 404 if endpoint does not exist (auth by cookie)`() = authenticated {
         callAndExpect(
             method = HttpMethod.GET,
             uri = "/",
-            reqCookies = listOf(accessTokenCookie(jwt)),
+            reqCookies = listOf(accessTokenCookie()),
             status = HttpStatus.NOT_FOUND,
             respDto = ErrorDto.NotFound
         )
-        verify(authService).usernameFromJwt(jwt)
     }
 
     @Test
@@ -54,7 +46,7 @@ internal class ErrorControllerTest : AbstractControllerTest() {
             contentType = MediaType.APPLICATION_PDF,
             reqContent = "{}",
             status = HttpStatus.UNSUPPORTED_MEDIA_TYPE,
-            respDto = ErrorDto.InvalidContentType(setOf(MediaType.APPLICATION_JSON_VALUE))
+            respDto = ErrorDto.UnsupportedMediaType(setOf(MediaType.APPLICATION_JSON_VALUE))
         )
     }
 
@@ -70,8 +62,7 @@ internal class ErrorControllerTest : AbstractControllerTest() {
 
     @Test
     fun `should return 401 if bad jwt (header)`() {
-        val jwt = "jwt"
-        whenever(authService.usernameFromJwt(jwt)).thenAnswer { throw BadJwtException("") }
+        whenever(authService.principalFromJwt(jwt)).thenAnswer { throw BadJwtException("") }
         callAndExpect(
             method = HttpMethod.GET,
             uri = "/",
@@ -79,21 +70,20 @@ internal class ErrorControllerTest : AbstractControllerTest() {
             status = HttpStatus.UNAUTHORIZED,
             respDto = ErrorDto.Unauthorized
         )
-        verify(authService).usernameFromJwt(jwt)
+        verify(authService).principalFromJwt(jwt)
     }
 
     @Test
     fun `should return 401 if bad jwt (cookie)`() {
-        val jwt = "jwt"
-        whenever(authService.usernameFromJwt(jwt)).thenAnswer { throw BadJwtException("") }
+        whenever(authService.principalFromJwt(jwt)).thenAnswer { throw BadJwtException("") }
         callAndExpect(
             method = HttpMethod.GET,
             uri = "/",
-            reqCookies = listOf(accessTokenCookie(jwt)),
+            reqCookies = listOf(accessTokenCookie()),
             status = HttpStatus.UNAUTHORIZED,
             respDto = ErrorDto.Unauthorized
         )
-        verify(authService).usernameFromJwt(jwt)
+        verify(authService).principalFromJwt(jwt)
     }
 
     @Test
@@ -127,13 +117,5 @@ internal class ErrorControllerTest : AbstractControllerTest() {
             status = HttpStatus.BAD_REQUEST,
             respDto = ErrorDto.MissingParameter("username")
         )
-    }
-
-    private fun accessTokenCookie(value: String) = Cookie(AccessTokenCookieName, value).apply {
-        domain = Host
-        maxAge = 60
-        isHttpOnly = true
-        path = "/"
-        secure = false
     }
 }
