@@ -32,28 +32,38 @@ class ErrorController {
 
     @ExceptionHandler(value = [HttpMessageNotReadableException::class, MultipartException::class])
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    fun handleMalformedRequest() = ErrorDto.MalformedRequest
+    fun handleMalformedRequest(exception: Exception) = ErrorDto.MalformedRequest.apply {
+        Logger.debug(exception.message, exception)
+    }
 
     @ExceptionHandler(HttpMessageConversionException::class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    fun handleMissingParameter(exception: HttpMessageConversionException) = when (val cause = exception.cause) {
-        is MissingKotlinParameterException -> ErrorDto.MissingParameter(cause.path.toHumanReadablePath())
-        else -> handleException(exception)
+    fun handleMissingParameter(exception: HttpMessageConversionException): ErrorDto {
+        Logger.debug(exception.message, exception)
+        return when (val cause = exception.cause) {
+            is MissingKotlinParameterException -> ErrorDto.MissingParameter(cause.path.toHumanReadablePath())
+            else -> handleException(exception)
+        }
     }
 
     @ExceptionHandler(NoHandlerFoundException::class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    fun handleNotFound(exception: NoHandlerFoundException) = ErrorDto.NotFound
+    fun handleNotFound(exception: NoHandlerFoundException) = ErrorDto.NotFound.apply {
+        Logger.debug(exception.message, exception)
+    }
 
     @ExceptionHandler(value = [BadCredentialsException::class, BadJwtException::class])
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    fun handleUnauthorized(exception: Exception) = ErrorDto.Unauthorized
+    fun handleUnauthorized(exception: Exception) = ErrorDto.Unauthorized.apply {
+        Logger.debug(exception.message, exception)
+    }
 
     @ExceptionHandler(HttpMediaTypeNotSupportedException::class)
     @ResponseStatus(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
-    fun handleUnsupportedMediaType(exception: HttpMediaTypeNotSupportedException) = ErrorDto.UnsupportedMediaType(
-        setOf(MediaType.APPLICATION_JSON_VALUE)
-    )
+    fun handleUnsupportedMediaType(exception: HttpMediaTypeNotSupportedException) =
+        ErrorDto.UnsupportedMediaType(setOf(MediaType.APPLICATION_JSON_VALUE)).apply {
+            Logger.debug(exception.message, exception)
+        }
 
     private fun List<JsonMappingException.Reference>.toHumanReadablePath() = map { it.fieldName }
         .reduce { field1, field2 -> "$field1.$field2" }

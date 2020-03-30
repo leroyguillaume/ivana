@@ -5,6 +5,10 @@ ivana:
   data-dir: ./data
   compression-quality: 0.3
 
+logging:
+  level:
+    io.ivana: debug
+
 spring:
   datasource:
     url: ${database.jdbcUrl}
@@ -16,3 +20,7 @@ spring:
 
   mvc:
     throw-exception-if-no-handler-found: true
+
+  servlet:
+    multipart:
+      max-file-size: 10GB
