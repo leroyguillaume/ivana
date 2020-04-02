@@ -2,6 +2,7 @@ package io.ivana.api.web.v1
 
 import io.ivana.api.impl.PhotoAlreadyUploadedException
 import io.ivana.api.security.CustomAuthentication
+import io.ivana.api.security.UserPhotoTargetType
 import io.ivana.core.EventSource
 import io.ivana.core.Photo
 import io.ivana.core.PhotoService
@@ -10,12 +11,14 @@ import io.ivana.dto.PhotoUploadResultsDto
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.Authentication
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
 import java.net.InetAddress
 import java.net.URI
+import java.util.*
 import javax.servlet.http.HttpServletRequest
 
 @RestController
@@ -31,6 +34,12 @@ class PhotoController(
 
         private val Logger = LoggerFactory.getLogger(PhotoController::class.java)
     }
+
+    @GetMapping("/{id:$UuidRegex}")
+    @PreAuthorize("hasPermission(#id, '$UserPhotoTargetType', 'read')")
+    @ResponseStatus(HttpStatus.OK)
+    @Suppress("MVCPathVariableInspection", "RegExpUnexpectedAnchor")
+    fun get(@PathVariable id: UUID) = photoService.getById(id).toDto()
 
     @Transactional
     @PostMapping

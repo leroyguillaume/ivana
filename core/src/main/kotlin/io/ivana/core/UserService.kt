@@ -1,5 +1,5 @@
 package io.ivana.core
 
-interface UserService {
-    fun findByName(username: String): User
+interface UserService : EntityService<User> {
+    fun getByName(username: String): User
 }

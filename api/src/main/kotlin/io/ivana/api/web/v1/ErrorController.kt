@@ -1,26 +1,44 @@
 package io.ivana.api.web.v1
 
 import com.fasterxml.jackson.databind.JsonMappingException
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.MissingKotlinParameterException
+import io.ivana.api.impl.EntityNotFoundException
 import io.ivana.api.security.BadCredentialsException
 import io.ivana.api.security.BadJwtException
+import io.ivana.api.security.CustomAccessDeniedHandler
 import io.ivana.dto.ErrorDto
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.converter.HttpMessageConversionException
 import org.springframework.http.converter.HttpMessageNotReadableException
+import org.springframework.security.access.AccessDeniedException
 import org.springframework.web.HttpMediaTypeNotSupportedException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.multipart.MultipartException
 import org.springframework.web.servlet.NoHandlerFoundException
+import javax.servlet.http.HttpServletRequest
+import javax.servlet.http.HttpServletResponse
 
 @RestControllerAdvice
-class ErrorController {
+class ErrorController(
+    private val mapper: ObjectMapper
+) {
     private companion object {
         val Logger = LoggerFactory.getLogger(ErrorController::class.java)
+    }
+
+    @ExceptionHandler(AccessDeniedException::class)
+    fun handleAccessDenied(exception: AccessDeniedException, req: HttpServletRequest, resp: HttpServletResponse) =
+        CustomAccessDeniedHandler(mapper).handle(req, resp, exception)
+
+    @ExceptionHandler(EntityNotFoundException::class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    fun handleEntityNotFound(exception: EntityNotFoundException) = ErrorDto.NotFound.apply {
+        Logger.debug(exception.message, exception)
     }
 
     @ExceptionHandler(Exception::class)

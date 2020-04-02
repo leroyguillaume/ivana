@@ -26,16 +26,17 @@ internal class UserRepositoryImplTest {
     @Autowired
     private lateinit var jdbc: NamedParameterJdbcTemplate
 
+    @Autowired
     private lateinit var repo: UserRepositoryImpl
+
+    @Autowired
     private lateinit var eventRepo: UserEventRepository
+
     private lateinit var creationEvent: UserEvent.Creation
     private lateinit var createdUser: User
 
     @BeforeEach
     fun beforeEach() {
-        eventRepo = UserEventRepositoryImpl(jdbc)
-        repo = UserRepositoryImpl(jdbc)
-
         cleanDb(jdbc)
         creationEvent = eventRepo.saveCreationEvent(creationEventContent, EventSource.System)
         createdUser = User(

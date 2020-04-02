@@ -25,12 +25,11 @@ internal class UserEventRepositoryImplTest {
     @Autowired
     private lateinit var jdbc: NamedParameterJdbcTemplate
 
+    @Autowired
     private lateinit var repo: UserEventRepositoryImpl
 
     @BeforeEach
     fun beforeEach() {
-        repo = UserEventRepositoryImpl(jdbc)
-
         cleanDb(jdbc)
     }
 

@@ -1,0 +1,26 @@
+databaseChangeLog:
+  - logicalFilePath: v1/changelog.yml
+  - changeSet:
+      id: v1.0.0
+      author: Guillaume 'Francis' Leroy
+      changes:
+        - sqlFile:
+            path: 001-utils.sql
+            splitStatements: false
+            relativeToChangelogFile: true
+        - sqlFile:
+            path: 002-user.sql
+            splitStatements: false
+            relativeToChangelogFile: true
+        - sqlFile:
+            path: 003-photo.sql
+            splitStatements: false
+            relativeToChangelogFile: true
+        - sqlFile:
+            path: 004-authorization.sql
+            splitStatements: false
+            relativeToChangelogFile: true
+        - sqlFile:
+            path: 005-photo-triggers.sql
+            splitStatements: false
+            relativeToChangelogFile: true

@@ -31,9 +31,15 @@ internal class PhotoRepositoryImplTest {
     @Autowired
     private lateinit var jdbc: NamedParameterJdbcTemplate
 
+    @Autowired
     private lateinit var repo: PhotoRepositoryImpl
+
+    @Autowired
     private lateinit var eventRepo: PhotoEventRepository
+
+    @Autowired
     private lateinit var userEventRepo: UserEventRepository
+
     private lateinit var userCreationEvent: UserEvent.Creation
     private lateinit var createdUser: User
     private lateinit var uploadEvent: PhotoEvent.Upload
@@ -41,10 +47,6 @@ internal class PhotoRepositoryImplTest {
 
     @BeforeEach
     fun beforeEach() {
-        userEventRepo = UserEventRepositoryImpl(jdbc)
-        eventRepo = PhotoEventRepositoryImpl(jdbc)
-        repo = PhotoRepositoryImpl(jdbc)
-
         cleanDb(jdbc)
         userCreationEvent = userEventRepo.saveCreationEvent(userCreationEventContent, EventSource.System)
         createdUser = User(

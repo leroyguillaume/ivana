@@ -30,36 +30,3 @@ SELECT COALESCE(MAX(number), 0) + 1
 FROM photo_event
 WHERE subject_id = $1;
 $$;
-
-CREATE PROCEDURE insert_photo_from_upload_event(event record)
-    LANGUAGE plpgsql AS
-$$
-BEGIN
-    INSERT INTO photo
-    VALUES
-    (
-        event.subject_id,
-        (event.data #>> '{source,id}')::uuid,
-        event.date,
-        (event.data #>> '{content,type}')::photo_type,
-        event.data #>> '{content,hash}'
-    );
-END;
-$$;
-
-CREATE FUNCTION photo_update() RETURNS trigger
-    LANGUAGE plpgsql AS
-$$
-BEGIN
-    CASE WHEN new.type = 'upload' THEN CALL insert_photo_from_upload_event(new);
-        ELSE
-        END CASE;
-    RETURN new;
-END;
-$$;
-
-CREATE TRIGGER photo_update
-    BEFORE INSERT
-    ON photo_event
-    FOR EACH ROW
-EXECUTE PROCEDURE photo_update();

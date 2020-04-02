@@ -5,6 +5,7 @@ package io.ivana.api.impl
 import io.ivana.api.config.IvanaProperties
 import io.ivana.core.*
 import io.kotlintest.matchers.file.shouldExist
+import io.kotlintest.matchers.throwable.shouldHaveMessage
 import io.kotlintest.shouldBe
 import io.mockk.confirmVerified
 import io.mockk.every
@@ -40,6 +41,36 @@ internal class PhotoServiceImplTest {
         photoRepo = mockk()
 
         service = PhotoServiceImpl(photoRepo, photoEventRepo, Props)
+    }
+
+    @Nested
+    inner class getById {
+        private val expectedPhoto = Photo(
+            id = UUID.randomUUID(),
+            ownerId = UUID.randomUUID(),
+            uploadDate = OffsetDateTime.now(),
+            type = Photo.Type.Jpg,
+            hash = "hash",
+            no = 1
+        )
+
+        @Test
+        fun `should throw exception if photo does not exist`() {
+            every { photoRepo.fetchById(expectedPhoto.id) } returns null
+            val exception = assertThrows<EntityNotFoundException> { service.getById(expectedPhoto.id) }
+            exception shouldHaveMessage "Photo ${expectedPhoto.id} does not exist"
+            verify { photoRepo.fetchById(expectedPhoto.id) }
+            confirmVerified(photoRepo)
+        }
+
+        @Test
+        fun `should return photo with id`() {
+            every { photoRepo.fetchById(expectedPhoto.id) } returns expectedPhoto
+            val photo = service.getById(expectedPhoto.id)
+            photo shouldBe expectedPhoto
+            verify { photoRepo.fetchById(photo.id) }
+            confirmVerified(photoRepo)
+        }
     }
 
     @Nested

@@ -1,5 +1,5 @@
-package io.ivana.core
+package io.ivana.api.impl
 
 class EntityNotFoundException(
     override val message: String
-) : Exception()
+) : RuntimeException()

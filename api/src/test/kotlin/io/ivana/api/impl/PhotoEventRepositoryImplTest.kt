@@ -2,7 +2,10 @@
 
 package io.ivana.api.impl
 
+import io.ivana.api.security.Permission
+import io.ivana.api.security.UserPhotoAuthorizationRepository
 import io.ivana.core.*
+import io.kotlintest.matchers.collections.shouldContainExactly
 import io.kotlintest.matchers.types.shouldBeNull
 import io.kotlintest.shouldBe
 import org.junit.jupiter.api.BeforeEach
@@ -28,16 +31,20 @@ internal class PhotoEventRepositoryImplTest {
     @Autowired
     private lateinit var jdbc: NamedParameterJdbcTemplate
 
+    @Autowired
     private lateinit var userEventRepo: UserEventRepository
+
+    @Autowired
     private lateinit var repo: PhotoEventRepositoryImpl
+
+    @Autowired
+    private lateinit var authRepo: UserPhotoAuthorizationRepository
+
     private lateinit var creationEvent: UserEvent.Creation
     private lateinit var createdUser: User
 
     @BeforeEach
     fun beforeEach() {
-        userEventRepo = UserEventRepositoryImpl(jdbc)
-        repo = PhotoEventRepositoryImpl(jdbc)
-
         cleanDb(jdbc)
         creationEvent = userEventRepo.saveCreationEvent(userCreationEventContent, EventSource.System)
         createdUser = User(
@@ -99,6 +106,8 @@ internal class PhotoEventRepositoryImplTest {
                 date = event.date,
                 subjectId = event.subjectId
             )
+            val permissions = authRepo.fetch(createdUser.id, event.subjectId)
+            permissions shouldContainExactly Permission.values().toSet()
         }
     }
 }

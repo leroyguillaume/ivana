@@ -6,6 +6,7 @@ import com.nhaarman.mockitokotlin2.verify
 import com.nhaarman.mockitokotlin2.whenever
 import io.ivana.api.security.AccessTokenCookieName
 import io.ivana.api.security.AuthenticationService
+import io.ivana.api.security.UserPhotoAuthorizationRepository
 import io.ivana.api.security.UserPrincipal
 import io.ivana.core.PhotoService
 import io.ivana.core.Role
@@ -56,6 +57,9 @@ internal abstract class AbstractControllerTest {
 
     @Autowired
     protected lateinit var mvc: MockMvc
+
+    @MockBean
+    protected lateinit var userPhotoAuthzRepo: UserPhotoAuthorizationRepository
 
     @MockBean
     protected lateinit var authService: AuthenticationService
