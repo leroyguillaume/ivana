@@ -20,7 +20,8 @@ CREATE TABLE photo
     upload_date timestamp WITH TIME ZONE NOT NULL,
     type        photo_type               NOT NULL,
     hash        varchar(40)              NOT NULL,
-    no          serial                   NOT NULL
+    no          serial                   NOT NULL UNIQUE,
+    UNIQUE (owner_id, hash)
 );
 
 CREATE FUNCTION next_photo_event_number(id uuid) RETURNS bigint

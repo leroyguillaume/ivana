@@ -5,8 +5,7 @@
       "photo": {
         "id": "61f11547-a340-441c-bce7-551234d5d361",
         "rawUri": "/v1/photo/61f11547-a340-441c-bce7-551234d5d361/raw",
-        "compressedUri": "/v1/photo/61f11547-a340-441c-bce7-551234d5d361/compressed",
-        "no": 1
+        "compressedUri": "/v1/photo/61f11547-a340-441c-bce7-551234d5d361/compressed"
       }
     },
     {

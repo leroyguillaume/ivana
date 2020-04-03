@@ -8,6 +8,7 @@ import java.net.URI
 private const val DuplicateResourceCodeValue = "duplicate_resource"
 private const val ForbiddenCodeValue = "forbidden"
 private const val InternalErrorCodeValue = "internal_error"
+private const val InvalidParameterCodeValue = "invalid_parameter"
 private const val MalformedRequestCodeValue = "malformed_request"
 private const val MissingParameterCodeValue = "missing_parameter"
 private const val NotFoundCodeValue = "not_found"
@@ -23,6 +24,7 @@ private const val UnsupportedMediaTypeCodeValue = "unsupported_media_type"
     JsonSubTypes.Type(value = ErrorDto.DuplicateResource::class, name = DuplicateResourceCodeValue),
     JsonSubTypes.Type(value = ErrorDto.Forbidden::class, name = ForbiddenCodeValue),
     JsonSubTypes.Type(value = ErrorDto.InternalError::class, name = InternalErrorCodeValue),
+    JsonSubTypes.Type(value = ErrorDto.InvalidParameter::class, name = InvalidParameterCodeValue),
     JsonSubTypes.Type(value = ErrorDto.MalformedRequest::class, name = MalformedRequestCodeValue),
     JsonSubTypes.Type(value = ErrorDto.MissingParameter::class, name = MissingParameterCodeValue),
     JsonSubTypes.Type(value = ErrorDto.NotFound::class, name = NotFoundCodeValue),
@@ -39,6 +41,9 @@ sealed class ErrorDto {
 
         @JsonProperty(InternalErrorCodeValue)
         InternalError,
+
+        @JsonProperty(InvalidParameterCodeValue)
+        InvalidParameter,
 
         @JsonProperty(MalformedRequestCodeValue)
         MalformedRequest,
@@ -72,6 +77,13 @@ sealed class ErrorDto {
         override val code = Code.InternalError
 
         override fun equals(other: Any?) = other is InternalError
+    }
+
+    data class InvalidParameter(
+        val parameter: String,
+        val reason: String
+    ) : ErrorDto() {
+        override val code = Code.InvalidParameter
     }
 
     object MalformedRequest : ErrorDto() {

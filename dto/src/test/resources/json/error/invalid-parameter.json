@@ -1,0 +1,5 @@
+{
+  "code": "invalid_parameter",
+  "parameter": "foo",
+  "reason": "must be boolean"
+}

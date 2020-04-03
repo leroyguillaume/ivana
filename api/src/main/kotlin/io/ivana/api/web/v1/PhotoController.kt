@@ -38,8 +38,15 @@ class PhotoController(
     @GetMapping("/{id:$UuidRegex}")
     @PreAuthorize("hasPermission(#id, '$UserPhotoTargetType', 'read')")
     @ResponseStatus(HttpStatus.OK)
-    @Suppress("MVCPathVariableInspection", "RegExpUnexpectedAnchor")
-    fun get(@PathVariable id: UUID) = photoService.getById(id).toDto()
+    @Suppress("MVCPathVariableInspection", "RegExpUnexpectedAnchor", "IMPLICIT_CAST_TO_ANY")
+    fun get(
+        @PathVariable id: UUID,
+        @RequestParam(name = NavigableParamName, required = false) navigable: Boolean = false
+    ) = if (navigable) {
+        photoService.getTimeWindowById(id).toDto()
+    } else {
+        photoService.getById(id).toDto()
+    }
 
     @Transactional
     @PostMapping

@@ -33,6 +33,14 @@ class PhotoServiceImpl(
     override fun getById(id: UUID) = photoRepo.fetchById(id)
         ?: throw EntityNotFoundException("Photo $id does not exist")
 
+    override fun getTimeWindowById(id: UUID) = getById(id).let { photo ->
+        PhotosTimeWindow(
+            current = photo,
+            previous = photoRepo.fetchPreviousOf(photo),
+            next = photoRepo.fetchNextOf(photo)
+        )
+    }
+
     override fun uploadPhoto(input: InputStream, type: Photo.Type, source: EventSource.User): Photo {
         val tmpFile = File.createTempFile(UUID.randomUUID().toString(), ".${type.extension()}")
         tmpFile.deleteOnExit()

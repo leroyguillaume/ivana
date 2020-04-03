@@ -51,16 +51,6 @@ internal class ErrorControllerTest : AbstractControllerTest() {
     }
 
     @Test
-    fun `should return 401 if no authentication`() {
-        callAndExpect(
-            method = HttpMethod.GET,
-            uri = "/",
-            status = HttpStatus.UNAUTHORIZED,
-            respDto = ErrorDto.Unauthorized
-        )
-    }
-
-    @Test
     fun `should return 401 if bad jwt (header)`() {
         whenever(authService.principalFromJwt(jwt)).thenAnswer { throw BadJwtException("") }
         callAndExpect(

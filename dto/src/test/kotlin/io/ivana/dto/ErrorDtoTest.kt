@@ -26,6 +26,16 @@ internal class ErrorDtoTest {
     )
 
     @Nested
+    inner class InvalidParameter : JsonTest(
+        filename = "error/invalid-parameter.json",
+        expectedValue = ErrorDto.InvalidParameter(
+            parameter = "foo",
+            reason = "must be boolean"
+        ),
+        deserializeAs = typeOf<ErrorDto>()
+    )
+
+    @Nested
     inner class MalformedRequest : JsonTest(
         filename = "error/malformed-request.json",
         expectedValue = ErrorDto.MalformedRequest,

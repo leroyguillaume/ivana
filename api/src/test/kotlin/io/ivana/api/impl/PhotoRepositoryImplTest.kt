@@ -18,14 +18,41 @@ import java.util.*
 @SpringBootTest
 internal class PhotoRepositoryImplTest {
     private val pwdEncoder = BCryptPasswordEncoder()
-    private val userCreationEventContent = UserEvent.Creation.Content(
-        name = "admin",
-        hashedPwd = pwdEncoder.encode("changeit"),
-        role = Role.SuperAdmin
-    )
-    private val photoUploadEventContent = PhotoEvent.Upload.Content(
-        type = Photo.Type.Jpg,
-        hash = "hash"
+    private val initData = listOf(
+        InitDataEntry(
+            userCreationContent = UserEvent.Creation.Content(
+                name = "admin",
+                hashedPwd = pwdEncoder.encode("changeit"),
+                role = Role.SuperAdmin
+            ),
+            photoUploadContents = listOf(
+                PhotoEvent.Upload.Content(
+                    type = Photo.Type.Jpg,
+                    hash = "hash1"
+                ),
+                PhotoEvent.Upload.Content(
+                    type = Photo.Type.Png,
+                    hash = "hash2"
+                ),
+                PhotoEvent.Upload.Content(
+                    type = Photo.Type.Png,
+                    hash = "hash3"
+                )
+            )
+        ),
+        InitDataEntry(
+            userCreationContent = UserEvent.Creation.Content(
+                name = "gleroy",
+                hashedPwd = pwdEncoder.encode("changeit"),
+                role = Role.User
+            ),
+            photoUploadContents = listOf(
+                PhotoEvent.Upload.Content(
+                    type = Photo.Type.Jpg,
+                    hash = "hash4"
+                )
+            )
+        )
     )
 
     @Autowired
@@ -40,37 +67,34 @@ internal class PhotoRepositoryImplTest {
     @Autowired
     private lateinit var userEventRepo: UserEventRepository
 
-    private lateinit var userCreationEvent: UserEvent.Creation
-    private lateinit var createdUser: User
-    private lateinit var uploadEvent: PhotoEvent.Upload
-    private lateinit var uploadedPhoto: Photo
+    private lateinit var photos: List<Photo>
 
     @BeforeEach
     fun beforeEach() {
         cleanDb(jdbc)
-        userCreationEvent = userEventRepo.saveCreationEvent(userCreationEventContent, EventSource.System)
-        createdUser = User(
-            id = userCreationEvent.subjectId,
-            name = userCreationEvent.content.name,
-            hashedPwd = userCreationEvent.content.hashedPwd,
-            role = userCreationEvent.content.role
-        )
-        uploadEvent = eventRepo.saveUploadEvent(
-            content = photoUploadEventContent,
-            source = EventSource.User(createdUser.id, InetAddress.getByName("127.0.0.1"))
-        )
-        uploadedPhoto = Photo(
-            id = uploadEvent.subjectId,
-            ownerId = createdUser.id,
-            uploadDate = uploadEvent.date,
-            type = uploadEvent.content.type,
-            hash = uploadEvent.content.hash,
-            no = 1
-        )
+        var no = 1
+        photos = initData
+            .map { entry ->
+                val user = userEventRepo.saveCreationEvent(entry.userCreationContent, EventSource.System).toUser()
+                entry.photoUploadContents.map { content ->
+                    eventRepo.saveUploadEvent(
+                        content = content,
+                        source = EventSource.User(user.id, InetAddress.getByName("127.0.0.1"))
+                    ).toPhoto(no++)
+                }
+            }
+            .flatten()
     }
 
     @Nested
     inner class fetchById {
+        private lateinit var photo: Photo
+
+        @BeforeEach
+        fun beforeEach() {
+            photo = photos[0]
+        }
+
         @Test
         fun `should return null if photo does not exist`() {
             val photo = repo.fetchById(UUID.randomUUID())
@@ -79,29 +103,83 @@ internal class PhotoRepositoryImplTest {
 
         @Test
         fun `should return photo with id`() {
-            val photo = repo.fetchById(uploadedPhoto.id)
-            photo shouldBe uploadedPhoto
+            val photo = repo.fetchById(photo.id)
+            photo shouldBe photo
         }
     }
 
     @Nested
     inner class fetchByHash {
+        private lateinit var photo: Photo
+
+        @BeforeEach
+        fun beforeEach() {
+            photo = photos[0]
+        }
+
         @Test
         fun `should return null if photo does not exist`() {
-            val photo = repo.fetchByHash(uploadedPhoto.ownerId, uploadedPhoto.hash.reversed())
+            val photo = repo.fetchByHash(photo.ownerId, photo.hash.reversed())
             photo.shouldBeNull()
         }
 
         @Test
         fun `should return null if owner is not the same`() {
-            val photo = repo.fetchByHash(UUID.randomUUID(), uploadedPhoto.hash)
+            val photo = repo.fetchByHash(UUID.randomUUID(), photo.hash)
             photo.shouldBeNull()
         }
 
         @Test
         fun `should return photo with hash`() {
-            val photo = repo.fetchByHash(uploadedPhoto.ownerId, uploadedPhoto.hash)
-            photo shouldBe uploadedPhoto
+            val photo = repo.fetchByHash(photo.ownerId, photo.hash)
+            photo shouldBe photo
         }
     }
+
+    @Nested
+    inner class fetchNextOf {
+        @Test
+        fun `should return null if photo does not exist`() {
+            val photo = repo.fetchNextOf(photos[3])
+            photo.shouldBeNull()
+        }
+
+        @Test
+        fun `should return null if next photo does not have same owner`() {
+            val photo = repo.fetchNextOf(photos[2])
+            photo.shouldBeNull()
+        }
+
+        @Test
+        fun `should return closet photo after`() {
+            val photo = repo.fetchNextOf(photos[1])
+            photo shouldBe photos[2]
+        }
+    }
+
+    @Nested
+    inner class fetchPreviousOf {
+        @Test
+        fun `should return null if photo does not exist`() {
+            val photo = repo.fetchPreviousOf(photos[0])
+            photo.shouldBeNull()
+        }
+
+        @Test
+        fun `should return null if previous photo does not have same owner`() {
+            val photo = repo.fetchNextOf(photos[3])
+            photo.shouldBeNull()
+        }
+
+        @Test
+        fun `should return closet photo after`() {
+            val photo = repo.fetchPreviousOf(photos[2])
+            photo shouldBe photos[1]
+        }
+    }
+
+    private data class InitDataEntry(
+        val userCreationContent: UserEvent.Creation.Content,
+        val photoUploadContents: List<PhotoEvent.Upload.Content>
+    )
 }

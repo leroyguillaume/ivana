@@ -74,6 +74,75 @@ internal class PhotoServiceImplTest {
     }
 
     @Nested
+    inner class getTimeWindowById {
+        private val defaultTimeWindow = PhotosTimeWindow(
+            current = Photo(
+                id = UUID.randomUUID(),
+                ownerId = UUID.randomUUID(),
+                uploadDate = OffsetDateTime.now(),
+                type = Photo.Type.Jpg,
+                hash = "hash",
+                no = 2
+            )
+        )
+        private val completeTimeWindow = defaultTimeWindow.copy(
+            next = Photo(
+                id = UUID.randomUUID(),
+                ownerId = UUID.randomUUID(),
+                uploadDate = OffsetDateTime.now(),
+                type = Photo.Type.Jpg,
+                hash = "hash",
+                no = 1
+            ),
+            previous = Photo(
+                id = UUID.randomUUID(),
+                ownerId = UUID.randomUUID(),
+                uploadDate = OffsetDateTime.now(),
+                type = Photo.Type.Jpg,
+                hash = "hash",
+                no = 3
+            )
+        )
+
+        @Test
+        fun `should throw exception if photo does not exist`() {
+            every { photoRepo.fetchById(defaultTimeWindow.current.id) } returns null
+            val exception = assertThrows<EntityNotFoundException> {
+                service.getTimeWindowById(defaultTimeWindow.current.id)
+            }
+            exception shouldHaveMessage "Photo ${defaultTimeWindow.current.id} does not exist"
+            verify { photoRepo.fetchById(defaultTimeWindow.current.id) }
+            confirmVerified(photoRepo)
+        }
+
+        @Test
+        fun `should return default time window`() {
+            every { photoRepo.fetchById(defaultTimeWindow.current.id) } returns defaultTimeWindow.current
+            every { photoRepo.fetchPreviousOf(defaultTimeWindow.current) } returns null
+            every { photoRepo.fetchNextOf(defaultTimeWindow.current) } returns null
+            val timeWindow = service.getTimeWindowById(defaultTimeWindow.current.id)
+            timeWindow shouldBe defaultTimeWindow
+            verify { photoRepo.fetchById(defaultTimeWindow.current.id) }
+            verify { photoRepo.fetchPreviousOf(defaultTimeWindow.current) }
+            verify { photoRepo.fetchNextOf(defaultTimeWindow.current) }
+            confirmVerified(photoRepo)
+        }
+
+        @Test
+        fun `should return complete time window`() {
+            every { photoRepo.fetchById(completeTimeWindow.current.id) } returns completeTimeWindow.current
+            every { photoRepo.fetchPreviousOf(completeTimeWindow.current) } returns completeTimeWindow.previous
+            every { photoRepo.fetchNextOf(completeTimeWindow.current) } returns completeTimeWindow.next
+            val timeWindow = service.getTimeWindowById(completeTimeWindow.current.id)
+            timeWindow shouldBe completeTimeWindow
+            verify { photoRepo.fetchById(completeTimeWindow.current.id) }
+            verify { photoRepo.fetchPreviousOf(completeTimeWindow.current) }
+            verify { photoRepo.fetchNextOf(defaultTimeWindow.current) }
+            confirmVerified(photoRepo)
+        }
+    }
+
+    @Nested
     inner class uploadPhoto {
         private val jpgFile = File(javaClass.getResource("/data/photo.jpg").file)
         private val pngFile = File(javaClass.getResource("/data/photo.png").file)
@@ -109,7 +178,7 @@ internal class PhotoServiceImplTest {
             uploadDate = pngEvent.date,
             type = pngEvent.content.type,
             hash = pngEvent.content.hash,
-            no = 1
+            no = 2
         )
 
         @Test

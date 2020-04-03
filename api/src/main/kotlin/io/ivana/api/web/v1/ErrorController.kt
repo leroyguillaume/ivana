@@ -18,6 +18,7 @@ import org.springframework.web.HttpMediaTypeNotSupportedException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestControllerAdvice
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
 import org.springframework.web.multipart.MultipartException
 import org.springframework.web.servlet.NoHandlerFoundException
 import javax.servlet.http.HttpServletRequest
@@ -53,6 +54,13 @@ class ErrorController(
     fun handleMalformedRequest(exception: Exception) = ErrorDto.MalformedRequest.apply {
         Logger.debug(exception.message, exception)
     }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException::class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    fun handleMethodArgumentTypeMismatch(exception: MethodArgumentTypeMismatchException) = ErrorDto.InvalidParameter(
+        parameter = exception.name,
+        reason = "must be ${exception.requiredType.simpleName.toLowerCase()}"
+    )
 
     @ExceptionHandler(HttpMessageConversionException::class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)

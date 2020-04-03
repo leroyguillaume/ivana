@@ -93,11 +93,13 @@ internal abstract class AbstractControllerTest {
         reqContent: String? = null,
         respDto: Any? = null,
         contentType: MediaType = MediaType.APPLICATION_JSON,
+        params: Map<String, List<String>> = mapOf(),
         reqHeaders: Map<String, List<String>> = mapOf(),
         reqCookies: List<Cookie> = listOf(),
         respCookies: List<Cookie> = listOf()
     ) {
         val request = request(method, uri)
+            .params(LinkedMultiValueMap(params))
             .headers(HttpHeaders(LinkedMultiValueMap(reqHeaders)))
         if (reqContent != null) {
             request

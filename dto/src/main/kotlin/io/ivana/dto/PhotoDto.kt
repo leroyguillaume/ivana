@@ -6,6 +6,5 @@ import java.util.*
 data class PhotoDto(
     val id: UUID,
     val rawUri: URI,
-    val compressedUri: URI,
-    val no: Int
+    val compressedUri: URI
 )

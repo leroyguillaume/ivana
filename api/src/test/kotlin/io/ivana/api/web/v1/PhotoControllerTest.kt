@@ -63,6 +63,21 @@ internal class PhotoControllerTest : AbstractControllerTest() {
         }
 
         @Test
+        fun `should return 400 if navigable is not boolean`() = authenticated {
+            callAndExpect(
+                method = HttpMethod.GET,
+                uri = "$PhotoApiEndpoint/${photo.id}",
+                params = mapOf(NavigableParamName to listOf("a")),
+                reqCookies = listOf(accessTokenCookie()),
+                status = HttpStatus.BAD_REQUEST,
+                respDto = ErrorDto.InvalidParameter(
+                    parameter = NavigableParamName,
+                    reason = "must be boolean"
+                )
+            )
+        }
+
+        @Test
         fun `should return 200`() = authenticated {
             whenever(userPhotoAuthzRepo.fetch(principal.user.id, photo.id)).thenReturn(setOf(Permission.Read))
             whenever(photoService.getById(photo.id)).thenReturn(photo)
@@ -158,7 +173,6 @@ internal class PhotoControllerTest : AbstractControllerTest() {
     private fun Photo.toDto() = PhotoDto(
         id = id,
         rawUri = URI("$PhotoApiEndpoint/$id$RawPhotoEndpoint"),
-        compressedUri = URI("$PhotoApiEndpoint/$id$CompressedPhotoEndpoint"),
-        no = no
+        compressedUri = URI("$PhotoApiEndpoint/$id$CompressedPhotoEndpoint")
     )
 }
