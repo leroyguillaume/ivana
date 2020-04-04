@@ -1,9 +1,9 @@
 package io.ivana.api.web.v1
 
 import io.ivana.core.Entity
+import io.ivana.core.LinkedPhotos
 import io.ivana.core.Page
 import io.ivana.core.Photo
-import io.ivana.core.PhotosTimeWindow
 import io.ivana.dto.EntityDto
 import io.ivana.dto.PageDto
 import io.ivana.dto.PhotoDto
@@ -38,7 +38,7 @@ fun Photo.toSimpleDto() = PhotoDto.Simple(
     compressedUri = compressedUri(id)
 )
 
-fun PhotosTimeWindow.toNavigableDto() = PhotoDto.Navigable(
+fun LinkedPhotos.toNavigableDto() = PhotoDto.Navigable(
     id = current.id,
     rawUri = rawUri(current.id),
     compressedUri = compressedUri(current.id),

@@ -52,7 +52,7 @@ class PhotoController(
         @PathVariable id: UUID,
         @RequestParam(name = NavigableParamName, required = false) navigable: Boolean = false
     ) = if (navigable) {
-        photoService.getTimeWindowById(id).toNavigableDto()
+        photoService.getLinkedById(id).toNavigableDto()
     } else {
         photoService.getById(id).toSimpleDto()
     }

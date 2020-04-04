@@ -9,9 +9,9 @@ interface PhotoService : EntityService<Photo> {
 
     fun getCompressedFile(photo: Photo): File
 
-    fun getRawFile(photo: Photo): File
+    fun getLinkedById(id: UUID): LinkedPhotos
 
-    fun getTimeWindowById(id: UUID): PhotosTimeWindow
+    fun getRawFile(photo: Photo): File
 
     fun uploadPhoto(input: InputStream, type: Photo.Type, source: EventSource.User): Photo
 }

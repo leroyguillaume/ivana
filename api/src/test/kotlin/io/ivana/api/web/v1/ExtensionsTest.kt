@@ -2,9 +2,9 @@
 
 package io.ivana.api.web.v1
 
+import io.ivana.core.LinkedPhotos
 import io.ivana.core.Page
 import io.ivana.core.Photo
-import io.ivana.core.PhotosTimeWindow
 import io.ivana.dto.PageDto
 import io.ivana.dto.PhotoDto
 import io.kotlintest.shouldBe
@@ -67,8 +67,8 @@ internal class ExtensionsTest {
     }
 
     @Test
-    fun photosTimeWindowToNavigableDto() {
-        val photosTimeWindow = PhotosTimeWindow(
+    fun linkedPhotosToNavigableDto() {
+        val linkedPhotos = LinkedPhotos(
             current = Photo(
                 id = UUID.randomUUID(),
                 ownerId = UUID.randomUUID(),
@@ -95,21 +95,21 @@ internal class ExtensionsTest {
             )
         )
         val dto = PhotoDto.Navigable(
-            id = photosTimeWindow.current.id,
-            rawUri = rawUri(photosTimeWindow.current.id),
-            compressedUri = compressedUri(photosTimeWindow.current.id),
+            id = linkedPhotos.current.id,
+            rawUri = rawUri(linkedPhotos.current.id),
+            compressedUri = compressedUri(linkedPhotos.current.id),
             previous = PhotoDto.Simple(
-                id = photosTimeWindow.previous!!.id,
-                rawUri = rawUri(photosTimeWindow.previous!!.id),
-                compressedUri = compressedUri(photosTimeWindow.previous!!.id)
+                id = linkedPhotos.previous!!.id,
+                rawUri = rawUri(linkedPhotos.previous!!.id),
+                compressedUri = compressedUri(linkedPhotos.previous!!.id)
             ),
             next = PhotoDto.Simple(
-                id = photosTimeWindow.next!!.id,
-                rawUri = rawUri(photosTimeWindow.next!!.id),
-                compressedUri = compressedUri(photosTimeWindow.next!!.id)
+                id = linkedPhotos.next!!.id,
+                rawUri = rawUri(linkedPhotos.next!!.id),
+                compressedUri = compressedUri(linkedPhotos.next!!.id)
             )
         )
-        photosTimeWindow.toNavigableDto() shouldBe dto
+        linkedPhotos.toNavigableDto() shouldBe dto
     }
 
     private fun rawUri(id: UUID) = URI("$PhotoApiEndpoint/$id$RawPhotoEndpoint")

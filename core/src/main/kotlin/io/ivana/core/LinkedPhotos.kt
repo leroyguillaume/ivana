@@ -1,6 +1,6 @@
 package io.ivana.core
 
-data class PhotosTimeWindow(
+data class LinkedPhotos(
     val current: Photo,
     val previous: Photo? = null,
     val next: Photo? = null

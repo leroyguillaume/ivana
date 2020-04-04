@@ -153,8 +153,8 @@ internal class PhotoServiceImplTest {
     }
 
     @Nested
-    inner class getTimeWindowById {
-        private val defaultTimeWindow = PhotosTimeWindow(
+    inner class getLinkedById {
+        private val defaultLinkedPhotos = LinkedPhotos(
             current = Photo(
                 id = UUID.randomUUID(),
                 ownerId = UUID.randomUUID(),
@@ -164,7 +164,7 @@ internal class PhotoServiceImplTest {
                 no = 2
             )
         )
-        private val completeTimeWindow = defaultTimeWindow.copy(
+        private val completeLinkedPhotos = defaultLinkedPhotos.copy(
             next = Photo(
                 id = UUID.randomUUID(),
                 ownerId = UUID.randomUUID(),
@@ -185,38 +185,38 @@ internal class PhotoServiceImplTest {
 
         @Test
         fun `should throw exception if photo does not exist`() {
-            every { photoRepo.fetchById(defaultTimeWindow.current.id) } returns null
+            every { photoRepo.fetchById(defaultLinkedPhotos.current.id) } returns null
             val exception = assertThrows<EntityNotFoundException> {
-                service.getTimeWindowById(defaultTimeWindow.current.id)
+                service.getLinkedById(defaultLinkedPhotos.current.id)
             }
-            exception shouldHaveMessage "Photo ${defaultTimeWindow.current.id} does not exist"
-            verify { photoRepo.fetchById(defaultTimeWindow.current.id) }
+            exception shouldHaveMessage "Photo ${defaultLinkedPhotos.current.id} does not exist"
+            verify { photoRepo.fetchById(defaultLinkedPhotos.current.id) }
             confirmVerified(photoRepo)
         }
 
         @Test
         fun `should return default time window`() {
-            every { photoRepo.fetchById(defaultTimeWindow.current.id) } returns defaultTimeWindow.current
-            every { photoRepo.fetchPreviousOf(defaultTimeWindow.current) } returns null
-            every { photoRepo.fetchNextOf(defaultTimeWindow.current) } returns null
-            val timeWindow = service.getTimeWindowById(defaultTimeWindow.current.id)
-            timeWindow shouldBe defaultTimeWindow
-            verify { photoRepo.fetchById(defaultTimeWindow.current.id) }
-            verify { photoRepo.fetchPreviousOf(defaultTimeWindow.current) }
-            verify { photoRepo.fetchNextOf(defaultTimeWindow.current) }
+            every { photoRepo.fetchById(defaultLinkedPhotos.current.id) } returns defaultLinkedPhotos.current
+            every { photoRepo.fetchPreviousOf(defaultLinkedPhotos.current) } returns null
+            every { photoRepo.fetchNextOf(defaultLinkedPhotos.current) } returns null
+            val linkedPhotos = service.getLinkedById(defaultLinkedPhotos.current.id)
+            linkedPhotos shouldBe defaultLinkedPhotos
+            verify { photoRepo.fetchById(defaultLinkedPhotos.current.id) }
+            verify { photoRepo.fetchPreviousOf(defaultLinkedPhotos.current) }
+            verify { photoRepo.fetchNextOf(defaultLinkedPhotos.current) }
             confirmVerified(photoRepo)
         }
 
         @Test
         fun `should return complete time window`() {
-            every { photoRepo.fetchById(completeTimeWindow.current.id) } returns completeTimeWindow.current
-            every { photoRepo.fetchPreviousOf(completeTimeWindow.current) } returns completeTimeWindow.previous
-            every { photoRepo.fetchNextOf(completeTimeWindow.current) } returns completeTimeWindow.next
-            val timeWindow = service.getTimeWindowById(completeTimeWindow.current.id)
-            timeWindow shouldBe completeTimeWindow
-            verify { photoRepo.fetchById(completeTimeWindow.current.id) }
-            verify { photoRepo.fetchPreviousOf(completeTimeWindow.current) }
-            verify { photoRepo.fetchNextOf(defaultTimeWindow.current) }
+            every { photoRepo.fetchById(completeLinkedPhotos.current.id) } returns completeLinkedPhotos.current
+            every { photoRepo.fetchPreviousOf(completeLinkedPhotos.current) } returns completeLinkedPhotos.previous
+            every { photoRepo.fetchNextOf(completeLinkedPhotos.current) } returns completeLinkedPhotos.next
+            val linkedPhotos = service.getLinkedById(completeLinkedPhotos.current.id)
+            linkedPhotos shouldBe completeLinkedPhotos
+            verify { photoRepo.fetchById(completeLinkedPhotos.current.id) }
+            verify { photoRepo.fetchPreviousOf(completeLinkedPhotos.current) }
+            verify { photoRepo.fetchNextOf(defaultLinkedPhotos.current) }
             confirmVerified(photoRepo)
         }
     }

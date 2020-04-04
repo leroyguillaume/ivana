@@ -6,9 +6,9 @@ import com.nhaarman.mockitokotlin2.*
 import io.ivana.api.impl.PhotoAlreadyUploadedException
 import io.ivana.api.security.Permission
 import io.ivana.core.EventSource
+import io.ivana.core.LinkedPhotos
 import io.ivana.core.Page
 import io.ivana.core.Photo
-import io.ivana.core.PhotosTimeWindow
 import io.ivana.dto.ErrorDto
 import io.ivana.dto.PhotoUploadResultsDto
 import org.junit.jupiter.api.Nested
@@ -30,7 +30,7 @@ import java.util.*
 internal class PhotoControllerTest : AbstractControllerTest() {
     @Nested
     inner class get {
-        private val photosTimeWindow = PhotosTimeWindow(
+        private val linkedPhotos = LinkedPhotos(
             current = Photo(
                 id = UUID.randomUUID(),
                 ownerId = principal.user.id,
@@ -56,10 +56,10 @@ internal class PhotoControllerTest : AbstractControllerTest() {
                 no = 3
             )
         )
-        private val photoSimpleDto = photosTimeWindow.current.toSimpleDto()
-        private val photoNavigableDto = photosTimeWindow.toNavigableDto()
+        private val photoSimpleDto = linkedPhotos.current.toSimpleDto()
+        private val photoNavigableDto = linkedPhotos.toNavigableDto()
         private val method = HttpMethod.GET
-        private val uri = "$PhotoApiEndpoint/${photosTimeWindow.current.id}"
+        private val uri = "$PhotoApiEndpoint/${linkedPhotos.current.id}"
 
         @Test
         fun `should return 401 if user is anonymous`() {
@@ -73,7 +73,7 @@ internal class PhotoControllerTest : AbstractControllerTest() {
 
         @Test
         fun `should return 403 if user does not have permission`() = authenticated {
-            whenever(userPhotoAuthzRepo.fetch(principal.user.id, photosTimeWindow.current.id)).thenReturn(emptySet())
+            whenever(userPhotoAuthzRepo.fetch(principal.user.id, linkedPhotos.current.id)).thenReturn(emptySet())
             callAndExpectDto(
                 method = method,
                 uri = uri,
@@ -81,7 +81,7 @@ internal class PhotoControllerTest : AbstractControllerTest() {
                 status = HttpStatus.FORBIDDEN,
                 respDto = ErrorDto.Forbidden
             )
-            verify(userPhotoAuthzRepo).fetch(principal.user.id, photosTimeWindow.current.id)
+            verify(userPhotoAuthzRepo).fetch(principal.user.id, linkedPhotos.current.id)
         }
 
         @Test
@@ -89,10 +89,10 @@ internal class PhotoControllerTest : AbstractControllerTest() {
             whenever(
                 userPhotoAuthzRepo.fetch(
                     principal.user.id,
-                    photosTimeWindow.current.id
+                    linkedPhotos.current.id
                 )
             ).thenReturn(setOf(Permission.Read))
-            whenever(photoService.getById(photosTimeWindow.current.id)).thenReturn(photosTimeWindow.current)
+            whenever(photoService.getById(linkedPhotos.current.id)).thenReturn(linkedPhotos.current)
             callAndExpectDto(
                 method = method,
                 uri = uri,
@@ -100,15 +100,15 @@ internal class PhotoControllerTest : AbstractControllerTest() {
                 status = HttpStatus.OK,
                 respDto = photoSimpleDto
             )
-            verify(userPhotoAuthzRepo).fetch(principal.user.id, photosTimeWindow.current.id)
-            verify(photoService).getById(photosTimeWindow.current.id)
+            verify(userPhotoAuthzRepo).fetch(principal.user.id, linkedPhotos.current.id)
+            verify(photoService).getById(linkedPhotos.current.id)
         }
 
         @Test
         fun `should return 200 (navigable)`() = authenticated {
-            whenever(userPhotoAuthzRepo.fetch(principal.user.id, photosTimeWindow.current.id))
+            whenever(userPhotoAuthzRepo.fetch(principal.user.id, linkedPhotos.current.id))
                 .thenReturn(setOf(Permission.Read))
-            whenever(photoService.getTimeWindowById(photosTimeWindow.current.id)).thenReturn(photosTimeWindow)
+            whenever(photoService.getLinkedById(linkedPhotos.current.id)).thenReturn(linkedPhotos)
             callAndExpectDto(
                 method = method,
                 uri = uri,
@@ -117,8 +117,8 @@ internal class PhotoControllerTest : AbstractControllerTest() {
                 status = HttpStatus.OK,
                 respDto = photoNavigableDto
             )
-            verify(userPhotoAuthzRepo).fetch(principal.user.id, photosTimeWindow.current.id)
-            verify(photoService).getTimeWindowById(photosTimeWindow.current.id)
+            verify(userPhotoAuthzRepo).fetch(principal.user.id, linkedPhotos.current.id)
+            verify(photoService).getLinkedById(linkedPhotos.current.id)
         }
     }
 

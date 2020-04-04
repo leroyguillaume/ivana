@@ -49,8 +49,8 @@ class PhotoServiceImpl(
 
     override fun getRawFile(photo: Photo) = rawFile(photo.id, photo.uploadDate, photo.type)
 
-    override fun getTimeWindowById(id: UUID) = getById(id).let { photo ->
-        PhotosTimeWindow(
+    override fun getLinkedById(id: UUID) = getById(id).let { photo ->
+        LinkedPhotos(
             current = photo,
             previous = photoRepo.fetchPreviousOf(photo),
             next = photoRepo.fetchNextOf(photo)
