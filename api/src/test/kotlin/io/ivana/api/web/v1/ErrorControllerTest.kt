@@ -18,7 +18,7 @@ import org.springframework.http.MediaType
 internal class ErrorControllerTest : AbstractControllerTest() {
     @Test
     fun `should return 404 if endpoint does not exist (auth by header)`() = authenticated {
-        callAndExpect(
+        callAndExpectDto(
             method = HttpMethod.GET,
             uri = "/",
             reqHeaders = mapOf(HttpHeaders.AUTHORIZATION to listOf("$Bearer $jwt")),
@@ -29,7 +29,7 @@ internal class ErrorControllerTest : AbstractControllerTest() {
 
     @Test
     fun `should return 404 if endpoint does not exist (auth by cookie)`() = authenticated {
-        callAndExpect(
+        callAndExpectDto(
             method = HttpMethod.GET,
             uri = "/",
             reqCookies = listOf(accessTokenCookie()),
@@ -40,7 +40,7 @@ internal class ErrorControllerTest : AbstractControllerTest() {
 
     @Test
     fun `should return 415 if content type is invalid`() {
-        callAndExpect(
+        callAndExpectDto(
             method = HttpMethod.POST,
             uri = LoginEndpoint,
             contentType = MediaType.APPLICATION_PDF,
@@ -53,7 +53,7 @@ internal class ErrorControllerTest : AbstractControllerTest() {
     @Test
     fun `should return 401 if bad jwt (header)`() {
         whenever(authService.principalFromJwt(jwt)).thenAnswer { throw BadJwtException("") }
-        callAndExpect(
+        callAndExpectDto(
             method = HttpMethod.GET,
             uri = "/",
             reqHeaders = mapOf(HttpHeaders.AUTHORIZATION to listOf("$Bearer $jwt")),
@@ -66,7 +66,7 @@ internal class ErrorControllerTest : AbstractControllerTest() {
     @Test
     fun `should return 401 if bad jwt (cookie)`() {
         whenever(authService.principalFromJwt(jwt)).thenAnswer { throw BadJwtException("") }
-        callAndExpect(
+        callAndExpectDto(
             method = HttpMethod.GET,
             uri = "/",
             reqCookies = listOf(accessTokenCookie()),
@@ -78,7 +78,7 @@ internal class ErrorControllerTest : AbstractControllerTest() {
 
     @Test
     fun `should return 400 if content is empty`() {
-        callAndExpect(
+        callAndExpectDto(
             method = HttpMethod.POST,
             uri = LoginEndpoint,
             reqContent = "",
@@ -89,7 +89,7 @@ internal class ErrorControllerTest : AbstractControllerTest() {
 
     @Test
     fun `should return 400 if content is malformed`() {
-        callAndExpect(
+        callAndExpectDto(
             method = HttpMethod.POST,
             uri = LoginEndpoint,
             reqContent = "{",
@@ -100,7 +100,7 @@ internal class ErrorControllerTest : AbstractControllerTest() {
 
     @Test
     fun `should return 400 if missing parameter`() {
-        callAndExpect(
+        callAndExpectDto(
             method = HttpMethod.POST,
             uri = LoginEndpoint,
             reqContent = "{}",

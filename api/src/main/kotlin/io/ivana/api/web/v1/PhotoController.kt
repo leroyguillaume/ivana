@@ -9,13 +9,16 @@ import io.ivana.core.PhotoService
 import io.ivana.dto.ErrorDto
 import io.ivana.dto.PhotoUploadResultsDto
 import org.slf4j.LoggerFactory
+import org.springframework.core.io.FileSystemResource
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
+import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.Authentication
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
+import java.io.File
 import java.net.InetAddress
 import java.net.URI
 import java.util.*
@@ -48,6 +51,23 @@ class PhotoController(
         photoService.getById(id).toDto()
     }
 
+    @GetMapping("/{id:$UuidRegex}$CompressedPhotoEndpoint")
+    @PreAuthorize("hasPermission(#id, '$UserPhotoTargetType', 'read')")
+    @Suppress("MVCPathVariableInspection", "RegExpUnexpectedAnchor")
+    fun getCompressedFile(@PathVariable id: UUID) = photoService.getById(id).let { photo ->
+        val file = photoService.getCompressedFile(photo)
+        photoFileResponseEntity(file, photo.type)
+    }
+
+    @GetMapping("/{id:$UuidRegex}$RawPhotoEndpoint")
+    @PreAuthorize("hasPermission(#id, '$UserPhotoTargetType', 'read')")
+    @ResponseStatus(HttpStatus.OK)
+    @Suppress("MVCPathVariableInspection", "RegExpUnexpectedAnchor")
+    fun getRawFile(@PathVariable id: UUID) = photoService.getById(id).let { photo ->
+        val file = photoService.getRawFile(photo)
+        photoFileResponseEntity(file, photo.type)
+    }
+
     @Transactional
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -57,6 +77,15 @@ class PhotoController(
         val principal = (auth as CustomAuthentication).principal
         val source = EventSource.User(principal.user.id, InetAddress.getByName(req.remoteAddr))
         return PhotoUploadResultsDto(files.map { uploadPhoto(it, source) })
+    }
+
+    private fun photoFileResponseEntity(file: File, type: Photo.Type): ResponseEntity<FileSystemResource> {
+        val contentType = MediaTypeToPhotoType.entries
+            .find { it.value == type }!!
+            .key
+        return ResponseEntity.status(HttpStatus.OK)
+            .contentType(MediaType.parseMediaType(contentType))
+            .body(FileSystemResource(file))
     }
 
     private fun uploadPhoto(file: MultipartFile, source: EventSource.User): PhotoUploadResultsDto.Result {

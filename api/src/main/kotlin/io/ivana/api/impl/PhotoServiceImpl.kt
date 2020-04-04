@@ -33,6 +33,10 @@ class PhotoServiceImpl(
     override fun getById(id: UUID) = photoRepo.fetchById(id)
         ?: throw EntityNotFoundException("Photo $id does not exist")
 
+    override fun getCompressedFile(photo: Photo) = compressedFile(photo.id, photo.uploadDate, photo.type)
+
+    override fun getRawFile(photo: Photo) = rawFile(photo.id, photo.uploadDate, photo.type)
+
     override fun getTimeWindowById(id: UUID) = getById(id).let { photo ->
         PhotosTimeWindow(
             current = photo,

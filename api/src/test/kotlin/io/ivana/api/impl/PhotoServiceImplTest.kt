@@ -74,6 +74,44 @@ internal class PhotoServiceImplTest {
     }
 
     @Nested
+    inner class getCompressedFile {
+        private val photo = Photo(
+            id = UUID.randomUUID(),
+            ownerId = UUID.randomUUID(),
+            uploadDate = OffsetDateTime.now(),
+            type = Photo.Type.Jpg,
+            hash = "hash",
+            no = 1
+        )
+        private val expectedFile = compressedFile(photo.id, photo.uploadDate, "jpg")
+
+        @Test
+        fun `should return file`() {
+            val file = service.getCompressedFile(photo)
+            file shouldBe expectedFile
+        }
+    }
+
+    @Nested
+    inner class getRawFile {
+        private val photo = Photo(
+            id = UUID.randomUUID(),
+            ownerId = UUID.randomUUID(),
+            uploadDate = OffsetDateTime.now(),
+            type = Photo.Type.Jpg,
+            hash = "hash",
+            no = 1
+        )
+        private val expectedFile = rawFile(photo.id, photo.uploadDate, "jpg")
+
+        @Test
+        fun `should return file`() {
+            val file = service.getRawFile(photo)
+            file shouldBe expectedFile
+        }
+    }
+
+    @Nested
     inner class getTimeWindowById {
         private val defaultTimeWindow = PhotosTimeWindow(
             current = Photo(
@@ -221,28 +259,28 @@ internal class PhotoServiceImplTest {
             verify { photoRepo.fetchById(pngEvent.subjectId) }
             confirmVerified(photoEventRepo, photoRepo)
         }
-
-        private fun compressedFile(id: UUID, uploadDate: OffsetDateTime, extension: String) = photoFile(
-            rootDir = Props.dataDir.resolve(PhotoServiceImpl.CompressedDirname),
-            id = id,
-            uploadDate = uploadDate,
-            extension = extension
-        )
-
-        private fun photoFile(rootDir: File, id: UUID, uploadDate: OffsetDateTime, extension: String) =
-            uploadDate.let { date ->
-                rootDir
-                    .resolve(date.year.toString())
-                    .resolve(date.monthValue.toString())
-                    .resolve(date.dayOfMonth.toString())
-                    .resolve("$id.$extension")
-            }
-
-        private fun rawFile(id: UUID, uploadDate: OffsetDateTime, extension: String) = photoFile(
-            rootDir = Props.dataDir.resolve(PhotoServiceImpl.RawDirname),
-            id = id,
-            uploadDate = uploadDate,
-            extension = extension
-        )
     }
+
+    private fun compressedFile(id: UUID, uploadDate: OffsetDateTime, extension: String) = photoFile(
+        rootDir = Props.dataDir.resolve(PhotoServiceImpl.CompressedDirname),
+        id = id,
+        uploadDate = uploadDate,
+        extension = extension
+    )
+
+    private fun photoFile(rootDir: File, id: UUID, uploadDate: OffsetDateTime, extension: String) =
+        uploadDate.let { date ->
+            rootDir
+                .resolve(date.year.toString())
+                .resolve(date.monthValue.toString())
+                .resolve(date.dayOfMonth.toString())
+                .resolve("$id.$extension")
+        }
+
+    private fun rawFile(id: UUID, uploadDate: OffsetDateTime, extension: String) = photoFile(
+        rootDir = Props.dataDir.resolve(PhotoServiceImpl.RawDirname),
+        id = id,
+        uploadDate = uploadDate,
+        extension = extension
+    )
 }

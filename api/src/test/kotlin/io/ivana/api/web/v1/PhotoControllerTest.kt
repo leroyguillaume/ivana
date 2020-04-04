@@ -8,7 +8,6 @@ import io.ivana.api.security.Permission
 import io.ivana.core.EventSource
 import io.ivana.core.Photo
 import io.ivana.dto.ErrorDto
-import io.ivana.dto.PhotoDto
 import io.ivana.dto.PhotoUploadResultsDto
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -38,12 +37,14 @@ internal class PhotoControllerTest : AbstractControllerTest() {
             no = 1
         )
         private val photoDto = photo.toDto()
+        private val method = HttpMethod.GET
+        private val uri = "$PhotoApiEndpoint/${photo.id}"
 
         @Test
         fun `should return 401 if user is anonymous`() {
-            callAndExpect(
-                method = HttpMethod.GET,
-                uri = "$PhotoApiEndpoint/${photo.id}",
+            callAndExpectDto(
+                method = method,
+                uri = uri,
                 status = HttpStatus.UNAUTHORIZED,
                 respDto = ErrorDto.Unauthorized
             )
@@ -52,9 +53,9 @@ internal class PhotoControllerTest : AbstractControllerTest() {
         @Test
         fun `should return 403 if user does not have permission`() = authenticated {
             whenever(userPhotoAuthzRepo.fetch(principal.user.id, photo.id)).thenReturn(emptySet())
-            callAndExpect(
-                method = HttpMethod.GET,
-                uri = "$PhotoApiEndpoint/${photo.id}",
+            callAndExpectDto(
+                method = method,
+                uri = uri,
                 reqCookies = listOf(accessTokenCookie()),
                 status = HttpStatus.FORBIDDEN,
                 respDto = ErrorDto.Forbidden
@@ -64,9 +65,9 @@ internal class PhotoControllerTest : AbstractControllerTest() {
 
         @Test
         fun `should return 400 if navigable is not boolean`() = authenticated {
-            callAndExpect(
-                method = HttpMethod.GET,
-                uri = "$PhotoApiEndpoint/${photo.id}",
+            callAndExpectDto(
+                method = method,
+                uri = uri,
                 params = mapOf(NavigableParamName to listOf("a")),
                 reqCookies = listOf(accessTokenCookie()),
                 status = HttpStatus.BAD_REQUEST,
@@ -81,15 +82,183 @@ internal class PhotoControllerTest : AbstractControllerTest() {
         fun `should return 200`() = authenticated {
             whenever(userPhotoAuthzRepo.fetch(principal.user.id, photo.id)).thenReturn(setOf(Permission.Read))
             whenever(photoService.getById(photo.id)).thenReturn(photo)
-            callAndExpect(
-                method = HttpMethod.GET,
-                uri = "$PhotoApiEndpoint/${photo.id}",
+            callAndExpectDto(
+                method = method,
+                uri = uri,
                 reqCookies = listOf(accessTokenCookie()),
                 status = HttpStatus.OK,
                 respDto = photoDto
             )
             verify(userPhotoAuthzRepo).fetch(principal.user.id, photo.id)
             verify(photoService).getById(photo.id)
+        }
+    }
+
+    @Nested
+    inner class getCompressedFile {
+        private val jpgPhoto = Photo(
+            id = UUID.randomUUID(),
+            ownerId = principal.user.id,
+            uploadDate = OffsetDateTime.now(),
+            type = Photo.Type.Jpg,
+            hash = "hash1",
+            no = 1
+        )
+        private val jpgFile = File(javaClass.getResource("/data/photo.jpg").file)
+        private val pngPhoto = Photo(
+            id = UUID.randomUUID(),
+            ownerId = principal.user.id,
+            uploadDate = OffsetDateTime.now(),
+            type = Photo.Type.Png,
+            hash = "hash2",
+            no = 2
+        )
+        private val pngFile = File(javaClass.getResource("/data/photo.png").file)
+        private val method = HttpMethod.GET
+        private val jpgUri = "$PhotoApiEndpoint/${jpgPhoto.id}$CompressedPhotoEndpoint"
+        private val pngUri = "$PhotoApiEndpoint/${pngPhoto.id}$CompressedPhotoEndpoint"
+
+        @Test
+        fun `should return 401 if user is anonymous`() {
+            callAndExpectDto(
+                method = method,
+                uri = jpgUri,
+                status = HttpStatus.UNAUTHORIZED,
+                respDto = ErrorDto.Unauthorized
+            )
+        }
+
+        @Test
+        fun `should return 403 if user does not have permission`() = authenticated {
+            whenever(userPhotoAuthzRepo.fetch(principal.user.id, jpgPhoto.id)).thenReturn(emptySet())
+            callAndExpectDto(
+                method = method,
+                uri = jpgUri,
+                reqCookies = listOf(accessTokenCookie()),
+                status = HttpStatus.FORBIDDEN,
+                respDto = ErrorDto.Forbidden
+            )
+            verify(userPhotoAuthzRepo).fetch(principal.user.id, jpgPhoto.id)
+        }
+
+        @Test
+        fun `should return 200 (jpg)`() = authenticated {
+            whenever(userPhotoAuthzRepo.fetch(principal.user.id, jpgPhoto.id)).thenReturn(setOf(Permission.Read))
+            whenever(photoService.getById(jpgPhoto.id)).thenReturn(jpgPhoto)
+            whenever(photoService.getCompressedFile(jpgPhoto)).thenReturn(jpgFile)
+            callAndExpectFile(
+                method = method,
+                uri = jpgUri,
+                reqCookies = listOf(accessTokenCookie()),
+                status = HttpStatus.OK,
+                expectedContentType = MediaType.IMAGE_JPEG,
+                expectedFile = jpgFile
+            )
+            verify(userPhotoAuthzRepo).fetch(principal.user.id, jpgPhoto.id)
+            verify(photoService).getById(jpgPhoto.id)
+            verify(photoService).getCompressedFile(jpgPhoto)
+        }
+
+        @Test
+        fun `should return 200 (png)`() = authenticated {
+            whenever(userPhotoAuthzRepo.fetch(principal.user.id, pngPhoto.id)).thenReturn(setOf(Permission.Read))
+            whenever(photoService.getById(pngPhoto.id)).thenReturn(pngPhoto)
+            whenever(photoService.getCompressedFile(pngPhoto)).thenReturn(pngFile)
+            callAndExpectFile(
+                method = method,
+                uri = pngUri,
+                reqCookies = listOf(accessTokenCookie()),
+                status = HttpStatus.OK,
+                expectedContentType = MediaType.IMAGE_PNG,
+                expectedFile = pngFile
+            )
+            verify(userPhotoAuthzRepo).fetch(principal.user.id, pngPhoto.id)
+            verify(photoService).getById(pngPhoto.id)
+            verify(photoService).getCompressedFile(pngPhoto)
+        }
+    }
+
+    @Nested
+    inner class getRawFile {
+        private val jpgPhoto = Photo(
+            id = UUID.randomUUID(),
+            ownerId = principal.user.id,
+            uploadDate = OffsetDateTime.now(),
+            type = Photo.Type.Jpg,
+            hash = "hash1",
+            no = 1
+        )
+        private val jpgFile = File(javaClass.getResource("/data/photo.jpg").file)
+        private val pngPhoto = Photo(
+            id = UUID.randomUUID(),
+            ownerId = principal.user.id,
+            uploadDate = OffsetDateTime.now(),
+            type = Photo.Type.Png,
+            hash = "hash2",
+            no = 2
+        )
+        private val pngFile = File(javaClass.getResource("/data/photo.png").file)
+        private val method = HttpMethod.GET
+        private val jpgUri = "$PhotoApiEndpoint/${jpgPhoto.id}$RawPhotoEndpoint"
+        private val pngUri = "$PhotoApiEndpoint/${pngPhoto.id}$RawPhotoEndpoint"
+
+        @Test
+        fun `should return 401 if user is anonymous`() {
+            callAndExpectDto(
+                method = method,
+                uri = jpgUri,
+                status = HttpStatus.UNAUTHORIZED,
+                respDto = ErrorDto.Unauthorized
+            )
+        }
+
+        @Test
+        fun `should return 403 if user does not have permission`() = authenticated {
+            whenever(userPhotoAuthzRepo.fetch(principal.user.id, jpgPhoto.id)).thenReturn(emptySet())
+            callAndExpectDto(
+                method = method,
+                uri = jpgUri,
+                reqCookies = listOf(accessTokenCookie()),
+                status = HttpStatus.FORBIDDEN,
+                respDto = ErrorDto.Forbidden
+            )
+            verify(userPhotoAuthzRepo).fetch(principal.user.id, jpgPhoto.id)
+        }
+
+        @Test
+        fun `should return 200 (jpg)`() = authenticated {
+            whenever(userPhotoAuthzRepo.fetch(principal.user.id, jpgPhoto.id)).thenReturn(setOf(Permission.Read))
+            whenever(photoService.getById(jpgPhoto.id)).thenReturn(jpgPhoto)
+            whenever(photoService.getRawFile(jpgPhoto)).thenReturn(jpgFile)
+            callAndExpectFile(
+                method = method,
+                uri = jpgUri,
+                reqCookies = listOf(accessTokenCookie()),
+                status = HttpStatus.OK,
+                expectedContentType = MediaType.IMAGE_JPEG,
+                expectedFile = jpgFile
+            )
+            verify(userPhotoAuthzRepo).fetch(principal.user.id, jpgPhoto.id)
+            verify(photoService).getById(jpgPhoto.id)
+            verify(photoService).getRawFile(jpgPhoto)
+        }
+
+        @Test
+        fun `should return 200 (png)`() = authenticated {
+            whenever(userPhotoAuthzRepo.fetch(principal.user.id, pngPhoto.id)).thenReturn(setOf(Permission.Read))
+            whenever(photoService.getById(pngPhoto.id)).thenReturn(pngPhoto)
+            whenever(photoService.getRawFile(pngPhoto)).thenReturn(pngFile)
+            callAndExpectFile(
+                method = method,
+                uri = pngUri,
+                reqCookies = listOf(accessTokenCookie()),
+                status = HttpStatus.OK,
+                expectedContentType = MediaType.IMAGE_PNG,
+                expectedFile = pngFile
+            )
+            verify(userPhotoAuthzRepo).fetch(principal.user.id, pngPhoto.id)
+            verify(photoService).getById(pngPhoto.id)
+            verify(photoService).getRawFile(pngPhoto)
         }
     }
 
@@ -118,6 +287,7 @@ internal class PhotoControllerTest : AbstractControllerTest() {
             hash = "hash",
             no = 2
         )
+        private val uri = PhotoApiEndpoint
 
         @Test
         fun `should return 201`() = authenticated {
@@ -131,8 +301,8 @@ internal class PhotoControllerTest : AbstractControllerTest() {
                     else -> throw IllegalStateException("Too many calls")
                 }
             }
-            callAndExpect(
-                uri = PhotoApiEndpoint,
+            multipartCallAndExpectDto(
+                uri = uri,
                 reqCookies = listOf(accessTokenCookie()),
                 files = listOf(
                     // JPG upload
@@ -169,10 +339,4 @@ internal class PhotoControllerTest : AbstractControllerTest() {
             verify(photoService, times(4)).uploadPhoto(any(), any(), eq(source))
         }
     }
-
-    private fun Photo.toDto() = PhotoDto(
-        id = id,
-        rawUri = URI("$PhotoApiEndpoint/$id$RawPhotoEndpoint"),
-        compressedUri = URI("$PhotoApiEndpoint/$id$CompressedPhotoEndpoint")
-    )
 }

@@ -39,7 +39,7 @@ internal class LoginControllerTest : AbstractControllerTest() {
         fun `should return 401 if credentials are invalid`() {
             whenever(authService.authenticate(creds.username, creds.password, ip))
                 .thenAnswer { throw BadCredentialsException("") }
-            callAndExpect(
+            callAndExpectDto(
                 method = HttpMethod.POST,
                 uri = LoginEndpoint,
                 reqContent = mapper.writeValueAsString(creds),
@@ -52,7 +52,7 @@ internal class LoginControllerTest : AbstractControllerTest() {
         @Test
         fun `should return 204 (local)`() {
             whenever(authService.authenticate(creds.username, creds.password, ip)).thenReturn(jwt)
-            callAndExpect(
+            callAndExpectDto(
                 method = HttpMethod.POST,
                 uri = LoginEndpoint,
                 reqContent = mapper.writeValueAsString(creds),
@@ -65,7 +65,7 @@ internal class LoginControllerTest : AbstractControllerTest() {
         @Test
         fun `should return 204 (behind RP)`() {
             whenever(authService.authenticate(creds.username, creds.password, ip)).thenReturn(jwt)
-            callAndExpect(
+            callAndExpectDto(
                 method = HttpMethod.POST,
                 uri = LoginEndpoint,
                 reqHeaders = RpHeaders,
@@ -93,7 +93,7 @@ internal class LoginControllerTest : AbstractControllerTest() {
 
         @Test
         fun `should return 204 (local)`() {
-            callAndExpect(
+            callAndExpectDto(
                 method = HttpMethod.GET,
                 uri = LogoutEndpoint,
                 status = HttpStatus.NO_CONTENT,
@@ -103,7 +103,7 @@ internal class LoginControllerTest : AbstractControllerTest() {
 
         @Test
         fun `should return 204 (behind RP)`() {
-            callAndExpect(
+            callAndExpectDto(
                 method = HttpMethod.GET,
                 uri = LogoutEndpoint,
                 reqHeaders = RpHeaders,

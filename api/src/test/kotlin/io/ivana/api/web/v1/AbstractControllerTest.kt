@@ -27,6 +27,7 @@ import org.springframework.test.web.servlet.result.CookieResultMatchers
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
 import org.springframework.util.LinkedMultiValueMap
+import java.io.File
 import java.util.*
 import javax.servlet.http.Cookie
 
@@ -86,7 +87,7 @@ internal abstract class AbstractControllerTest {
         verify(authService).principalFromJwt(jwt)
     }
 
-    protected fun callAndExpect(
+    protected fun callAndExpectDto(
         method: HttpMethod,
         uri: String,
         status: HttpStatus,
@@ -116,7 +117,36 @@ internal abstract class AbstractControllerTest {
         }
     }
 
-    protected fun callAndExpect(
+    protected fun callAndExpectFile(
+        method: HttpMethod,
+        uri: String,
+        status: HttpStatus,
+        expectedContentType: MediaType,
+        expectedFile: File,
+        reqContent: String? = null,
+        contentType: MediaType = MediaType.APPLICATION_JSON,
+        params: Map<String, List<String>> = mapOf(),
+        reqHeaders: Map<String, List<String>> = mapOf(),
+        reqCookies: List<Cookie> = listOf(),
+        respCookies: List<Cookie> = listOf()
+    ) {
+        val request = request(method, uri)
+            .params(LinkedMultiValueMap(params))
+            .headers(HttpHeaders(LinkedMultiValueMap(reqHeaders)))
+        if (reqContent != null) {
+            request
+                .contentType(contentType)
+                .content(reqContent)
+        }
+        reqCookies.forEach { request.cookie(it) }
+        val result = mvc.perform(request)
+            .andExpect(status().`is`(status.value()))
+            .andExpect(content().contentType(expectedContentType))
+            .andExpect(content().bytes(expectedFile.readBytes()))
+        respCookies.forEach { result.andExpect(cookie().`is`(it)) }
+    }
+
+    protected fun multipartCallAndExpectDto(
         uri: String,
         status: HttpStatus,
         files: List<MockMultipartFile>,
