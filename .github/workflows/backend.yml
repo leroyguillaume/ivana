@@ -21,6 +21,6 @@ jobs:
     steps:
       - uses: actions/checkout@v1
       - name: Buid
-        run: gradle assemble
+        run: gradle assemble -x ivana-webapp:assemble
       - name: Test
         run: gradle clean check -Pdatabase.host=postgres -Pdatabase.port=${{ job.services.postgres.ports[5432] }} -x ivana-webapp:check
