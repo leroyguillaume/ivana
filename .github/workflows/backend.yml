@@ -4,7 +4,7 @@ on: [push]
 
 jobs:
   ci:
-    name: CI
+    name: Backend
     runs-on: ubuntu-latest
     container:
       image: gradle:6.2-jdk11
@@ -23,4 +23,4 @@ jobs:
       - name: Buid
         run: gradle assemble
       - name: Test
-        run: gradle clean check -Pdatabase.host=postgres -Pdatabase.port=${{ job.services.postgres.ports[5432] }}
+        run: gradle clean check -Pdatabase.host=postgres -Pdatabase.port=${{ job.services.postgres.ports[5432] }} -x ivana-webapp:check

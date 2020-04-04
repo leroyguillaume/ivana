@@ -1,0 +1,29 @@
+name: CI
+
+on: [push]
+
+jobs:
+  ci:
+    name: Frontend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 12.16
+      - name: Install dependencies
+        working-directory: ./webapp
+        run: npm install
+      - name: Lint
+        working-directory: ./webapp
+        run: npm run lint
+      - name: Build
+        working-directory: ./webapp
+        run: npm run build -- --prod
+      - name: Test
+        working-directory: ./webapp
+        run: npm test -- --configuration=ci
+# Not working on GitHub CI
+#      - name: E2E
+#        working-directory: ./webapp
+#        run: npm run e2e -- --configuration=ci
