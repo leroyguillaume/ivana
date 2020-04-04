@@ -7,6 +7,7 @@ import com.nhaarman.mockitokotlin2.whenever
 import io.ivana.api.security.AccessTokenCookieName
 import io.ivana.api.security.BadCredentialsException
 import io.ivana.api.security.Jwt
+import io.ivana.api.web.AbstractControllerTest
 import io.ivana.dto.CredentialsDto
 import io.ivana.dto.ErrorDto
 import org.junit.jupiter.api.Nested

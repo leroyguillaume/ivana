@@ -1,4 +1,4 @@
-package io.ivana.api.web.v1
+package io.ivana.api.web
 
 import com.fasterxml.jackson.databind.JsonMappingException
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -20,7 +20,6 @@ import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
 import org.springframework.web.multipart.MultipartException
-import org.springframework.web.servlet.NoHandlerFoundException
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 import javax.validation.ConstraintViolation
@@ -86,13 +85,6 @@ class ErrorController(
             is MissingKotlinParameterException -> ErrorDto.MissingParameter(cause.path.toHumanReadablePath())
             else -> handleException(exception)
         }
-    }
-
-    @ExceptionHandler(NoHandlerFoundException::class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    fun handleNotFound(exception: NoHandlerFoundException): ErrorDto {
-        Logger.debug(exception.message, exception)
-        return ErrorDto.NotFound
     }
 
     @ExceptionHandler(value = [BadCredentialsException::class, BadJwtException::class])

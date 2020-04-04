@@ -4,6 +4,7 @@ build
 
 # Ivana
 api/data
+api/src/main/resources/static
 
 # JetBrains
 .idea

@@ -5,6 +5,7 @@ package io.ivana.api.web.v1
 import com.nhaarman.mockitokotlin2.*
 import io.ivana.api.impl.PhotoAlreadyUploadedException
 import io.ivana.api.security.Permission
+import io.ivana.api.web.AbstractControllerTest
 import io.ivana.core.EventSource
 import io.ivana.core.LinkedPhotos
 import io.ivana.core.Page

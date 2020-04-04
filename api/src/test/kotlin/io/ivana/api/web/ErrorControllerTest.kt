@@ -1,9 +1,12 @@
-package io.ivana.api.web.v1
+package io.ivana.api.web
 
 import com.nhaarman.mockitokotlin2.verify
 import com.nhaarman.mockitokotlin2.whenever
 import io.ivana.api.security.BadJwtException
 import io.ivana.api.security.Bearer
+import io.ivana.api.web.v1.LoginEndpoint
+import io.ivana.api.web.v1.NavigableParamName
+import io.ivana.api.web.v1.PhotoApiEndpoint
 import io.ivana.dto.ErrorDto
 import org.junit.jupiter.api.Test
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
@@ -17,28 +20,6 @@ import java.util.*
 @SpringBootTest
 @AutoConfigureMockMvc
 internal class ErrorControllerTest : AbstractControllerTest() {
-    @Test
-    fun `should return 404 if endpoint does not exist (auth by header)`() = authenticated {
-        callAndExpectDto(
-            method = HttpMethod.GET,
-            uri = "/",
-            reqHeaders = mapOf(HttpHeaders.AUTHORIZATION to listOf("$Bearer $jwt")),
-            status = HttpStatus.NOT_FOUND,
-            respDto = ErrorDto.NotFound
-        )
-    }
-
-    @Test
-    fun `should return 404 if endpoint does not exist (auth by cookie)`() = authenticated {
-        callAndExpectDto(
-            method = HttpMethod.GET,
-            uri = "/",
-            reqCookies = listOf(accessTokenCookie()),
-            status = HttpStatus.NOT_FOUND,
-            respDto = ErrorDto.NotFound
-        )
-    }
-
     @Test
     fun `should return 415 if content type is invalid`() {
         callAndExpectDto(
@@ -56,7 +37,7 @@ internal class ErrorControllerTest : AbstractControllerTest() {
         whenever(authService.principalFromJwt(jwt)).thenAnswer { throw BadJwtException("") }
         callAndExpectDto(
             method = HttpMethod.GET,
-            uri = "/",
+            uri = PhotoApiEndpoint,
             reqHeaders = mapOf(HttpHeaders.AUTHORIZATION to listOf("$Bearer $jwt")),
             status = HttpStatus.UNAUTHORIZED,
             respDto = ErrorDto.Unauthorized
@@ -69,7 +50,7 @@ internal class ErrorControllerTest : AbstractControllerTest() {
         whenever(authService.principalFromJwt(jwt)).thenAnswer { throw BadJwtException("") }
         callAndExpectDto(
             method = HttpMethod.GET,
-            uri = "/",
+            uri = PhotoApiEndpoint,
             reqCookies = listOf(accessTokenCookie()),
             status = HttpStatus.UNAUTHORIZED,
             respDto = ErrorDto.Unauthorized

@@ -83,6 +83,10 @@ dependencies {
 }
 
 tasks {
+    bootJar {
+        dependsOn("copyStaticFiles")
+    }
+
     bootRun {
         jvmArgs = listOf("-Djava.net.preferIPv4Stack=true")
     }
@@ -116,6 +120,13 @@ tasks {
             )
         )
         environment("PGPASSWORD", dbProps.password)
+    }
+
+    create<Copy>("copyStaticFiles") {
+        dependsOn(":ivana-webapp:assemble")
+
+        from(project(":ivana-webapp").buildDir)
+        into("src/main/resources/static")
     }
 }
 

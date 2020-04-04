@@ -1,5 +1,6 @@
 package io.ivana.api.web.v1
 
+import io.ivana.api.web.RootApiEndpoint
 import io.ivana.core.Entity
 import io.ivana.core.LinkedPhotos
 import io.ivana.core.Page
@@ -10,11 +11,11 @@ import io.ivana.dto.PhotoDto
 import java.net.URI
 import java.util.*
 
-const val EndpointRoot = "/v1"
+const val RootEndpoint = "$RootApiEndpoint/v1"
 
-const val LoginEndpoint = "$EndpointRoot/login"
-const val LogoutEndpoint = "$EndpointRoot/logout"
-const val PhotoApiEndpoint = "$EndpointRoot/photo"
+const val LoginEndpoint = "$RootEndpoint/login"
+const val LogoutEndpoint = "$RootEndpoint/logout"
+const val PhotoApiEndpoint = "$RootEndpoint/photo"
 const val RawPhotoEndpoint = "/raw"
 const val CompressedPhotoEndpoint = "/compressed"
 

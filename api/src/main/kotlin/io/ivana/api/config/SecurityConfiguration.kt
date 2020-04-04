@@ -5,6 +5,7 @@ import io.ivana.api.security.AuthenticationService
 import io.ivana.api.security.CustomAccessDeniedHandler
 import io.ivana.api.security.CustomAuthenticationEntryPoint
 import io.ivana.api.security.JwtAuthenticationFilter
+import io.ivana.api.web.RootApiEndpoint
 import io.ivana.api.web.v1.LoginEndpoint
 import io.ivana.api.web.v1.LogoutEndpoint
 import org.springframework.context.annotation.Bean
@@ -38,7 +39,8 @@ class SecurityConfiguration(
             .authorizeRequests()
             .antMatchers(HttpMethod.POST, LoginEndpoint).permitAll()
             .antMatchers(HttpMethod.GET, LogoutEndpoint).permitAll()
-            .anyRequest().authenticated()
+            .antMatchers("$RootApiEndpoint/**").authenticated()
+            .anyRequest().permitAll()
             .and()
             .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
     }

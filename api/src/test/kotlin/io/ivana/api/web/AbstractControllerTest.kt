@@ -1,4 +1,4 @@
-package io.ivana.api.web.v1
+package io.ivana.api.web
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.nhaarman.mockitokotlin2.reset
@@ -33,7 +33,7 @@ import java.util.*
 import javax.servlet.http.Cookie
 
 @Suppress("SpringJavaAutowiredMembersInspection")
-internal abstract class AbstractControllerTest {
+abstract class AbstractControllerTest {
     protected companion object {
         const val Host = "localhost"
         const val ForwardedHost = "ivana.io"
