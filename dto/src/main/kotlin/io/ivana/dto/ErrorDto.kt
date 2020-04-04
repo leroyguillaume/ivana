@@ -14,6 +14,7 @@ private const val MissingParameterCodeValue = "missing_parameter"
 private const val NotFoundCodeValue = "not_found"
 private const val UnauthorizedCodeValue = "unauthorized"
 private const val UnsupportedMediaTypeCodeValue = "unsupported_media_type"
+private const val ValidationErrorCodeValue = "validation_error"
 
 @JsonTypeInfo(
     include = JsonTypeInfo.As.EXISTING_PROPERTY,
@@ -29,7 +30,8 @@ private const val UnsupportedMediaTypeCodeValue = "unsupported_media_type"
     JsonSubTypes.Type(value = ErrorDto.MissingParameter::class, name = MissingParameterCodeValue),
     JsonSubTypes.Type(value = ErrorDto.NotFound::class, name = NotFoundCodeValue),
     JsonSubTypes.Type(value = ErrorDto.Unauthorized::class, name = UnauthorizedCodeValue),
-    JsonSubTypes.Type(value = ErrorDto.UnsupportedMediaType::class, name = UnsupportedMediaTypeCodeValue)
+    JsonSubTypes.Type(value = ErrorDto.UnsupportedMediaType::class, name = UnsupportedMediaTypeCodeValue),
+    JsonSubTypes.Type(value = ErrorDto.ValidationError::class, name = ValidationErrorCodeValue)
 )
 sealed class ErrorDto {
     enum class Code {
@@ -58,7 +60,10 @@ sealed class ErrorDto {
         Unauthorized,
 
         @JsonProperty(UnsupportedMediaTypeCodeValue)
-        UnsupportedMediaType
+        UnsupportedMediaType,
+
+        @JsonProperty(ValidationErrorCodeValue)
+        ValidationError
     }
 
     data class DuplicateResource(
@@ -114,6 +119,12 @@ sealed class ErrorDto {
         val supportedMediaTypes: Set<String>
     ) : ErrorDto() {
         override val code = Code.UnsupportedMediaType
+    }
+
+    data class ValidationError(
+        val errors: List<InvalidParameter>
+    ) : ErrorDto() {
+        override val code = Code.ValidationError
     }
 
     abstract val code: Code

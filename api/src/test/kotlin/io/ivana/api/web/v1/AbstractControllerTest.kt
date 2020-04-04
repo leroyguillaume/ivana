@@ -11,6 +11,7 @@ import io.ivana.api.security.UserPrincipal
 import io.ivana.core.PhotoService
 import io.ivana.core.Role
 import io.ivana.core.User
+import io.ivana.dto.ErrorDto
 import org.junit.jupiter.api.BeforeEach
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.mock.mockito.MockBean
@@ -146,6 +147,11 @@ internal abstract class AbstractControllerTest {
         respCookies.forEach { result.andExpect(cookie().`is`(it)) }
     }
 
+    protected fun minErrorDto(parameter: String, min: Int) = ErrorDto.InvalidParameter(
+        parameter = parameter,
+        reason = "must be greater than or equal to $min"
+    )
+
     protected fun multipartCallAndExpectDto(
         uri: String,
         status: HttpStatus,
@@ -166,6 +172,11 @@ internal abstract class AbstractControllerTest {
             result.andExpect(content().json(mapper.writeValueAsString(respDto)))
         }
     }
+
+    protected fun typeMismatchErrorDto(parameter: String, type: String) = ErrorDto.InvalidParameter(
+        parameter = parameter,
+        reason = "must be $type"
+    )
 
     private fun CookieResultMatchers.`is`(cookie: Cookie) = ResultMatcher { mvc ->
         exists(cookie.name).match(mvc)

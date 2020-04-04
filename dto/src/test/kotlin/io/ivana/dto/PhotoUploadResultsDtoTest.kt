@@ -8,7 +8,7 @@ internal class PhotoUploadResultsDtoTest : JsonTest(
     expectedValue = PhotoUploadResultsDto(
         listOf(
             PhotoUploadResultsDto.Result.Success(
-                PhotoDto(
+                PhotoDto.Simple(
                     id = UUID.fromString("61f11547-a340-441c-bce7-551234d5d361"),
                     rawUri = URI("/v1/photo/61f11547-a340-441c-bce7-551234d5d361/raw"),
                     compressedUri = URI("/v1/photo/61f11547-a340-441c-bce7-551234d5d361/compressed")

@@ -29,7 +29,7 @@ data class PhotoUploadResultsDto(
         }
 
         data class Success(
-            val photo: PhotoDto
+            val photo: PhotoDto.Simple
         ) : Result() {
             override val type = Type.Success
         }

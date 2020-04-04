@@ -6,7 +6,9 @@ import com.nhaarman.mockitokotlin2.*
 import io.ivana.api.impl.PhotoAlreadyUploadedException
 import io.ivana.api.security.Permission
 import io.ivana.core.EventSource
+import io.ivana.core.Page
 import io.ivana.core.Photo
+import io.ivana.core.PhotosTimeWindow
 import io.ivana.dto.ErrorDto
 import io.ivana.dto.PhotoUploadResultsDto
 import org.junit.jupiter.api.Nested
@@ -28,17 +30,36 @@ import java.util.*
 internal class PhotoControllerTest : AbstractControllerTest() {
     @Nested
     inner class get {
-        private val photo = Photo(
-            id = UUID.randomUUID(),
-            ownerId = principal.user.id,
-            uploadDate = OffsetDateTime.now(),
-            type = Photo.Type.Jpg,
-            hash = "hash",
-            no = 1
+        private val photosTimeWindow = PhotosTimeWindow(
+            current = Photo(
+                id = UUID.randomUUID(),
+                ownerId = principal.user.id,
+                uploadDate = OffsetDateTime.now(),
+                type = Photo.Type.Jpg,
+                hash = "hash1",
+                no = 1
+            ),
+            previous = Photo(
+                id = UUID.randomUUID(),
+                ownerId = principal.user.id,
+                uploadDate = OffsetDateTime.now(),
+                type = Photo.Type.Jpg,
+                hash = "hash2",
+                no = 2
+            ),
+            next = Photo(
+                id = UUID.randomUUID(),
+                ownerId = principal.user.id,
+                uploadDate = OffsetDateTime.now(),
+                type = Photo.Type.Jpg,
+                hash = "hash3",
+                no = 3
+            )
         )
-        private val photoDto = photo.toDto()
+        private val photoSimpleDto = photosTimeWindow.current.toSimpleDto()
+        private val photoNavigableDto = photosTimeWindow.toNavigableDto()
         private val method = HttpMethod.GET
-        private val uri = "$PhotoApiEndpoint/${photo.id}"
+        private val uri = "$PhotoApiEndpoint/${photosTimeWindow.current.id}"
 
         @Test
         fun `should return 401 if user is anonymous`() {
@@ -52,7 +73,7 @@ internal class PhotoControllerTest : AbstractControllerTest() {
 
         @Test
         fun `should return 403 if user does not have permission`() = authenticated {
-            whenever(userPhotoAuthzRepo.fetch(principal.user.id, photo.id)).thenReturn(emptySet())
+            whenever(userPhotoAuthzRepo.fetch(principal.user.id, photosTimeWindow.current.id)).thenReturn(emptySet())
             callAndExpectDto(
                 method = method,
                 uri = uri,
@@ -60,37 +81,120 @@ internal class PhotoControllerTest : AbstractControllerTest() {
                 status = HttpStatus.FORBIDDEN,
                 respDto = ErrorDto.Forbidden
             )
-            verify(userPhotoAuthzRepo).fetch(principal.user.id, photo.id)
+            verify(userPhotoAuthzRepo).fetch(principal.user.id, photosTimeWindow.current.id)
         }
 
         @Test
-        fun `should return 400 if navigable is not boolean`() = authenticated {
+        fun `should return 200 (simple)`() = authenticated {
+            whenever(
+                userPhotoAuthzRepo.fetch(
+                    principal.user.id,
+                    photosTimeWindow.current.id
+                )
+            ).thenReturn(setOf(Permission.Read))
+            whenever(photoService.getById(photosTimeWindow.current.id)).thenReturn(photosTimeWindow.current)
             callAndExpectDto(
                 method = method,
                 uri = uri,
-                params = mapOf(NavigableParamName to listOf("a")),
+                reqCookies = listOf(accessTokenCookie()),
+                status = HttpStatus.OK,
+                respDto = photoSimpleDto
+            )
+            verify(userPhotoAuthzRepo).fetch(principal.user.id, photosTimeWindow.current.id)
+            verify(photoService).getById(photosTimeWindow.current.id)
+        }
+
+        @Test
+        fun `should return 200 (navigable)`() = authenticated {
+            whenever(userPhotoAuthzRepo.fetch(principal.user.id, photosTimeWindow.current.id))
+                .thenReturn(setOf(Permission.Read))
+            whenever(photoService.getTimeWindowById(photosTimeWindow.current.id)).thenReturn(photosTimeWindow)
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                params = mapOf(NavigableParamName to listOf("true")),
+                reqCookies = listOf(accessTokenCookie()),
+                status = HttpStatus.OK,
+                respDto = photoNavigableDto
+            )
+            verify(userPhotoAuthzRepo).fetch(principal.user.id, photosTimeWindow.current.id)
+            verify(photoService).getTimeWindowById(photosTimeWindow.current.id)
+        }
+    }
+
+    @Nested
+    inner class getAll {
+        private val pageNo = 2
+        private val pageSize = 3
+        private val page = Page(
+            content = listOf(
+                Photo(
+                    id = UUID.randomUUID(),
+                    ownerId = principal.user.id,
+                    uploadDate = OffsetDateTime.now(),
+                    type = Photo.Type.Jpg,
+                    hash = "hash1",
+                    no = 1
+                ),
+                Photo(
+                    id = UUID.randomUUID(),
+                    ownerId = principal.user.id,
+                    uploadDate = OffsetDateTime.now(),
+                    type = Photo.Type.Jpg,
+                    hash = "hash2",
+                    no = 2
+                )
+            ),
+            no = pageNo,
+            totalItems = 2,
+            totalPages = 1
+        )
+        private val pageDto = page.toDto { it.toSimpleDto() }
+        private val method = HttpMethod.GET
+        private val uri = PhotoApiEndpoint
+
+        @Test
+        fun `should return 401 if user is anonymous`() {
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                status = HttpStatus.UNAUTHORIZED,
+                respDto = ErrorDto.Unauthorized
+            )
+        }
+
+        @Test
+        fun `should return 400 if parameters are lower than 1`() = authenticated {
+            callAndExpectDto(
+                method = method,
+                params = mapOf(
+                    PageParamName to listOf("-1"),
+                    SizeParamName to listOf("-1")
+                ),
+                uri = uri,
                 reqCookies = listOf(accessTokenCookie()),
                 status = HttpStatus.BAD_REQUEST,
-                respDto = ErrorDto.InvalidParameter(
-                    parameter = NavigableParamName,
-                    reason = "must be boolean"
+                respDto = ErrorDto.ValidationError(
+                    errors = listOf(minErrorDto(PageParamName, 1), minErrorDto(SizeParamName, 1))
                 )
             )
         }
 
         @Test
         fun `should return 200`() = authenticated {
-            whenever(userPhotoAuthzRepo.fetch(principal.user.id, photo.id)).thenReturn(setOf(Permission.Read))
-            whenever(photoService.getById(photo.id)).thenReturn(photo)
+            whenever(photoService.getAll(principal.user.id, pageNo, pageSize)).thenReturn(page)
             callAndExpectDto(
                 method = method,
+                params = mapOf(
+                    PageParamName to listOf(pageNo.toString()),
+                    SizeParamName to listOf(pageSize.toString())
+                ),
                 uri = uri,
                 reqCookies = listOf(accessTokenCookie()),
                 status = HttpStatus.OK,
-                respDto = photoDto
+                respDto = pageDto
             )
-            verify(userPhotoAuthzRepo).fetch(principal.user.id, photo.id)
-            verify(photoService).getById(photo.id)
+            verify(photoService).getAll(principal.user.id, pageNo, pageSize)
         }
     }
 
@@ -321,8 +425,8 @@ internal class PhotoControllerTest : AbstractControllerTest() {
                 status = HttpStatus.CREATED,
                 respDto = PhotoUploadResultsDto(
                     listOf(
-                        PhotoUploadResultsDto.Result.Success(jpgPhoto.toDto()),
-                        PhotoUploadResultsDto.Result.Success(pngPhoto.toDto()),
+                        PhotoUploadResultsDto.Result.Success(jpgPhoto.toSimpleDto()),
+                        PhotoUploadResultsDto.Result.Success(pngPhoto.toSimpleDto()),
                         PhotoUploadResultsDto.Result.Failure(
                             ErrorDto.UnsupportedMediaType(PhotoController.MediaTypeToPhotoType.keys)
                         ),

@@ -69,4 +69,16 @@ internal class ErrorDtoTest {
         expectedValue = ErrorDto.UnsupportedMediaType(setOf("application/json")),
         deserializeAs = typeOf<ErrorDto>()
     )
+
+    @Nested
+    inner class ValidationError : JsonTest(
+        filename = "error/validation-error.json",
+        expectedValue = ErrorDto.ValidationError(
+            listOf(
+                ErrorDto.InvalidParameter("foo", "must not be null"),
+                ErrorDto.InvalidParameter("bar", "must be greater than 1")
+            )
+        ),
+        deserializeAs = typeOf<ErrorDto>()
+    )
 }

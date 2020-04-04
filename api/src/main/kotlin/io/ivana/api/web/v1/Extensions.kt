@@ -1,8 +1,11 @@
 package io.ivana.api.web.v1
 
+import io.ivana.core.Entity
+import io.ivana.core.Page
 import io.ivana.core.Photo
 import io.ivana.core.PhotosTimeWindow
-import io.ivana.dto.NavigablePhotoDto
+import io.ivana.dto.EntityDto
+import io.ivana.dto.PageDto
 import io.ivana.dto.PhotoDto
 import java.net.URI
 import java.util.*
@@ -17,21 +20,30 @@ const val CompressedPhotoEndpoint = "/compressed"
 
 const val FilesParamName = "files"
 const val NavigableParamName = "navigable"
+const val PageParamName = "page"
+const val SizeParamName = "size"
 
 const val UuidRegex = "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}"
 
-fun Photo.toDto() = PhotoDto(
+fun <E : Entity, D : EntityDto> Page<E>.toDto(mapper: (E) -> D) = PageDto(
+    content = content.map(mapper),
+    no = no,
+    totalItems = totalItems,
+    totalPages = totalPages
+)
+
+fun Photo.toSimpleDto() = PhotoDto.Simple(
     id = id,
     rawUri = rawUri(id),
     compressedUri = compressedUri(id)
 )
 
-fun PhotosTimeWindow.toDto() = NavigablePhotoDto(
+fun PhotosTimeWindow.toNavigableDto() = PhotoDto.Navigable(
     id = current.id,
     rawUri = rawUri(current.id),
     compressedUri = compressedUri(current.id),
-    previous = previous?.toDto(),
-    next = next?.toDto()
+    previous = previous?.toSimpleDto(),
+    next = next?.toSimpleDto()
 )
 
 private fun rawUri(id: UUID) = URI("$PhotoApiEndpoint/$id$RawPhotoEndpoint")

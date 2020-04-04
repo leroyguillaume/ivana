@@ -3,10 +3,13 @@ package io.ivana.api.web.v1
 import io.ivana.api.impl.PhotoAlreadyUploadedException
 import io.ivana.api.security.CustomAuthentication
 import io.ivana.api.security.UserPhotoTargetType
+import io.ivana.api.security.UserPrincipal
 import io.ivana.core.EventSource
 import io.ivana.core.Photo
 import io.ivana.core.PhotoService
 import io.ivana.dto.ErrorDto
+import io.ivana.dto.PageDto
+import io.ivana.dto.PhotoDto
 import io.ivana.dto.PhotoUploadResultsDto
 import org.slf4j.LoggerFactory
 import org.springframework.core.io.FileSystemResource
@@ -16,6 +19,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.Authentication
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
 import java.io.File
@@ -23,9 +27,11 @@ import java.net.InetAddress
 import java.net.URI
 import java.util.*
 import javax.servlet.http.HttpServletRequest
+import javax.validation.constraints.Min
 
 @RestController
 @RequestMapping(PhotoApiEndpoint)
+@Validated
 class PhotoController(
     private val photoService: PhotoService
 ) {
@@ -41,14 +47,25 @@ class PhotoController(
     @GetMapping("/{id:$UuidRegex}")
     @PreAuthorize("hasPermission(#id, '$UserPhotoTargetType', 'read')")
     @ResponseStatus(HttpStatus.OK)
-    @Suppress("MVCPathVariableInspection", "RegExpUnexpectedAnchor", "IMPLICIT_CAST_TO_ANY")
+    @Suppress("MVCPathVariableInspection", "RegExpUnexpectedAnchor")
     fun get(
         @PathVariable id: UUID,
         @RequestParam(name = NavigableParamName, required = false) navigable: Boolean = false
     ) = if (navigable) {
-        photoService.getTimeWindowById(id).toDto()
+        photoService.getTimeWindowById(id).toNavigableDto()
     } else {
-        photoService.getById(id).toDto()
+        photoService.getById(id).toSimpleDto()
+    }
+
+    @GetMapping
+    @ResponseStatus(HttpStatus.OK)
+    fun getAll(
+        @RequestParam(name = PageParamName, required = false, defaultValue = "1") @Min(1) page: Int,
+        @RequestParam(name = SizeParamName, required = false, defaultValue = "10") @Min(1) size: Int,
+        auth: Authentication
+    ): PageDto<PhotoDto> {
+        val principal = auth.principal as UserPrincipal
+        return photoService.getAll(principal.user.id, page, size).toDto { it.toSimpleDto() }
     }
 
     @GetMapping("/{id:$UuidRegex}$CompressedPhotoEndpoint")
@@ -99,7 +116,7 @@ class PhotoController(
                 val photo = photoService.uploadPhoto(
                     file.inputStream, MediaTypeToPhotoType.getValue(contentType), source
                 )
-                PhotoUploadResultsDto.Result.Success(photo.toDto())
+                PhotoUploadResultsDto.Result.Success(photo.toSimpleDto())
             } catch (exception: PhotoAlreadyUploadedException) {
                 PhotoUploadResultsDto.Result.Failure(
                     ErrorDto.DuplicateResource(URI("$PhotoApiEndpoint/${exception.photo.id}"))

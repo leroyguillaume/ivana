@@ -14,6 +14,7 @@ import java.util.*
 import javax.imageio.IIOImage
 import javax.imageio.ImageIO
 import javax.imageio.ImageWriteParam
+import kotlin.math.ceil
 
 @Service
 class PhotoServiceImpl(
@@ -28,6 +29,17 @@ class PhotoServiceImpl(
         private val Digest = MessageDigest.getInstance("SHA1")
 
         private val Logger = LoggerFactory.getLogger(PhotoServiceImpl::class.java)
+    }
+
+    override fun getAll(ownerId: UUID, pageNo: Int, pageSize: Int): Page<Photo> {
+        val content = photoRepo.fetchAll(ownerId, (pageNo - 1) * pageSize, pageSize)
+        val itemsNb = photoRepo.count(ownerId)
+        return Page(
+            content = content,
+            no = pageNo,
+            totalItems = itemsNb,
+            totalPages = ceil(itemsNb.toDouble() / pageSize.toDouble()).toInt()
+        )
     }
 
     override fun getById(id: UUID) = photoRepo.fetchById(id)

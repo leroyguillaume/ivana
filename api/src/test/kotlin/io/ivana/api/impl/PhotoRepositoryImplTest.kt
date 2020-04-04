@@ -67,13 +67,13 @@ internal class PhotoRepositoryImplTest {
     @Autowired
     private lateinit var userEventRepo: UserEventRepository
 
-    private lateinit var photos: List<Photo>
+    private lateinit var uploadedPhotos: List<Photo>
 
     @BeforeEach
     fun beforeEach() {
         cleanDb(jdbc)
         var no = 1
-        photos = initData
+        uploadedPhotos = initData
             .map { entry ->
                 val user = userEventRepo.saveCreationEvent(entry.userCreationContent, EventSource.System).toUser()
                 entry.photoUploadContents.map { content ->
@@ -87,12 +87,44 @@ internal class PhotoRepositoryImplTest {
     }
 
     @Nested
+    inner class count {
+        private lateinit var ownerId: UUID
+
+        @BeforeEach
+        fun beforeEach() {
+            ownerId = uploadedPhotos[0].ownerId
+        }
+
+        @Test
+        fun `should return count of photos of user`() {
+            val count = repo.count(ownerId)
+            count shouldBe 3
+        }
+    }
+
+    @Nested
+    inner class fetchAll {
+        private lateinit var ownerId: UUID
+
+        @BeforeEach
+        fun beforeEach() {
+            ownerId = uploadedPhotos[0].ownerId
+        }
+
+        @Test
+        fun `should return all photos in interval`() {
+            val photos = repo.fetchAll(ownerId, 1, 10)
+            photos shouldBe uploadedPhotos.subList(1, 3)
+        }
+    }
+
+    @Nested
     inner class fetchById {
         private lateinit var photo: Photo
 
         @BeforeEach
         fun beforeEach() {
-            photo = photos[0]
+            photo = uploadedPhotos[0]
         }
 
         @Test
@@ -114,7 +146,7 @@ internal class PhotoRepositoryImplTest {
 
         @BeforeEach
         fun beforeEach() {
-            photo = photos[0]
+            photo = uploadedPhotos[0]
         }
 
         @Test
@@ -140,20 +172,20 @@ internal class PhotoRepositoryImplTest {
     inner class fetchNextOf {
         @Test
         fun `should return null if photo does not exist`() {
-            val photo = repo.fetchNextOf(photos[3])
+            val photo = repo.fetchNextOf(uploadedPhotos[3])
             photo.shouldBeNull()
         }
 
         @Test
         fun `should return null if next photo does not have same owner`() {
-            val photo = repo.fetchNextOf(photos[2])
+            val photo = repo.fetchNextOf(uploadedPhotos[2])
             photo.shouldBeNull()
         }
 
         @Test
         fun `should return closet photo after`() {
-            val photo = repo.fetchNextOf(photos[1])
-            photo shouldBe photos[2]
+            val photo = repo.fetchNextOf(uploadedPhotos[1])
+            photo shouldBe uploadedPhotos[2]
         }
     }
 
@@ -161,20 +193,20 @@ internal class PhotoRepositoryImplTest {
     inner class fetchPreviousOf {
         @Test
         fun `should return null if photo does not exist`() {
-            val photo = repo.fetchPreviousOf(photos[0])
+            val photo = repo.fetchPreviousOf(uploadedPhotos[0])
             photo.shouldBeNull()
         }
 
         @Test
         fun `should return null if previous photo does not have same owner`() {
-            val photo = repo.fetchNextOf(photos[3])
+            val photo = repo.fetchNextOf(uploadedPhotos[3])
             photo.shouldBeNull()
         }
 
         @Test
         fun `should return closet photo after`() {
-            val photo = repo.fetchPreviousOf(photos[2])
-            photo shouldBe photos[1]
+            val photo = repo.fetchPreviousOf(uploadedPhotos[2])
+            photo shouldBe uploadedPhotos[1]
         }
     }
 

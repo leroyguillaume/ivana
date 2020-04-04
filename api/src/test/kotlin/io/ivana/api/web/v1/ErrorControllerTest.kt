@@ -12,6 +12,7 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
+import java.util.*
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -106,6 +107,18 @@ internal class ErrorControllerTest : AbstractControllerTest() {
             reqContent = "{}",
             status = HttpStatus.BAD_REQUEST,
             respDto = ErrorDto.MissingParameter("username")
+        )
+    }
+
+    @Test
+    fun `should return 400 if parameter type mismatch`() = authenticated {
+        callAndExpectDto(
+            method = HttpMethod.GET,
+            uri = "$PhotoApiEndpoint/${UUID.randomUUID()}",
+            params = mapOf(NavigableParamName to listOf("a")),
+            reqCookies = listOf(accessTokenCookie()),
+            status = HttpStatus.BAD_REQUEST,
+            respDto = typeMismatchErrorDto(NavigableParamName, "boolean")
         )
     }
 }

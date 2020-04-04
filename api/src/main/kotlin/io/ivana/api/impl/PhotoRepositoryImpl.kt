@@ -25,6 +25,27 @@ class PhotoRepositoryImpl(
 
     override val tableName = TableName
 
+    override fun count(ownerId: UUID) = jdbc.queryForObject(
+        """
+        SELECT COUNT($IdColumnName)
+        FROM $tableName
+        WHERE $OwnerIdColumnName = :owner_id
+        """,
+        MapSqlParameterSource(mapOf("owner_id" to ownerId))
+    ) { rs, _ -> rs.getInt(1) }
+
+    override fun fetchAll(ownerId: UUID, offset: Int, limit: Int) = jdbc.query(
+        """
+        SELECT *
+        FROM $tableName
+        WHERE $OwnerIdColumnName = :owner_id
+        ORDER BY $NoColumnName
+        OFFSET :offset
+        LIMIT :limit
+        """,
+        MapSqlParameterSource(mapOf("owner_id" to ownerId, "offset" to offset, "limit" to limit))
+    ) { rs, _ -> entityFromResultSet(rs) }
+
     override fun fetchByHash(ownerId: UUID, hash: String) = fetchBy(
         Column(OwnerIdColumnName, ownerId),
         Column(HashColumnName, hash)
