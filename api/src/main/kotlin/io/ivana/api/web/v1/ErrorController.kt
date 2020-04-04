@@ -74,7 +74,7 @@ class ErrorController(
         Logger.debug(exception.message, exception)
         return ErrorDto.InvalidParameter(
             parameter = exception.name,
-            reason = "must be ${exception.requiredType.simpleName.toLowerCase()}"
+            reason = "must be ${exception.requiredType!!.simpleName.toLowerCase()}"
         )
     }
 
