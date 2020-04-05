@@ -37,4 +37,9 @@ export class LoginService {
     return this.http.post(`${this.baseUrl}/api/v1/login`, creds, {withCredentials: true})
       .pipe(tap(() => this.logged = true))
   }
+
+  logout(): Observable<any> {
+    return this.http.get(`${this.baseUrl}/api/v1/logout`, {withCredentials: true})
+      .pipe(tap(() => this.logged = false))
+  }
 }

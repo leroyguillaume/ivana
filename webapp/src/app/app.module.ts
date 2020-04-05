@@ -9,12 +9,14 @@ import {HttpClientModule} from '@angular/common/http'
 import {FontAwesomeModule} from '@fortawesome/angular-fontawesome'
 import {NgbModule} from '@ng-bootstrap/ng-bootstrap'
 import {HomeComponent} from './home/home.component'
+import {NavbarComponent} from './navbar/navbar.component'
 
 @NgModule({
   declarations: [
     AppComponent,
     LoginComponent,
-    HomeComponent
+    HomeComponent,
+    NavbarComponent
   ],
   imports: [
     BrowserModule,
