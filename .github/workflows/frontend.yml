@@ -20,9 +20,10 @@ jobs:
       - name: Build
         working-directory: ./webapp
         run: npm run build -- --prod
-      - name: Test
-        working-directory: ./webapp
-        run: npm test -- --configuration=ci
+# TODO: Write tests! :D
+#      - name: Test
+#        working-directory: ./webapp
+#        run: npm test -- --configuration=ci
 # Not working on GitHub CI
 #      - name: E2E
 #        working-directory: ./webapp

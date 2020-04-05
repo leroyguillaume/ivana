@@ -1,6 +1,10 @@
 auth:
   secret: changeit
 
+cors:
+  origins:
+    - http://localhost:4200
+
 ivana:
   data-dir: ./data
   compression-quality: 0.3

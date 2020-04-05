@@ -34,16 +34,23 @@ tasks {
         setArgs(listOf("run", "test", "--", "--configuration=ci"))
     }
 
-    create<NpmTask>("e2e") {
+    create<NpmTask>("lint") {
         group = "verification"
         dependsOn("assemble")
 
-        setArgs(listOf("run", "e2e", "--", "--configuration=ci"))
+        setArgs(listOf("run", "lint"))
     }
+
+//    create<NpmTask>("e2e") {
+//        group = "verification"
+//        dependsOn("assemble")
+//
+//        setArgs(listOf("run", "e2e", "--", "--configuration=ci"))
+//    }
 
     create("check") {
         group = "verification"
-        dependsOn("test", "e2e")
+        dependsOn("lint", "test")
     }
 
     create("clean") {

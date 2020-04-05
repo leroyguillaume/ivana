@@ -34,6 +34,12 @@ class LoginController(
         resp.addCookie(cookie("", 0, req))
     }
 
+    // To nothing, just test if user is logged
+    @GetMapping(LoginEndpoint)
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    fun testLogin() {
+    }
+
     private fun cookie(value: String, expirationInSeconds: Int, req: HttpServletRequest) =
         Cookie(AccessTokenCookieName, value).apply {
             secure = req.getHeader("X-Forwarded-Proto")?.let { it == "https" } ?: req.isSecure
