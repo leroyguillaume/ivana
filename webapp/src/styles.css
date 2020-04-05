@@ -1,3 +1,7 @@
 .cursor-forbidden {
   cursor: not-allowed !important;
 }
+
+.navbar-container {
+  margin-bottom: 73px;
+}
