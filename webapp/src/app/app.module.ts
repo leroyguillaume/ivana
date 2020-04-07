@@ -10,13 +10,15 @@ import {FontAwesomeModule} from '@fortawesome/angular-fontawesome'
 import {NgbModule} from '@ng-bootstrap/ng-bootstrap'
 import {HomeComponent} from './home/home.component'
 import {NavbarComponent} from './navbar/navbar.component'
+import {PhotoComponent} from './photo/photo.component'
 
 @NgModule({
   declarations: [
     AppComponent,
     LoginComponent,
     HomeComponent,
-    NavbarComponent
+    NavbarComponent,
+    PhotoComponent
   ],
   imports: [
     BrowserModule,

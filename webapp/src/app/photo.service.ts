@@ -4,6 +4,7 @@ import {Photo} from './photo'
 import {Page} from './page'
 import {Observable} from 'rxjs'
 import {environment} from '../environments/environment'
+import {NavigablePhoto} from './navigable-photo'
 
 @Injectable({
   providedIn: 'root'
@@ -14,6 +15,18 @@ export class PhotoService {
   constructor(
     private http: HttpClient
   ) {
+  }
+
+  get(id: string): Observable<NavigablePhoto> {
+    return this.http.get<NavigablePhoto>(
+      `${this.baseUrl}/api/v1/photo/${id}`,
+      {
+        withCredentials: true,
+        params: {
+          navigable: 'true'
+        }
+      }
+    )
   }
 
   getAll(page: number, size: number): Observable<Page<Photo>> {

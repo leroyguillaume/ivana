@@ -1,0 +1,15 @@
+<div class="container" *ngIf="error">
+  <ngb-alert type="danger" dismissible="true" (close)="error = null">{{error}}</ngb-alert>
+</div>
+
+<div *ngIf="loading; else photoBlock" class="d-flex h-100">
+  <div class="m-auto text-center">
+    <fa-icon [icon]="spinnerIcon" spin="true" size="8x"></fa-icon>
+  </div>
+</div>
+
+<ng-template #photoBlock>
+  <div class="h-100 w-100 text-center">
+    <img src="{{baseUrl}}{{photo.rawUri}}" class="img-fluid">
+  </div>
+</ng-template>

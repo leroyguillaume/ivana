@@ -4,6 +4,7 @@ import {LoginComponent} from './login/login.component'
 import {HomeComponent} from './home/home.component'
 import {AuthenticatedGuard} from './authenticated.guard'
 import {AnonymousGuard} from './anonymous.guard'
+import {PhotoComponent} from './photo/photo.component'
 
 
 const routes: Routes = [
@@ -15,6 +16,11 @@ const routes: Routes = [
   {
     path: 'home',
     component: HomeComponent,
+    canActivate: [AuthenticatedGuard]
+  },
+  {
+    path: 'photo/:id',
+    component: PhotoComponent,
     canActivate: [AuthenticatedGuard]
   },
   {
