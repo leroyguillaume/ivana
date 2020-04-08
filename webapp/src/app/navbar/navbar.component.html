@@ -6,7 +6,7 @@
 
   <div class="collapse navbar-collapse" [ngClass]="{'show': opened}">
     <ul class="navbar-nav mr-auto">
-      <li class="nav-item nav-" [ngClass]="{'active': currentUrl === '/home'}">
+      <li class="nav-item nav-" [ngClass]="{'active': currentUrl.startsWith('/home')}">
         <a class="nav-link" routerLink="/home">Mes photos</a>
       </li>
     </ul>
