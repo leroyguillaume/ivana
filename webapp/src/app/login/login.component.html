@@ -1,4 +1,6 @@
-<div class="container">
+<div class="container mt-5">
+  <h1 class="text-center mb-5">Ivana</h1>
+
   <ngb-alert *ngIf="error" type="danger" dismissible="true" (close)="error = null">{{error}}</ngb-alert>
 
   <form [formGroup]="loginForm" (ngSubmit)="login()" novalidate>

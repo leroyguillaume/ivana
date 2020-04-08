@@ -9,7 +9,7 @@ import {environment} from '../../environments/environment'
 @Component({
   selector: 'app-photo',
   templateUrl: './photo.component.html',
-  styleUrls: ['./photo.component.css']
+  styleUrls: ['./photo.component.scss']
 })
 export class PhotoComponent implements OnInit {
   spinnerIcon = faSpinner

@@ -1,0 +1,14 @@
+$body-bg: #022F40;
+$body-color: white;
+
+$theme-colors: (
+  "primary": #F3C677,
+  "secondary": #51A3A3,
+  "dark": $body-bg
+);
+
+@import "node_modules/bootstrap/scss/bootstrap.scss";
+
+.btn:disabled {
+  cursor: not-allowed;
+}
