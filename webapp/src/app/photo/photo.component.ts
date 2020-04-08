@@ -1,10 +1,11 @@
 import {Component, HostListener, OnInit} from '@angular/core'
 import {NavigablePhoto} from '../navigable-photo'
-import {faSpinner} from '@fortawesome/free-solid-svg-icons'
+import {faArrowLeft, faSpinner} from '@fortawesome/free-solid-svg-icons'
 import {PhotoService} from '../photo.service'
 import {ActivatedRoute, Router} from '@angular/router'
 import {finalize, flatMap} from 'rxjs/operators'
 import {environment} from '../../environments/environment'
+import {RoutingService} from '../routing.service'
 
 @Component({
   selector: 'app-photo',
@@ -13,19 +14,21 @@ import {environment} from '../../environments/environment'
 })
 export class PhotoComponent implements OnInit {
   spinnerIcon = faSpinner
+  leftIcon = faArrowLeft
 
   baseUrl = environment.baseUrl
   loading = true
   error = null
 
-  photo: NavigablePhoto
-
   constructor(
     private photoService: PhotoService,
+    private routingService: RoutingService,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
   ) {
   }
+
+  photo: NavigablePhoto
 
   @HostListener('window:keyup', ['$event'])
   keyEvent(event: KeyboardEvent) {
@@ -42,9 +45,9 @@ export class PhotoComponent implements OnInit {
     }
   }
 
-  private close() {
+  close() {
     // noinspection JSIgnoredPromiseFromCall
-    this.router.navigate(['home'])
+    this.router.navigateByUrl(this.routingService.previousUrl)
   }
 
   private next() {
