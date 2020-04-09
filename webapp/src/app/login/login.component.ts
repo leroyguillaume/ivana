@@ -1,7 +1,7 @@
 import {Component, OnInit} from '@angular/core'
 import {FormControl, FormGroup} from '@angular/forms'
 import {LoginService} from '../login.service'
-import {faSpinner} from '@fortawesome/free-solid-svg-icons'
+import {faSignInAlt, faSpinner} from '@fortawesome/free-solid-svg-icons'
 import {finalize} from 'rxjs/operators'
 import {Router} from '@angular/router'
 
@@ -12,6 +12,8 @@ import {Router} from '@angular/router'
 })
 export class LoginComponent implements OnInit {
   spinnerIcon = faSpinner
+  loginIcon = faSignInAlt
+
   loading = false
   error = null
 

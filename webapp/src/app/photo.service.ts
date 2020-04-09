@@ -5,6 +5,7 @@ import {Page} from './page'
 import {Observable} from 'rxjs'
 import {environment} from '../environments/environment'
 import {NavigablePhoto} from './navigable-photo'
+import {PhotoUploadResults} from './photo-upload-results'
 
 @Injectable({
   providedIn: 'root'
@@ -40,5 +41,15 @@ export class PhotoService {
         }
       }
     )
+  }
+
+  upload(files: FileList): Observable<PhotoUploadResults> {
+    const data = new FormData()
+    for (let i = 0; i < files.length; ++i) {
+      data.append('files', files.item(i))
+    }
+    return this.http.post<PhotoUploadResults>(`${this.baseUrl}/api/v1/photo`, data, {
+      withCredentials: true
+    })
   }
 }

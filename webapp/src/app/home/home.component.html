@@ -2,12 +2,23 @@
 
 <div class="container mt-5">
   <ngb-alert *ngIf="error" type="danger" dismissible="true" (close)="error = null">{{error}}</ngb-alert>
+  <ngb-alert *ngIf="success" type="success" dismissible="true" (close)="success = null">{{success}}</ngb-alert>
 
-  <div class="text-center" *ngIf="loading; else photos">
+  <div class="text-center" *ngIf="loading">
     <fa-icon [icon]="spinnerIcon" spin="true" size="8x"></fa-icon>
   </div>
 
-  <ng-template #photos>
+  <div class="text-center" *ngIf="!loading && page.totalItems === 0">
+    <h1 class="mb-3">Vous n'avez pas encore de photos... Ajoutez-en !</h1>
+    <button class="btn btn-primary" (click)="selectFiles()" [disabled]="uploading">
+      <fa-icon [icon]="spinnerIcon" spin="true" *ngIf="uploading"></fa-icon>
+      <span *ngIf="uploading"> Ajout en cours...</span>
+      <span *ngIf="!uploading">C'est parti !</span>
+    </button>
+    <input name="files" type="file" (change)="upload()" multiple hidden #files>
+  </div>
+
+  <div *ngIf="!loading && page.totalItems > 0">
     <div class="text-right mb-3">
       <div class="btn-group">
         <button type="button"
@@ -33,5 +44,5 @@
         </a>
       </div>
     </div>
-  </ng-template>
+  </div>
 </div>

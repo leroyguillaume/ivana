@@ -1,4 +1,4 @@
-import {Component, OnInit} from '@angular/core'
+import {Component, ElementRef, OnInit, ViewChild} from '@angular/core'
 import {Photo} from '../photo'
 import {Page} from '../page'
 import {PhotoService} from '../photo.service'
@@ -6,6 +6,7 @@ import {finalize, map} from 'rxjs/operators'
 import {faArrowLeft, faArrowRight, faSpinner} from '@fortawesome/free-solid-svg-icons'
 import {environment} from '../../environments/environment'
 import {ActivatedRoute, Router} from '@angular/router'
+import {UploaderService} from '../uploader.service'
 
 @Component({
   selector: 'app-home',
@@ -22,11 +23,17 @@ export class HomeComponent implements OnInit {
   nextIcon = faArrowRight
 
   page = new Page<Photo>([], 0, 0, 0)
+  success = null
   error = null
   loading = false
+  uploading = false
+
+  @ViewChild('files')
+  filesInput: ElementRef
 
   constructor(
     private photoService: PhotoService,
+    private uploaderService: UploaderService,
     private route: ActivatedRoute,
     private router: Router
   ) {
@@ -51,6 +58,21 @@ export class HomeComponent implements OnInit {
           this.fetchPage(no)
         }
       })
+    this.uploaderService.uploading.subscribe(uploading => this.uploading = uploading)
+    this.uploaderService.error.subscribe(error => this.error = error)
+    this.uploaderService.success.subscribe(success => this.success = success)
+    this.uploaderService.filesUploaded.subscribe(() => this.fetchPage(this.page.no))
+  }
+
+  selectFiles() {
+    this.filesInput.nativeElement.click()
+  }
+
+  upload() {
+    const files = this.filesInput.nativeElement.files
+    if (files.length > 0) {
+      this.uploaderService.upload(files)
+    }
   }
 
   private fetchPage(no: number) {

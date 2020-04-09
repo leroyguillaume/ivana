@@ -14,8 +14,22 @@
 
   <div class="collapse navbar-collapse" [ngClass]="{'show': opened}">
     <ul class="navbar-nav ml-auto">
-      <li class="nav-item">
-        <a class="nav-link logout-btn" (click)="logout()">
+      <li class="nav-item clickable" [ngClass]="{'disabled': uploading}">
+        <a class="nav-link clickable" (click)="selectFiles()" [ngClass]="{'disabled': uploading}">
+          <div *ngIf="uploading; else uploadBlock">
+            <fa-icon [icon]="spinnerIcon" spin="true"></fa-icon>
+            Ajout en cours...
+          </div>
+          <ng-template #uploadBlock>
+            <fa-icon [icon]="uploadIcon"></fa-icon>
+            Ajouter des photos
+          </ng-template>
+        </a>
+        <input name="files" type="file" (change)="upload()" multiple hidden #files>
+      </li>
+
+      <li class="nav-item clickable">
+        <a class="nav-link" (click)="logout()">
           <fa-icon [icon]="logoutIcon"></fa-icon>
           Déconnexion
         </a>

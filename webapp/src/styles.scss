@@ -12,3 +12,11 @@ $theme-colors: (
 .btn:disabled {
   cursor: not-allowed;
 }
+
+.clickable {
+  cursor: pointer;
+}
+
+.clickable.disabled {
+  cursor: not-allowed;
+}
