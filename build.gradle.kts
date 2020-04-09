@@ -1,6 +1,5 @@
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import java.io.ByteArrayOutputStream
 
 plugins {
     // Kotlin
@@ -10,10 +9,8 @@ plugins {
 }
 
 allprojects {
-    val baseVersion = project.property("ivana.version").toString()
-
     group = "io.ivana"
-    version = if (currentBranchName() == "master") baseVersion else "$baseVersion.${currentCommitShortHash()}"
+    version = project.property("ivana.version").toString()
 
     repositories {
         mavenCentral()
@@ -36,24 +33,4 @@ tasks {
     wrapper {
         gradleVersion = "6.2"
     }
-}
-
-fun currentBranchName(): String {
-    val stdout = ByteArrayOutputStream()
-    exec {
-        executable("git")
-        args(listOf("rev-parse", "--abbrev-ref", "HEAD"))
-        standardOutput = stdout
-    }
-    return stdout.toString(Charsets.UTF_8).trim()
-}
-
-fun currentCommitShortHash(): String {
-    val stdout = ByteArrayOutputStream()
-    exec {
-        executable("git")
-        args(listOf("rev-parse", "--short", "HEAD"))
-        standardOutput = stdout
-    }
-    return stdout.toString(Charsets.UTF_8).trim()
 }

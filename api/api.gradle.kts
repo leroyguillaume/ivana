@@ -1,4 +1,8 @@
 plugins {
+    // Gradle
+    application
+    distribution
+
     // Kotlin
     kotlin("jvm")
     kotlin("plugin.spring")
@@ -9,6 +13,12 @@ plugins {
     // Spring
     val springVersion = "2.2.5.RELEASE"
     id("org.springframework.boot") version springVersion
+}
+
+application {
+    applicationName = "ivana"
+    mainClassName = "io.ivana.api.IvanaApiApplicationKt"
+    applicationDefaultJvmArgs = listOf("-Djava.net.preferIPv4Stack=true")
 }
 
 liquibase {
@@ -82,13 +92,39 @@ dependencies {
     }
 }
 
+val staticDir = projectDir.resolve("src/main/resources/static")
+
 tasks {
     bootJar {
         dependsOn("copyStaticFiles")
+
+        archiveClassifier.set("boot")
     }
 
     bootRun {
         jvmArgs = listOf("-Djava.net.preferIPv4Stack=true")
+    }
+
+    clean {
+        doLast {
+            if (staticDir.deleteRecursively()) {
+                logger.info("${staticDir.absolutePath} deleted")
+            } else {
+                logger.error("Unable to delete ${staticDir.absolutePath}")
+            }
+        }
+    }
+
+    distTar {
+        archiveBaseName.set("ivana")
+        compression = Compression.GZIP
+        archiveExtension.set("tar.gz")
+    }
+
+    jar {
+        dependsOn("copyStaticFiles")
+
+        enabled = true
     }
 
     processResources {
@@ -126,7 +162,7 @@ tasks {
         dependsOn(":ivana-webapp:assemble")
 
         from(project(":ivana-webapp").buildDir)
-        into("src/main/resources/static")
+        into(staticDir)
     }
 }
 

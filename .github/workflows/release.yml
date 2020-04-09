@@ -1,0 +1,35 @@
+on:
+  push:
+    tags:
+      - 'v*'
+
+name: Release
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: echo ::set-env name=RELEASE_VERSION::${GITHUB_REF:11}
+      - name: Build
+        run: gradle clean :ivana-api:distTar
+      - name: Create release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+      - name: Upload tarball
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./api/build/distributions/ivana-${{ env.RELEASE_VERSION }}.tar.gz
+          asset_name: ivana-${{ env.RELEASE_VERSION }}.tar.gz
+          asset_content_type: application/tar+gzip
