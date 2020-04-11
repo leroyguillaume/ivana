@@ -92,27 +92,19 @@ dependencies {
     }
 }
 
-val staticDir = projectDir.resolve("src/main/resources/static")
-
 tasks {
     bootJar {
-        dependsOn("copyStaticFiles")
+        dependsOn(":ivana-webapp:assemble")
 
         archiveClassifier.set("boot")
+
+        from(project(":ivana-webapp").buildDir) {
+            into("public")
+        }
     }
 
     bootRun {
         jvmArgs = listOf("-Djava.net.preferIPv4Stack=true")
-    }
-
-    clean {
-        doLast {
-            if (staticDir.deleteRecursively()) {
-                logger.info("${staticDir.absolutePath} deleted")
-            } else {
-                logger.error("Unable to delete ${staticDir.absolutePath}")
-            }
-        }
     }
 
     distTar {
@@ -122,9 +114,13 @@ tasks {
     }
 
     jar {
-        dependsOn("copyStaticFiles")
+        dependsOn(":ivana-webapp:assemble")
 
         enabled = true
+
+        from(project(":ivana-webapp").buildDir) {
+            into("static")
+        }
     }
 
     processResources {
@@ -156,13 +152,6 @@ tasks {
             )
         )
         environment("PGPASSWORD", dbProps.password)
-    }
-
-    create<Copy>("copyStaticFiles") {
-        dependsOn(":ivana-webapp:assemble")
-
-        from(project(":ivana-webapp").buildDir)
-        into(staticDir)
     }
 }
 
