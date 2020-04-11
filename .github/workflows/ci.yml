@@ -43,7 +43,7 @@ jobs:
         run: npm run lint
       - name: Build
         working-directory: ./webapp
-        run: npm run build -- --prod
+        run: npm run build
 # TODO: Write tests! :D
 #      - name: Test
 #        working-directory: ./webapp
