@@ -18,7 +18,7 @@ class CustomAuthenticationEntryPoint(
     }
 
     override fun commence(req: HttpServletRequest, resp: HttpServletResponse, exception: AuthenticationException) {
-        val remoteAddr = req.getHeader("X-Forwarded-For") ?: req.remoteAddr
+        val remoteAddr = req.remoteHost()
         Logger.warn("Anonymous user ($remoteAddr) attempted to access ${req.requestURI}")
         resp.status = HttpStatus.UNAUTHORIZED.value()
         resp.contentType = MediaType.APPLICATION_JSON_VALUE

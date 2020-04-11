@@ -22,7 +22,7 @@ tasks {
         group = "build"
         dependsOn("npm_install")
 
-        setArgs(listOf("run", "build"))
+        setArgs(listOf("run", "build", "--prod"))
 
         outputs.upToDateWhen { buildDir.exists() }
     }

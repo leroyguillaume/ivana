@@ -20,7 +20,7 @@ class CustomAccessDeniedHandler(
 
     override fun handle(req: HttpServletRequest, resp: HttpServletResponse, exception: AccessDeniedException) {
         val principal = SecurityContextHolder.getContext().authentication.principal as UserPrincipal
-        val remoteAddr = req.getHeader("X-Forwarded-For") ?: req.remoteAddr
+        val remoteAddr = req.remoteHost()
         Logger.warn("User '${principal.username}' ($remoteAddr) attempted to access ${req.requestURI}")
         resp.status = HttpStatus.FORBIDDEN.value()
         resp.contentType = MediaType.APPLICATION_JSON_VALUE
