@@ -67,6 +67,17 @@ internal class PhotoEventRepositoryImplTest {
         }
 
         @Test
+        fun `should return transform event with subject id and number`() {
+            val expectedEvent = repo.saveTransformEvent(
+                photoId = UUID.randomUUID(),
+                transform = Transform.Rotation(Transform.Rotation.Direction.Clockwise),
+                source = EventSource.User(createdUser.id, InetAddress.getByName("127.0.0.1"))
+            )
+            val event = repo.fetch(expectedEvent.subjectId, expectedEvent.number)
+            event shouldBe expectedEvent
+        }
+
+        @Test
         fun `should return upload event with subject id and number`() {
             val expectedEvent = repo.saveUploadEvent(
                 content = PhotoEvent.Upload.Content(
@@ -77,6 +88,33 @@ internal class PhotoEventRepositoryImplTest {
             )
             val event = repo.fetch(expectedEvent.subjectId, expectedEvent.number)
             event shouldBe expectedEvent
+        }
+    }
+
+    @Nested
+    inner class saveTransformEvent {
+        private lateinit var expectedEvent: PhotoEvent.Transform
+
+        @BeforeEach
+        fun beforeEach() {
+            expectedEvent = UUID.randomUUID().let { id ->
+                PhotoEvent.Transform(
+                    date = OffsetDateTime.now(),
+                    subjectId = id,
+                    number = 1,
+                    source = EventSource.User(createdUser.id, InetAddress.getByName("127.0.0.1")),
+                    transform = Transform.Rotation(Transform.Rotation.Direction.Clockwise)
+                )
+            }
+        }
+
+        @Test
+        fun `should return created event`() {
+            val event = repo.saveTransformEvent(expectedEvent.subjectId, expectedEvent.transform, expectedEvent.source)
+            event shouldBe expectedEvent.copy(
+                date = event.date,
+                subjectId = event.subjectId
+            )
         }
     }
 

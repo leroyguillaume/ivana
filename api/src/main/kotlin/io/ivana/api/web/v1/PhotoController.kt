@@ -4,13 +4,11 @@ import io.ivana.api.impl.PhotoAlreadyUploadedException
 import io.ivana.api.security.CustomAuthentication
 import io.ivana.api.security.UserPhotoTargetType
 import io.ivana.api.security.UserPrincipal
+import io.ivana.api.web.toTransform
 import io.ivana.core.EventSource
 import io.ivana.core.Photo
 import io.ivana.core.PhotoService
-import io.ivana.dto.ErrorDto
-import io.ivana.dto.PageDto
-import io.ivana.dto.PhotoDto
-import io.ivana.dto.PhotoUploadResultsDto
+import io.ivana.dto.*
 import org.slf4j.LoggerFactory
 import org.springframework.core.io.FileSystemResource
 import org.springframework.http.HttpStatus
@@ -23,10 +21,10 @@ import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
 import java.io.File
-import java.net.InetAddress
 import java.net.URI
 import java.util.*
 import javax.servlet.http.HttpServletRequest
+import javax.validation.Valid
 import javax.validation.constraints.Min
 
 @RestController
@@ -86,13 +84,27 @@ class PhotoController(
     }
 
     @Transactional
+    @PostMapping("/{id:$UuidRegex}$TransformPhotoEndpoint")
+    @PreAuthorize("hasPermission(#id, '$UserPhotoTargetType', 'update')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Suppress("MVCPathVariableInspection", "RegExpUnexpectedAnchor")
+    fun transform(
+        @PathVariable id: UUID,
+        @RequestBody @Valid transformDto: TransformDto,
+        auth: Authentication,
+        req: HttpServletRequest
+    ) {
+        photoService.transform(id, transformDto.toTransform(), userSource(req, auth.principal as UserPrincipal))
+    }
+
+    @Transactional
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     fun upload(
         @RequestParam(FilesParamName) files: List<MultipartFile>, auth: Authentication, req: HttpServletRequest
     ): PhotoUploadResultsDto {
         val principal = (auth as CustomAuthentication).principal
-        val source = EventSource.User(principal.user.id, InetAddress.getByName(req.remoteAddr))
+        val source = userSource(req, principal)
         return PhotoUploadResultsDto(files.map { uploadPhoto(it, source) })
     }
 
