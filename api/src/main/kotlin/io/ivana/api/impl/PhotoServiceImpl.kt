@@ -5,6 +5,10 @@ import io.ivana.core.*
 import org.slf4j.LoggerFactory
 import org.springframework.security.crypto.codec.Hex
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
+import java.awt.geom.AffineTransform
+import java.awt.image.AffineTransformOp
+import java.awt.image.BufferedImage
 import java.io.File
 import java.io.InputStream
 import java.security.DigestInputStream
@@ -14,7 +18,8 @@ import java.util.*
 import javax.imageio.IIOImage
 import javax.imageio.ImageIO
 import javax.imageio.ImageWriteParam
-import kotlin.math.ceil
+import kotlin.math.*
+
 
 @Service
 class PhotoServiceImpl(
@@ -57,6 +62,14 @@ class PhotoServiceImpl(
         )
     }
 
+    @Transactional
+    override fun transform(id: UUID, transform: Transform, source: EventSource.User) {
+        transform.perform(getById(id))
+        photoEventRepo.saveTransformEvent(id, transform, source)
+        Logger.info("User ${source.id} (${source.ip}) transformed photo $id")
+    }
+
+    @Transactional
     override fun uploadPhoto(input: InputStream, type: Photo.Type, source: EventSource.User): Photo {
         val tmpFile = File.createTempFile(UUID.randomUUID().toString(), ".${type.extension()}")
         tmpFile.deleteOnExit()
@@ -76,6 +89,7 @@ class PhotoServiceImpl(
             try {
                 val compressionFile = saveCompressedFile(tmpFile, event)
                 return try {
+                    Logger.info("User ${source.id} (${source.ip}) uploaded new photo")
                     photoRepo.fetchById(event.subjectId)!!
                 } catch (exception: Exception) {
                     compressionFile.deleteAndLog()
@@ -96,6 +110,28 @@ class PhotoServiceImpl(
         uploadDate = uploadDate,
         type = type
     )
+
+    private fun performRotation(photo: Photo, direction: Transform.Rotation.Direction) {
+        performRotation(rawFile(photo.id, photo.uploadDate, photo.type), photo.type, direction)
+        performRotation(compressedFile(photo.id, photo.uploadDate, photo.type), photo.type, direction)
+    }
+
+    private fun performRotation(file: File, type: Photo.Type, direction: Transform.Rotation.Direction) {
+        val image = file.inputStream().use { ImageIO.read(it) }
+        val angle = Math.toRadians(direction.angle)
+        val sin = abs(sin(angle))
+        val cos = abs(cos(angle))
+        val width = floor(image.width * cos + image.height * sin).toInt()
+        val height = floor(image.height * cos + image.width * sin).toInt()
+        val rotatedImage = BufferedImage(width, height, image.type)
+        val transform = AffineTransform()
+        transform.translate(width / 2.toDouble(), height / 2.toDouble())
+        transform.rotate(angle, 0.0, 0.0)
+        transform.translate(-image.width / 2.toDouble(), -image.height / 2.toDouble())
+        val transformOp = AffineTransformOp(transform, AffineTransformOp.TYPE_BILINEAR)
+        transformOp.filter(image, rotatedImage)
+        file.outputStream().use { ImageIO.write(rotatedImage, type.format(), it) }
+    }
 
     private fun photoFile(rootDir: File, id: UUID, uploadDate: OffsetDateTime, type: Photo.Type) =
         uploadDate.let { date ->
@@ -164,5 +200,9 @@ class PhotoServiceImpl(
     private fun Photo.Type.format() = when (this) {
         Photo.Type.Jpg -> "jpg"
         Photo.Type.Png -> "png"
+    }
+
+    private fun Transform.perform(photo: Photo) = when (this) {
+        is Transform.Rotation -> performRotation(photo, direction)
     }
 }

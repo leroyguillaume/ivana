@@ -6,12 +6,10 @@ import com.nhaarman.mockitokotlin2.*
 import io.ivana.api.impl.PhotoAlreadyUploadedException
 import io.ivana.api.security.Permission
 import io.ivana.api.web.AbstractControllerTest
-import io.ivana.core.EventSource
-import io.ivana.core.LinkedPhotos
-import io.ivana.core.Page
-import io.ivana.core.Photo
+import io.ivana.core.*
 import io.ivana.dto.ErrorDto
 import io.ivana.dto.PhotoUploadResultsDto
+import io.ivana.dto.TransformDto
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
@@ -74,7 +72,8 @@ internal class PhotoControllerTest : AbstractControllerTest() {
 
         @Test
         fun `should return 403 if user does not have permission`() = authenticated {
-            whenever(userPhotoAuthzRepo.fetch(principal.user.id, linkedPhotos.current.id)).thenReturn(emptySet())
+            whenever(userPhotoAuthzRepo.fetch(principal.user.id, linkedPhotos.current.id))
+                .thenReturn(EnumSet.complementOf(EnumSet.of(Permission.Read)))
             callAndExpectDto(
                 method = method,
                 uri = uri,
@@ -235,7 +234,8 @@ internal class PhotoControllerTest : AbstractControllerTest() {
 
         @Test
         fun `should return 403 if user does not have permission`() = authenticated {
-            whenever(userPhotoAuthzRepo.fetch(principal.user.id, jpgPhoto.id)).thenReturn(emptySet())
+            whenever(userPhotoAuthzRepo.fetch(principal.user.id, jpgPhoto.id))
+                .thenReturn(EnumSet.complementOf(EnumSet.of(Permission.Read)))
             callAndExpectDto(
                 method = method,
                 uri = jpgUri,
@@ -319,7 +319,8 @@ internal class PhotoControllerTest : AbstractControllerTest() {
 
         @Test
         fun `should return 403 if user does not have permission`() = authenticated {
-            whenever(userPhotoAuthzRepo.fetch(principal.user.id, jpgPhoto.id)).thenReturn(emptySet())
+            whenever(userPhotoAuthzRepo.fetch(principal.user.id, jpgPhoto.id))
+                .thenReturn(EnumSet.complementOf(EnumSet.of(Permission.Read)))
             callAndExpectDto(
                 method = method,
                 uri = jpgUri,
@@ -364,6 +365,63 @@ internal class PhotoControllerTest : AbstractControllerTest() {
             verify(userPhotoAuthzRepo).fetch(principal.user.id, pngPhoto.id)
             verify(photoService).getById(pngPhoto.id)
             verify(photoService).getRawFile(pngPhoto)
+        }
+    }
+
+    @Nested
+    inner class transform {
+        private val id = UUID.randomUUID()
+        private val source = EventSource.User(
+            id = principal.user.id,
+            ip = InetAddress.getByName("127.0.0.1")
+        )
+        private val method = HttpMethod.POST
+        private val uri = "$PhotoApiEndpoint/$id$TransformPhotoEndpoint"
+
+        @Test
+        fun `should return 401 if user is anonymous`() {
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                status = HttpStatus.UNAUTHORIZED,
+                respDto = ErrorDto.Unauthorized
+            )
+        }
+
+        @Test
+        fun `should return 403 if user does not have permission`() = authenticated {
+            val transformDto = TransformDto.Rotation(TransformDto.Rotation.Direction.Clockwise)
+            whenever(userPhotoAuthzRepo.fetch(principal.user.id, id))
+                .thenReturn(EnumSet.complementOf(EnumSet.of(Permission.Update)))
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                reqCookies = listOf(accessTokenCookie()),
+                reqContent = mapper.writeValueAsString(transformDto),
+                status = HttpStatus.FORBIDDEN,
+                respDto = ErrorDto.Forbidden
+            )
+            verify(userPhotoAuthzRepo).fetch(principal.user.id, id)
+        }
+
+        @Nested
+        inner class rotation {
+            private val transformDto = TransformDto.Rotation(TransformDto.Rotation.Direction.Clockwise)
+            private val transform = Transform.Rotation(Transform.Rotation.Direction.Clockwise)
+
+            @Test
+            fun `should return 204`() = authenticated {
+                whenever(userPhotoAuthzRepo.fetch(principal.user.id, id)).thenReturn(setOf(Permission.Update))
+                callAndExpectDto(
+                    method = method,
+                    uri = uri,
+                    reqCookies = listOf(accessTokenCookie()),
+                    reqContent = mapper.writeValueAsString(transformDto),
+                    status = HttpStatus.NO_CONTENT
+                )
+                verify(userPhotoAuthzRepo).fetch(principal.user.id, id)
+                verify(photoService).transform(id, transform, source)
+            }
         }
     }
 

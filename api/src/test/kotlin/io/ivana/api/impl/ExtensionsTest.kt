@@ -5,13 +5,16 @@ package io.ivana.api.impl
 import io.ivana.core.EventSource
 import io.ivana.core.Photo
 import io.ivana.core.Role
+import io.ivana.core.Transform
 import io.kotlintest.shouldBe
+import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import java.net.InetAddress
 import java.util.*
 
 internal class ExtensionsTest {
-    internal class toDataTest {
+    @Nested
+    inner class eventSourceToDataTest {
         @Test
         fun system() {
             EventSource.System.toData() shouldBe EventSourceData.System
@@ -25,7 +28,8 @@ internal class ExtensionsTest {
         }
     }
 
-    internal class toPhotoTypeDataTest {
+    @Nested
+    inner class photoTypeToPhotoTypeDataTest {
         @Test
         fun jpg() {
             Photo.Type.Jpg.toPhotoTypeData() shouldBe PhotoTypeData.Jpg
@@ -37,7 +41,8 @@ internal class ExtensionsTest {
         }
     }
 
-    internal class toRoleDataTest {
+    @Nested
+    inner class roletoRoleDataTest {
         @Test
         fun user() {
             Role.User.toRoleData() shouldBe RoleData.User
@@ -51,6 +56,23 @@ internal class ExtensionsTest {
         @Test
         fun super_admin() {
             Role.SuperAdmin.toRoleData() shouldBe RoleData.SuperAdmin
+        }
+    }
+
+    @Nested
+    inner class directionToDirectionData {
+        @Test
+        fun clockwise() {
+            Transform.Rotation.Direction.Clockwise.toDirectionData().shouldBe(
+                PhotoEventData.Transform.Content.Rotation.Direction.Clockwise
+            )
+        }
+
+        @Test
+        fun counterclockwise() {
+            Transform.Rotation.Direction.Counterclockwise.toDirectionData().shouldBe(
+                PhotoEventData.Transform.Content.Rotation.Direction.Counterclockwise
+            )
         }
     }
 }

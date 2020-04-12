@@ -1,8 +1,9 @@
 package io.ivana.api.security
 
+import java.net.InetAddress
 import javax.servlet.http.HttpServletRequest
 
 internal const val Bearer = "Bearer"
 internal const val AccessTokenCookieName = "access_token"
 
-internal fun HttpServletRequest.remoteHost() = getHeader("X-Real-IP") ?: remoteAddr
+fun HttpServletRequest.remoteHost() = InetAddress.getByName(getHeader("X-Real-IP") ?: remoteAddr)

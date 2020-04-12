@@ -1,7 +1,7 @@
 -- @formatter:off
 CREATE TYPE photo_type AS enum ('jpg', 'png');
 
-CREATE TYPE photo_event_type AS enum ('upload', 'visualization', 'deletion');
+CREATE TYPE photo_event_type AS enum ('upload', 'visualization', 'deletion', 'transform');
 
 CREATE TABLE photo_event
 (

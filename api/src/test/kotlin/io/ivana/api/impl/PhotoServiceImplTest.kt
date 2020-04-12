@@ -222,6 +222,183 @@ internal class PhotoServiceImplTest {
     }
 
     @Nested
+    inner class transform {
+        private val jpgPhoto = Photo(
+            id = UUID.randomUUID(),
+            ownerId = UUID.randomUUID(),
+            uploadDate = OffsetDateTime.now(),
+            type = Photo.Type.Jpg,
+            hash = "hash",
+            no = 1
+        )
+        private val pngPhoto = Photo(
+            id = UUID.randomUUID(),
+            ownerId = UUID.randomUUID(),
+            uploadDate = OffsetDateTime.now(),
+            type = Photo.Type.Png,
+            hash = "hash",
+            no = 1
+        )
+        private val jpgFile = File(javaClass.getResource("/data/photo.jpg").file)
+        private val pngFile = File(javaClass.getResource("/data/photo.png").file)
+
+        @BeforeEach
+        fun beforeEach() {
+            copyPhoto(jpgPhoto, jpgFile)
+            copyPhoto(pngPhoto, pngFile)
+        }
+
+        @Nested
+        inner class rotation {
+            private val clockwiseRotationEvent = PhotoEvent.Transform(
+                date = OffsetDateTime.now(),
+                subjectId = jpgPhoto.id,
+                number = 1,
+                source = EventSource.User(UUID.randomUUID(), InetAddress.getByName("127.0.0.1")),
+                transform = Transform.Rotation(Transform.Rotation.Direction.Clockwise)
+            )
+            private val counterclockwiseRotationEvent = clockwiseRotationEvent.copy(
+                transform = Transform.Rotation(Transform.Rotation.Direction.Counterclockwise)
+            )
+            private val jpgClockwiseRotatedFile = File(javaClass.getResource("/data/photo-clockwise.jpg").file)
+            private val jpgCounterclockwiseRotatedFile =
+                File(javaClass.getResource("/data/photo-counterclockwise.jpg").file)
+            private val pngClockwiseRotatedFile = File(javaClass.getResource("/data/photo-clockwise.png").file)
+            private val pngCounterclockwiseRotatedFile =
+                File(javaClass.getResource("/data/photo-counterclockwise.png").file)
+
+            @Test
+            fun `should throw exception if photo does not exist`() {
+                every { photoRepo.fetchById(jpgPhoto.id) } returns null
+                val exception = assertThrows<EntityNotFoundException> {
+                    service.transform(jpgPhoto.id, clockwiseRotationEvent.transform, clockwiseRotationEvent.source)
+                }
+                exception shouldHaveMessage "Photo ${jpgPhoto.id} does not exist"
+                verify { photoRepo.fetchById(jpgPhoto.id) }
+                confirmVerified(photoRepo)
+            }
+
+            @Test
+            fun `should rotate photo clockwise (jpg)`() {
+                every { photoRepo.fetchById(jpgPhoto.id) } returns jpgPhoto
+                every {
+                    photoEventRepo.saveTransformEvent(
+                        photoId = jpgPhoto.id,
+                        transform = clockwiseRotationEvent.transform,
+                        source = clockwiseRotationEvent.source
+                    )
+                } returns clockwiseRotationEvent
+                service.transform(jpgPhoto.id, clockwiseRotationEvent.transform, clockwiseRotationEvent.source)
+                rawFile(jpgPhoto.id, jpgPhoto.uploadDate, jpgPhoto.type.extension()).readBytes().shouldBe(
+                    jpgClockwiseRotatedFile.readBytes()
+                )
+                verify { photoRepo.fetchById(jpgPhoto.id) }
+                verify {
+                    photoEventRepo.saveTransformEvent(
+                        photoId = jpgPhoto.id,
+                        transform = clockwiseRotationEvent.transform,
+                        source = clockwiseRotationEvent.source
+                    )
+                }
+                confirmVerified(photoRepo)
+            }
+
+            @Test
+            fun `should rotate photo counterclockwise (jpg)`() {
+                every { photoRepo.fetchById(jpgPhoto.id) } returns jpgPhoto
+                every {
+                    photoEventRepo.saveTransformEvent(
+                        photoId = jpgPhoto.id,
+                        transform = counterclockwiseRotationEvent.transform,
+                        source = counterclockwiseRotationEvent.source
+                    )
+                } returns counterclockwiseRotationEvent
+                service.transform(
+                    id = jpgPhoto.id,
+                    transform = counterclockwiseRotationEvent.transform,
+                    source = counterclockwiseRotationEvent.source
+                )
+                rawFile(jpgPhoto.id, jpgPhoto.uploadDate, jpgPhoto.type.extension()).readBytes().shouldBe(
+                    jpgCounterclockwiseRotatedFile.readBytes()
+                )
+                verify { photoRepo.fetchById(jpgPhoto.id) }
+                verify {
+                    photoEventRepo.saveTransformEvent(
+                        photoId = jpgPhoto.id,
+                        transform = counterclockwiseRotationEvent.transform,
+                        source = counterclockwiseRotationEvent.source
+                    )
+                }
+                confirmVerified(photoRepo)
+            }
+
+            @Test
+            fun `should rotate photo clockwise (png)`() {
+                every { photoRepo.fetchById(pngPhoto.id) } returns pngPhoto
+                every {
+                    photoEventRepo.saveTransformEvent(
+                        photoId = pngPhoto.id,
+                        transform = clockwiseRotationEvent.transform,
+                        source = clockwiseRotationEvent.source
+                    )
+                } returns clockwiseRotationEvent
+                service.transform(pngPhoto.id, clockwiseRotationEvent.transform, clockwiseRotationEvent.source)
+                rawFile(pngPhoto.id, pngPhoto.uploadDate, pngPhoto.type.extension()).readBytes().shouldBe(
+                    pngClockwiseRotatedFile.readBytes()
+                )
+                verify { photoRepo.fetchById(pngPhoto.id) }
+                verify {
+                    photoEventRepo.saveTransformEvent(
+                        photoId = pngPhoto.id,
+                        transform = clockwiseRotationEvent.transform,
+                        source = clockwiseRotationEvent.source
+                    )
+                }
+                confirmVerified(photoRepo)
+            }
+
+            @Test
+            fun `should rotate photo counterclockwise (png)`() {
+                every { photoRepo.fetchById(pngPhoto.id) } returns pngPhoto
+                every {
+                    photoEventRepo.saveTransformEvent(
+                        photoId = pngPhoto.id,
+                        transform = counterclockwiseRotationEvent.transform,
+                        source = counterclockwiseRotationEvent.source
+                    )
+                } returns counterclockwiseRotationEvent
+                service.transform(
+                    id = pngPhoto.id,
+                    transform = counterclockwiseRotationEvent.transform,
+                    source = counterclockwiseRotationEvent.source
+                )
+                rawFile(pngPhoto.id, pngPhoto.uploadDate, pngPhoto.type.extension()).readBytes().shouldBe(
+                    pngCounterclockwiseRotatedFile.readBytes()
+                )
+                verify { photoRepo.fetchById(pngPhoto.id) }
+                verify {
+                    photoEventRepo.saveTransformEvent(
+                        photoId = pngPhoto.id,
+                        transform = counterclockwiseRotationEvent.transform,
+                        source = counterclockwiseRotationEvent.source
+                    )
+                }
+                confirmVerified(photoRepo)
+            }
+        }
+
+        private fun copyPhoto(photo: Photo, file: File) {
+            copyFile(file, rawFile(photo.id, photo.uploadDate, photo.type.extension()))
+            copyFile(file, compressedFile(photo.id, photo.uploadDate, photo.type.extension()))
+        }
+
+        private fun copyFile(srcFile: File, destFile: File) {
+            destFile.parentFile.mkdirs()
+            srcFile.copyTo(destFile)
+        }
+    }
+
+    @Nested
     inner class uploadPhoto {
         private val jpgFile = File(javaClass.getResource("/data/photo.jpg").file)
         private val pngFile = File(javaClass.getResource("/data/photo.png").file)
@@ -324,4 +501,9 @@ internal class PhotoServiceImplTest {
         uploadDate = uploadDate,
         extension = extension
     )
+
+    private fun Photo.Type.extension() = when (this) {
+        Photo.Type.Jpg -> "jpg"
+        Photo.Type.Png -> "png"
+    }
 }

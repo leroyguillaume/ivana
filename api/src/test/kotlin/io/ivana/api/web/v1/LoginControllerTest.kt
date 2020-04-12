@@ -36,7 +36,7 @@ internal class LoginControllerTest : AbstractControllerTest() {
             expirationInSeconds = 60
         )
         private val localCookie = accessTokenCookie(Host, false)
-        private val rpCookie = accessTokenCookie(ForwardedHost, true)
+        private val rpCookie = accessTokenCookie(Host, true)
 
         @Test
         fun `should return 401 if credentials are invalid`() {
@@ -67,7 +67,7 @@ internal class LoginControllerTest : AbstractControllerTest() {
 
         @Test
         fun `should return 204 (behind RP)`() {
-            whenever(authService.authenticate(creds.username, creds.password, ip)).thenReturn(jwt)
+            whenever(authService.authenticate(creds.username, creds.password, RpRealIp)).thenReturn(jwt)
             callAndExpectDto(
                 method = HttpMethod.POST,
                 uri = LoginEndpoint,
@@ -76,7 +76,7 @@ internal class LoginControllerTest : AbstractControllerTest() {
                 status = HttpStatus.NO_CONTENT,
                 respCookies = listOf(rpCookie)
             )
-            verify(authService).authenticate(creds.username, creds.password, ip)
+            verify(authService).authenticate(creds.username, creds.password, RpRealIp)
         }
 
         private fun accessTokenCookie(host: String, secured: Boolean) =
@@ -92,7 +92,7 @@ internal class LoginControllerTest : AbstractControllerTest() {
     @Nested
     inner class logout {
         private val localCookie = accessTokenCookie(Host, false)
-        private val rpCookie = accessTokenCookie(ForwardedHost, true)
+        private val rpCookie = accessTokenCookie(Host, true)
 
         @Test
         fun `should return 204 (local)`() {

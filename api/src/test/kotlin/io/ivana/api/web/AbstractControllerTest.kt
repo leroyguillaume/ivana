@@ -29,6 +29,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultHandlers
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
 import org.springframework.util.LinkedMultiValueMap
 import java.io.File
+import java.net.InetAddress
 import java.util.*
 import javax.servlet.http.Cookie
 
@@ -36,10 +37,10 @@ import javax.servlet.http.Cookie
 abstract class AbstractControllerTest {
     protected companion object {
         const val Host = "localhost"
-        const val ForwardedHost = "ivana.io"
 
+        val RpRealIp = InetAddress.getByName("192.168.1.12")
         val RpHeaders = mapOf(
-            "X-Forwarded-Host" to listOf(ForwardedHost),
+            "X-Real-IP" to listOf(RpRealIp.hostAddress),
             "X-Forwarded-Proto" to listOf("https")
         )
     }
