@@ -9,10 +9,10 @@ import {catchError, finalize, map, tap} from 'rxjs/operators'
   providedIn: 'root'
 })
 export class LoginService {
-  private firstCall = true
-  private logged = false
+  private firstCall: boolean = true
+  private logged: boolean = false
 
-  private baseUrl = environment.baseUrl
+  private baseUrl: string = environment.baseUrl
 
   constructor(
     private readonly http: HttpClient

@@ -39,7 +39,7 @@
     </div>
     <div class="row">
       <div *ngFor="let photo of page.content" class="col-lg-3 col-md-4 col-6 mb-2">
-        <a [routerLink]="['/photo', photo.id]">
+        <a (click)="openPhoto(photo.id)" class="clickable">
           <img src="{{baseUrl}}{{photo.compressedUri}}" class="thumbnail img-fluid">
         </a>
       </div>

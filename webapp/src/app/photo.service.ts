@@ -11,7 +11,7 @@ import {PhotoUploadResults} from './photo-upload-results'
   providedIn: 'root'
 })
 export class PhotoService {
-  private baseUrl = environment.baseUrl
+  private baseUrl: string = environment.baseUrl
 
   constructor(
     private http: HttpClient

@@ -2,28 +2,36 @@ import {EventEmitter, Injectable} from '@angular/core'
 import {BehaviorSubject} from 'rxjs'
 import {PhotoService} from './photo.service'
 import {finalize} from 'rxjs/operators'
+import {Photo} from './photo'
+import {Page} from './page'
 
 @Injectable({
   providedIn: 'root'
 })
-export class UploaderService {
-  uploading = new BehaviorSubject(false)
-  success = new BehaviorSubject(null)
-  error = new BehaviorSubject(null)
-  filesUploaded = new EventEmitter()
+export class StateService {
+  success: BehaviorSubject<string> = new BehaviorSubject(null)
+  error: BehaviorSubject<string> = new BehaviorSubject(null)
+
+  uploadingPhotos: BehaviorSubject<boolean> = new BehaviorSubject(false)
+  photosUploaded: EventEmitter<void> = new EventEmitter()
+
+  currentHomePage: Page<Photo> = null
+
+  startPhotoNavIndex: number = -1
+  currentPhotoNavOffset: number = 0
 
   constructor(
     private photoService: PhotoService
   ) {
   }
 
-  upload(files: FileList) {
-    this.uploading.next(true)
+  uploadPhotos(files: FileList): void {
+    this.uploadingPhotos.next(true)
     this.photoService.upload(files)
       .pipe(
         finalize(() => {
-          this.uploading.next(false)
-          this.filesUploaded.emit()
+          this.uploadingPhotos.next(false)
+          this.photosUploaded.emit()
         })
       )
       .subscribe(

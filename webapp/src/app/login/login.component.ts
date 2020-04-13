@@ -1,9 +1,10 @@
 import {Component, OnInit} from '@angular/core'
-import {FormControl, FormGroup} from '@angular/forms'
+import {AbstractControl, FormControl, FormGroup} from '@angular/forms'
 import {LoginService} from '../login.service'
 import {faSignInAlt, faSpinner} from '@fortawesome/free-solid-svg-icons'
 import {finalize} from 'rxjs/operators'
 import {Router} from '@angular/router'
+import {IconDefinition} from '@fortawesome/fontawesome-common-types'
 
 @Component({
   selector: 'app-login',
@@ -11,13 +12,13 @@ import {Router} from '@angular/router'
   styleUrls: ['./login.component.scss']
 })
 export class LoginComponent implements OnInit {
-  spinnerIcon = faSpinner
-  loginIcon = faSignInAlt
+  spinnerIcon: IconDefinition = faSpinner
+  loginIcon: IconDefinition = faSignInAlt
 
-  loading = false
-  error = null
+  loading: boolean = false
+  error: string = null
 
-  loginForm = new FormGroup({
+  loginForm: FormGroup = new FormGroup({
     username: new FormControl(''),
     password: new FormControl('')
   })
@@ -28,11 +29,11 @@ export class LoginComponent implements OnInit {
   ) {
   }
 
-  get username() {
+  get username(): AbstractControl {
     return this.loginForm.get('username')
   }
 
-  get password() {
+  get password(): AbstractControl {
     return this.loginForm.get('password')
   }
 
