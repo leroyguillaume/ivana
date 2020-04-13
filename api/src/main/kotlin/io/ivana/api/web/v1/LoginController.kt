@@ -1,9 +1,9 @@
 package io.ivana.api.web.v1
 
-import io.ivana.api.security.AccessTokenCookieName
 import io.ivana.api.security.AuthenticationService
-import io.ivana.api.security.Bearer
-import io.ivana.api.security.remoteHost
+import io.ivana.api.web.AccessTokenCookieName
+import io.ivana.api.web.Bearer
+import io.ivana.api.web.remoteHost
 import io.ivana.dto.CredentialsDto
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus

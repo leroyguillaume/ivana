@@ -15,10 +15,11 @@ CREATE TABLE user_event
 
 CREATE TABLE "user"
 (
-    id       uuid         NOT NULL PRIMARY KEY,
-    name     varchar(50)  NOT NULL UNIQUE,
-    password varchar(100) NOT NULL,
-    role     user_role    NOT NULL
+    id            uuid                     NOT NULL PRIMARY KEY,
+    name          varchar(50)              NOT NULL UNIQUE,
+    password      varchar(100)             NOT NULL,
+    role          user_role                NOT NULL,
+    creation_date timestamp WITH TIME ZONE NOT NULL
 );
 
 CREATE FUNCTION next_user_event_number(id uuid) RETURNS bigint
@@ -39,7 +40,8 @@ BEGIN
         event.subject_id,
         event.data #>> '{content,name}',
         event.data #>> '{content,hashedPwd}',
-        (event.data #>> '{content,role}')::user_role
+        (event.data #>> '{content,role}')::user_role,
+        event.date
     );
 END;
 $$;

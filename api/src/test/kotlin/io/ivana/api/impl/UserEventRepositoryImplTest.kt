@@ -95,7 +95,8 @@ internal class UserEventRepositoryImplTest {
             id = UUID.randomUUID(),
             name = expectedEvent.content.name,
             hashedPwd = expectedEvent.content.hashedPwd,
-            role = expectedEvent.content.role
+            role = expectedEvent.content.role,
+            creationDate = expectedEvent.date
         )
 
         @Test
@@ -105,7 +106,10 @@ internal class UserEventRepositoryImplTest {
                 date = event.date,
                 subjectId = event.subjectId
             )
-            userRepo.fetchById(event.subjectId) shouldBe expectedUser.copy(id = event.subjectId)
+            userRepo.fetchById(event.subjectId) shouldBe expectedUser.copy(
+                id = event.subjectId,
+                creationDate = event.date
+            )
         }
     }
 

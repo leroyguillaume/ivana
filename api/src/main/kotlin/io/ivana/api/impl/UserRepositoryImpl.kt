@@ -5,6 +5,7 @@ import io.ivana.core.UserRepository
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Repository
 import java.sql.ResultSet
+import java.time.OffsetDateTime
 import java.util.*
 
 @Repository
@@ -16,6 +17,7 @@ class UserRepositoryImpl(
         const val NameColumnName = "name"
         const val PasswordColumnName = "password"
         const val RoleColumnName = "role"
+        const val CreationDateColumnName = "creation_date"
     }
 
     override val tableName = TableName
@@ -26,7 +28,8 @@ class UserRepositoryImpl(
         id = rs.getObject(IdColumnName, UUID::class.java),
         name = rs.getString(NameColumnName),
         hashedPwd = rs.getString(PasswordColumnName),
-        role = rs.getRole()
+        role = rs.getRole(),
+        creationDate = rs.getObject(CreationDateColumnName, OffsetDateTime::class.java)
     )
 
     private fun ResultSet.getRole() = getString(RoleColumnName).let { type ->

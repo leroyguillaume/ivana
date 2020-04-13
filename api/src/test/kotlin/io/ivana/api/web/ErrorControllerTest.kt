@@ -3,7 +3,6 @@ package io.ivana.api.web
 import com.nhaarman.mockitokotlin2.verify
 import com.nhaarman.mockitokotlin2.whenever
 import io.ivana.api.security.BadJwtException
-import io.ivana.api.security.Bearer
 import io.ivana.api.web.v1.*
 import io.ivana.dto.ErrorDto
 import io.ivana.dto.PasswordUpdateDto

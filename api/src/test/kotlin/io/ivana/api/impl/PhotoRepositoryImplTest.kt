@@ -234,6 +234,23 @@ internal class PhotoRepositoryImplTest {
         }
     }
 
+    private fun PhotoEvent.Upload.toPhoto(no: Int) = Photo(
+        id = subjectId,
+        ownerId = source.id,
+        uploadDate = date,
+        type = content.type,
+        hash = content.hash,
+        no = no
+    )
+
+    private fun UserEvent.Creation.toUser() = User(
+        id = subjectId,
+        name = content.name,
+        hashedPwd = content.hashedPwd,
+        role = content.role,
+        creationDate = date
+    )
+
     private data class InitDataEntry(
         val userCreationContent: UserEvent.Creation.Content,
         val photoUploadContents: List<PhotoEvent.Upload.Content>

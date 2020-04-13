@@ -89,7 +89,7 @@ class PhotoServiceImpl(
             try {
                 val compressionFile = saveCompressedFile(tmpFile, event)
                 return try {
-                    Logger.info("User ${source.id} (${source.ip}) uploaded new photo")
+                    Logger.info("User ${source.id} (${source.ip}) uploaded new photo (${event.subjectId})")
                     photoRepo.fetchById(event.subjectId)!!
                 } catch (exception: Exception) {
                     compressionFile.deleteAndLog()

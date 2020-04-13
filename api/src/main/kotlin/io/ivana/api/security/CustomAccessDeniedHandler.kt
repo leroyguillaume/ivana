@@ -1,6 +1,7 @@
 package io.ivana.api.security
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import io.ivana.api.web.remoteHost
 import io.ivana.dto.ErrorDto
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus

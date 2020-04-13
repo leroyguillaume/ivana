@@ -4,9 +4,11 @@ import com.fasterxml.jackson.databind.JsonMappingException
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.MissingKotlinParameterException
 import io.ivana.api.impl.EntityNotFoundException
+import io.ivana.api.impl.UserAlreadyExistsException
 import io.ivana.api.security.BadCredentialsException
 import io.ivana.api.security.BadJwtException
 import io.ivana.api.security.CustomAccessDeniedHandler
+import io.ivana.api.web.v1.UserApiEndpoint
 import io.ivana.dto.ErrorDto
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
@@ -16,11 +18,13 @@ import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.web.HttpMediaTypeNotSupportedException
 import org.springframework.web.HttpRequestMethodNotSupportedException
+import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
 import org.springframework.web.multipart.MultipartException
+import java.net.URI
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 import javax.validation.ConstraintViolation
@@ -68,6 +72,16 @@ class ErrorController(
         return ErrorDto.MalformedRequest
     }
 
+    @ExceptionHandler(MethodArgumentNotValidException::class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    fun handleMethodArgumentNotValid(exception: MethodArgumentNotValidException): ErrorDto {
+        Logger.debug(exception.message, exception)
+        return ErrorDto.ValidationError(
+            errors = exception.bindingResult.fieldErrors
+                .map { ErrorDto.InvalidParameter(it.field, it.defaultMessage!!) }
+        )
+    }
+
     @ExceptionHandler(MethodArgumentTypeMismatchException::class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     fun handleMethodArgumentTypeMismatch(exception: MethodArgumentTypeMismatchException): ErrorDto {
@@ -107,6 +121,13 @@ class ErrorController(
     fun handleUnsupportedMediaType(exception: HttpMediaTypeNotSupportedException): ErrorDto {
         Logger.debug(exception.message, exception)
         return ErrorDto.UnsupportedMediaType(setOf(MediaType.APPLICATION_JSON_VALUE))
+    }
+
+    @ExceptionHandler(UserAlreadyExistsException::class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    fun handleUserAlreadyExists(exception: UserAlreadyExistsException): ErrorDto {
+        Logger.debug(exception.message, exception)
+        return ErrorDto.DuplicateResource(URI("$UserApiEndpoint/${exception.user.id}"))
     }
 
     private fun ConstraintViolation<*>.toDto() = ErrorDto.InvalidParameter(

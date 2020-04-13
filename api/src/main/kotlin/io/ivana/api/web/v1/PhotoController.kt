@@ -4,10 +4,11 @@ import io.ivana.api.impl.PhotoAlreadyUploadedException
 import io.ivana.api.security.CustomAuthentication
 import io.ivana.api.security.UserPhotoTargetType
 import io.ivana.api.security.UserPrincipal
-import io.ivana.api.web.toTransform
+import io.ivana.api.web.source
 import io.ivana.core.EventSource
 import io.ivana.core.Photo
 import io.ivana.core.PhotoService
+import io.ivana.core.Transform
 import io.ivana.dto.*
 import org.slf4j.LoggerFactory
 import org.springframework.core.io.FileSystemResource
@@ -94,7 +95,7 @@ class PhotoController(
         auth: Authentication,
         req: HttpServletRequest
     ) {
-        photoService.transform(id, transformDto.toTransform(), userSource(req, auth.principal as UserPrincipal))
+        photoService.transform(id, transformDto.toTransform(), req.source(auth.principal as UserPrincipal))
     }
 
     @Transactional
@@ -104,7 +105,7 @@ class PhotoController(
         @RequestParam(FilesParamName) files: List<MultipartFile>, auth: Authentication, req: HttpServletRequest
     ): PhotoUploadResultsDto {
         val principal = (auth as CustomAuthentication).principal
-        val source = userSource(req, principal)
+        val source = req.source(principal)
         return PhotoUploadResultsDto(files.map { uploadPhoto(it, source) })
     }
 
@@ -139,4 +140,15 @@ class PhotoController(
             }
         }
     }
+
+    private fun TransformDto.toTransform() = when (this) {
+        is TransformDto.Rotation -> toTransform()
+    }
+
+    private fun TransformDto.Rotation.Direction.toDirection() = when (this) {
+        TransformDto.Rotation.Direction.Clockwise -> Transform.Rotation.Direction.Clockwise
+        TransformDto.Rotation.Direction.Counterclockwise -> Transform.Rotation.Direction.Counterclockwise
+    }
+
+    private fun TransformDto.Rotation.toTransform() = Transform.Rotation(direction.toDirection())
 }
