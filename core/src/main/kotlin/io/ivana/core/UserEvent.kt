@@ -25,4 +25,12 @@ sealed class UserEvent : Event {
         override val number: Long,
         override val source: EventSource.User
     ) : UserEvent()
+
+    data class PasswordUpdate(
+        override val date: OffsetDateTime,
+        override val subjectId: UUID,
+        override val number: Long,
+        override val source: EventSource,
+        val newHashedPwd: String
+    ) : UserEvent()
 }

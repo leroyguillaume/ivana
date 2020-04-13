@@ -2,9 +2,7 @@
 
 package io.ivana.api.impl
 
-import io.ivana.core.Role
-import io.ivana.core.User
-import io.ivana.core.UserRepository
+import io.ivana.core.*
 import io.kotlintest.matchers.throwable.shouldHaveMessage
 import io.kotlintest.shouldBe
 import io.mockk.confirmVerified
@@ -15,17 +13,23 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import org.springframework.security.crypto.password.PasswordEncoder
+import java.time.OffsetDateTime
 import java.util.*
 
 internal class UserServiceImplTest {
     private lateinit var userRepo: UserRepository
+    private lateinit var userEventRepo: UserEventRepository
+    private lateinit var pwdEncoder: PasswordEncoder
     private lateinit var service: UserServiceImpl
 
     @BeforeEach
     fun beforeEach() {
         userRepo = mockk()
+        userEventRepo = mockk()
+        pwdEncoder = mockk()
 
-        service = UserServiceImpl(userRepo)
+        service = UserServiceImpl(userRepo, userEventRepo, pwdEncoder)
     }
 
     @Nested
@@ -81,6 +85,42 @@ internal class UserServiceImplTest {
             user shouldBe expectedUser
             verify { userRepo.fetchById(user.id) }
             confirmVerified(userRepo)
+        }
+    }
+
+    @Nested
+    inner class updatePassword {
+        private val event = UserEvent.PasswordUpdate(
+            date = OffsetDateTime.now(),
+            subjectId = UUID.randomUUID(),
+            number = 1,
+            source = EventSource.System,
+            newHashedPwd = "newHashedPwd"
+        )
+        private val newPwd = "newPwd"
+
+        @Test
+        fun `should throw exception if user does not exist`() {
+            every { userRepo.existsById(event.subjectId) } returns false
+            val exception = assertThrows<EntityNotFoundException> {
+                service.updatePassword(event.subjectId, newPwd, event.source)
+            }
+            exception shouldHaveMessage "User ${event.subjectId} does not exist"
+            verify { userRepo.existsById(event.subjectId) }
+            confirmVerified(userRepo)
+        }
+
+        @Test
+        fun `should update password`() {
+            every { userRepo.existsById(event.subjectId) } returns true
+            every { pwdEncoder.encode(newPwd) } returns event.newHashedPwd
+            every {
+                userEventRepo.savePasswordUpdateEvent(event.subjectId, event.newHashedPwd, event.source)
+            } returns event
+            service.updatePassword(event.subjectId, newPwd, event.source)
+            verify { userRepo.existsById(event.subjectId) }
+            verify { pwdEncoder.encode(newPwd) }
+            confirmVerified(userRepo, pwdEncoder)
         }
     }
 }

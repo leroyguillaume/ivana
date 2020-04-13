@@ -43,6 +43,13 @@ internal class ErrorDtoTest {
     )
 
     @Nested
+    inner class MethodNotAllowed : JsonTest(
+        filename = "error/method-not-allowed.json",
+        expectedValue = ErrorDto.MethodNotAllowed,
+        deserializeAs = typeOf<ErrorDto>()
+    )
+
+    @Nested
     inner class MissingParameter : JsonTest(
         filename = "error/missing-parameter.json",
         expectedValue = ErrorDto.MissingParameter("foo"),

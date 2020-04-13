@@ -6,7 +6,10 @@ import com.nhaarman.mockitokotlin2.*
 import io.ivana.api.impl.PhotoAlreadyUploadedException
 import io.ivana.api.security.Permission
 import io.ivana.api.web.AbstractControllerTest
-import io.ivana.core.*
+import io.ivana.core.LinkedPhotos
+import io.ivana.core.Page
+import io.ivana.core.Photo
+import io.ivana.core.Transform
 import io.ivana.dto.ErrorDto
 import io.ivana.dto.PhotoUploadResultsDto
 import io.ivana.dto.TransformDto
@@ -19,7 +22,6 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.mock.web.MockMultipartFile
 import java.io.File
-import java.net.InetAddress
 import java.net.URI
 import java.time.OffsetDateTime
 import java.util.*
@@ -371,10 +373,6 @@ internal class PhotoControllerTest : AbstractControllerTest() {
     @Nested
     inner class transform {
         private val id = UUID.randomUUID()
-        private val source = EventSource.User(
-            id = principal.user.id,
-            ip = InetAddress.getByName("127.0.0.1")
-        )
         private val method = HttpMethod.POST
         private val uri = "$PhotoApiEndpoint/$id$TransformPhotoEndpoint"
 
@@ -430,10 +428,6 @@ internal class PhotoControllerTest : AbstractControllerTest() {
         private val jpgFile = File(javaClass.getResource("/data/photo.jpg").file)
         private val pngFile = File(javaClass.getResource("/data/photo.png").file)
         private val gifFile = File(javaClass.getResource("/data/photo.gif").file)
-        private val source = EventSource.User(
-            id = principal.user.id,
-            ip = InetAddress.getByName("127.0.0.1")
-        )
         private val jpgPhoto = Photo(
             id = UUID.randomUUID(),
             ownerId = principal.user.id,

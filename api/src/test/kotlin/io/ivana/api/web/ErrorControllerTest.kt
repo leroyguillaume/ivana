@@ -4,10 +4,9 @@ import com.nhaarman.mockitokotlin2.verify
 import com.nhaarman.mockitokotlin2.whenever
 import io.ivana.api.security.BadJwtException
 import io.ivana.api.security.Bearer
-import io.ivana.api.web.v1.LoginEndpoint
-import io.ivana.api.web.v1.NavigableParamName
-import io.ivana.api.web.v1.PhotoApiEndpoint
+import io.ivana.api.web.v1.*
 import io.ivana.dto.ErrorDto
+import io.ivana.dto.PasswordUpdateDto
 import org.junit.jupiter.api.Test
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
@@ -100,6 +99,18 @@ internal class ErrorControllerTest : AbstractControllerTest() {
             reqCookies = listOf(accessTokenCookie()),
             status = HttpStatus.BAD_REQUEST,
             respDto = typeMismatchErrorDto(NavigableParamName, "boolean")
+        )
+    }
+
+    @Test
+    fun `should return 404`() = authenticated {
+        callAndExpectDto(
+            method = HttpMethod.POST,
+            uri = "$UserApiEndpoint$PasswordUpdateEndpoint",
+            reqCookies = listOf(accessTokenCookie()),
+            reqContent = mapper.writeValueAsString(PasswordUpdateDto("changeit")),
+            status = HttpStatus.METHOD_NOT_ALLOWED,
+            respDto = ErrorDto.MethodNotAllowed
         )
     }
 }

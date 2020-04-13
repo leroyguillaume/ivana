@@ -1,5 +1,5 @@
 -- @formatter:off
-CREATE PROCEDURE insert_photo_from_upload_event(event record)
+CREATE PROCEDURE insert_photo(event record)
     LANGUAGE plpgsql AS
 $$
 DECLARE
@@ -31,7 +31,7 @@ CREATE FUNCTION photo_update() RETURNS trigger
     LANGUAGE plpgsql AS
 $$
 BEGIN
-    CASE WHEN new.type = 'upload' THEN CALL insert_photo_from_upload_event(new);
+    CASE WHEN new.type = 'upload' THEN CALL insert_photo(new);
         ELSE
         END CASE;
     RETURN new;

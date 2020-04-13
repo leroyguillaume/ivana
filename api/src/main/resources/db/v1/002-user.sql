@@ -1,5 +1,5 @@
 -- @formatter:off
-CREATE TYPE user_event_type AS enum ('creation', 'login');
+CREATE TYPE user_event_type AS enum ('creation', 'login', 'password_update');
 
 CREATE TYPE user_role AS enum ('user', 'admin', 'super_admin');
 
@@ -29,7 +29,7 @@ FROM user_event
 WHERE subject_id = $1;
 $$;
 
-CREATE PROCEDURE insert_user_from_creation_event(event record)
+CREATE PROCEDURE insert_user(event record)
     LANGUAGE plpgsql AS
 $$
 BEGIN
@@ -44,13 +44,25 @@ BEGIN
 END;
 $$;
 
+CREATE PROCEDURE update_user_password(event record)
+    LANGUAGE plpgsql AS
+$$
+BEGIN
+    UPDATE "user"
+    SET password = event.data #>> '{content,newHashedPwd}'
+    WHERE id = event.subject_id;
+END;
+$$;
+
 CREATE FUNCTION user_update() RETURNS trigger
     LANGUAGE plpgsql AS
 $$
 BEGIN
-    CASE WHEN new.type = 'creation' THEN CALL insert_user_from_creation_event(new);
+    CASE
+        WHEN new.type = 'creation' THEN CALL insert_user(new);
+        WHEN new.type = 'password_update' THEN CALL update_user_password(new);
         ELSE
-        END CASE;
+    END CASE;
     RETURN new;
 END;
 $$;

@@ -32,4 +32,16 @@ internal class UserEventDataTest {
         ),
         deserializeAs = typeOf<UserEventData.Login>()
     )
+
+    @Nested
+    inner class PasswordUpdate : JsonTest(
+        filename = "event-data/user/password-update.json",
+        expectedValue = UserEventData.PasswordUpdate(
+            EventSourceData.System,
+            UserEventData.PasswordUpdate.Content(
+                newHashedPwd = "newHashedPwd"
+            )
+        ),
+        deserializeAs = typeOf<UserEventData.PasswordUpdate>()
+    )
 }

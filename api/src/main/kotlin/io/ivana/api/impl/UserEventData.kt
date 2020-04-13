@@ -15,4 +15,13 @@ internal sealed class UserEventData : EventData {
     data class Login(
         override val source: EventSourceData.User
     ) : UserEventData()
+
+    data class PasswordUpdate(
+        override val source: EventSourceData,
+        val content: Content
+    ) : UserEventData() {
+        data class Content(
+            val newHashedPwd: String
+        )
+    }
 }
