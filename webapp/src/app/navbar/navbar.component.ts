@@ -2,7 +2,8 @@ import {Component, ElementRef, OnInit, ViewChild} from '@angular/core'
 import {Router} from '@angular/router'
 import {faSignOutAlt, faSpinner, faUpload} from '@fortawesome/free-solid-svg-icons'
 import {LoginService} from '../login.service'
-import {UploaderService} from '../uploader.service'
+import {StateService} from '../state.service'
+import {IconDefinition} from '@fortawesome/fontawesome-common-types'
 
 @Component({
   selector: 'app-navbar',
@@ -10,19 +11,19 @@ import {UploaderService} from '../uploader.service'
   styleUrls: ['./navbar.component.scss']
 })
 export class NavbarComponent implements OnInit {
-  logoutIcon = faSignOutAlt
-  uploadIcon = faUpload
-  spinnerIcon = faSpinner
+  logoutIcon: IconDefinition = faSignOutAlt
+  uploadIcon: IconDefinition = faUpload
+  spinnerIcon: IconDefinition = faSpinner
 
-  opened = false
-  uploading = false
+  opened: boolean = false
+  uploading: boolean = false
 
   @ViewChild('files')
   filesInput: ElementRef
 
   constructor(
     private loginService: LoginService,
-    private uploaderService: UploaderService,
+    private uploaderService: StateService,
     private router: Router
   ) {
   }
@@ -36,17 +37,17 @@ export class NavbarComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.uploaderService.uploading.subscribe(uploading => this.uploading = uploading)
+    this.uploaderService.uploadingPhotos.subscribe(uploading => this.uploading = uploading)
   }
 
-  selectFiles() {
+  selectFiles(): void {
     this.filesInput.nativeElement.click()
   }
 
-  upload() {
+  upload(): void {
     const files = this.filesInput.nativeElement.files
     if (files.length > 0) {
-      this.uploaderService.upload(files)
+      this.uploaderService.uploadPhotos(files)
     }
   }
 

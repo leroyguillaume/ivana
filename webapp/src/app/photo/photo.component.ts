@@ -5,7 +5,9 @@ import {PhotoService} from '../photo.service'
 import {ActivatedRoute, Router} from '@angular/router'
 import {finalize, flatMap} from 'rxjs/operators'
 import {environment} from '../../environments/environment'
-import {RoutingService} from '../routing.service'
+import {StateService} from '../state.service'
+import {IconDefinition} from '@fortawesome/fontawesome-common-types'
+import {PageSize} from '../home/home.component'
 
 @Component({
   selector: 'app-photo',
@@ -13,25 +15,37 @@ import {RoutingService} from '../routing.service'
   styleUrls: ['./photo.component.scss']
 })
 export class PhotoComponent implements OnInit {
-  spinnerIcon = faSpinner
-  leftIcon = faArrowLeft
+  spinnerIcon: IconDefinition = faSpinner
+  leftIcon: IconDefinition = faArrowLeft
 
-  baseUrl = environment.baseUrl
-  loading = true
-  error = null
+  baseUrl: string = environment.baseUrl
+  loading: boolean = true
+  error: string = null
+
+  photo: NavigablePhoto
 
   constructor(
     private photoService: PhotoService,
-    private routingService: RoutingService,
+    private stateService: StateService,
     private route: ActivatedRoute,
     private router: Router,
   ) {
   }
 
-  photo: NavigablePhoto
+  close(): void {
+    const offset = this.stateService.startPhotoNavIndex > -1
+      ? Math.floor((this.stateService.startPhotoNavIndex + this.stateService.currentPhotoNavOffset) / PageSize)
+      : 0
+    // noinspection JSIgnoredPromiseFromCall
+    this.router.navigate(['home'], {
+      queryParams: {
+        page: (this.stateService.currentHomePage?.no || 1) + offset
+      }
+    })
+  }
 
   @HostListener('window:keyup', ['$event'])
-  keyEvent(event: KeyboardEvent) {
+  keyEvent(event: KeyboardEvent): void {
     switch (event.key) {
       case 'ArrowLeft':
         this.previous()
@@ -45,19 +59,16 @@ export class PhotoComponent implements OnInit {
     }
   }
 
-  close() {
-    // noinspection JSIgnoredPromiseFromCall
-    this.router.navigateByUrl(this.routingService.previousUrl)
-  }
-
-  private next() {
+  next(): void {
     if (this.photo.next) {
+      this.stateService.currentPhotoNavOffset++
       // noinspection JSIgnoredPromiseFromCall
       this.router.navigate(['photo', this.photo.next.id])
     }
   }
 
   ngOnInit(): void {
+    this.stateService.currentPhotoNavOffset = 0
     this.route.paramMap
       .pipe(flatMap(params => this.photoService.get(params.get('id')).pipe(finalize(() => this.loading = false))))
       .subscribe(
@@ -69,8 +80,9 @@ export class PhotoComponent implements OnInit {
       )
   }
 
-  private previous() {
+  previous(): void {
     if (this.photo.previous) {
+      this.stateService.currentPhotoNavOffset--
       // noinspection JSIgnoredPromiseFromCall
       this.router.navigate(['photo', this.photo.previous.id])
     }
