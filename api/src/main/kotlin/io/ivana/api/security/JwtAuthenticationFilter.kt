@@ -1,5 +1,7 @@
 package io.ivana.api.security
 
+import io.ivana.api.web.AccessTokenCookieName
+import io.ivana.api.web.Bearer
 import org.springframework.http.HttpHeaders
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.core.context.SecurityContextHolder

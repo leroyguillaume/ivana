@@ -45,7 +45,8 @@ internal class UserRepositoryImplTest {
             id = creationEvent.subjectId,
             name = creationEvent.content.name,
             hashedPwd = creationEvent.content.hashedPwd,
-            role = creationEvent.content.role
+            role = creationEvent.content.role,
+            creationDate = creationEvent.date
         )
     }
 

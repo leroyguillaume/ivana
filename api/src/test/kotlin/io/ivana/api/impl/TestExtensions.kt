@@ -1,9 +1,5 @@
 package io.ivana.api.impl
 
-import io.ivana.core.Photo
-import io.ivana.core.PhotoEvent
-import io.ivana.core.User
-import io.ivana.core.UserEvent
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 
@@ -18,19 +14,3 @@ internal fun cleanDb(jdbc: NamedParameterJdbcTemplate) {
         )
     }
 }
-
-internal fun PhotoEvent.Upload.toPhoto(no: Int) = Photo(
-    id = subjectId,
-    ownerId = source.id,
-    uploadDate = date,
-    type = content.type,
-    hash = content.hash,
-    no = no
-)
-
-internal fun UserEvent.Creation.toUser() = User(
-    id = subjectId,
-    name = content.name,
-    hashedPwd = content.hashedPwd,
-    role = content.role
-)

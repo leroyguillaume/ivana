@@ -52,7 +52,8 @@ internal class AuthenticationServiceTest {
             id = UUID.randomUUID(),
             name = "admin",
             hashedPwd = pwdEncoder.encode(password),
-            role = Role.SuperAdmin
+            role = Role.SuperAdmin,
+            creationDate = OffsetDateTime.now()
         )
         private val expectedJwt = Jwt(
             value = "jwt",
@@ -112,7 +113,8 @@ internal class AuthenticationServiceTest {
             id = UUID.randomUUID(),
             name = "admin",
             hashedPwd = "hashedPwd",
-            role = Role.SuperAdmin
+            role = Role.SuperAdmin,
+            creationDate = OffsetDateTime.now()
         )
         private val expectedPrincipal = UserPrincipal(user)
 
@@ -142,7 +144,8 @@ internal class AuthenticationServiceTest {
                 id = UUID.randomUUID(),
                 name = "admin",
                 hashedPwd = "hashedPwd",
-                role = Role.SuperAdmin
+                role = Role.SuperAdmin,
+                creationDate = OffsetDateTime.now()
             )
         )
 

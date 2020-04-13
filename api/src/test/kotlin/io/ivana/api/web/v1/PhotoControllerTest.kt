@@ -34,7 +34,7 @@ internal class PhotoControllerTest : AbstractControllerTest() {
         private val linkedPhotos = LinkedPhotos(
             current = Photo(
                 id = UUID.randomUUID(),
-                ownerId = principal.user.id,
+                ownerId = userPrincipal.user.id,
                 uploadDate = OffsetDateTime.now(),
                 type = Photo.Type.Jpg,
                 hash = "hash1",
@@ -42,7 +42,7 @@ internal class PhotoControllerTest : AbstractControllerTest() {
             ),
             previous = Photo(
                 id = UUID.randomUUID(),
-                ownerId = principal.user.id,
+                ownerId = userPrincipal.user.id,
                 uploadDate = OffsetDateTime.now(),
                 type = Photo.Type.Jpg,
                 hash = "hash2",
@@ -50,7 +50,7 @@ internal class PhotoControllerTest : AbstractControllerTest() {
             ),
             next = Photo(
                 id = UUID.randomUUID(),
-                ownerId = principal.user.id,
+                ownerId = userPrincipal.user.id,
                 uploadDate = OffsetDateTime.now(),
                 type = Photo.Type.Jpg,
                 hash = "hash3",
@@ -132,7 +132,7 @@ internal class PhotoControllerTest : AbstractControllerTest() {
             content = listOf(
                 Photo(
                     id = UUID.randomUUID(),
-                    ownerId = principal.user.id,
+                    ownerId = userPrincipal.user.id,
                     uploadDate = OffsetDateTime.now(),
                     type = Photo.Type.Jpg,
                     hash = "hash1",
@@ -140,7 +140,7 @@ internal class PhotoControllerTest : AbstractControllerTest() {
                 ),
                 Photo(
                     id = UUID.randomUUID(),
-                    ownerId = principal.user.id,
+                    ownerId = userPrincipal.user.id,
                     uploadDate = OffsetDateTime.now(),
                     type = Photo.Type.Jpg,
                     hash = "hash2",
@@ -204,7 +204,7 @@ internal class PhotoControllerTest : AbstractControllerTest() {
     inner class getCompressedFile {
         private val jpgPhoto = Photo(
             id = UUID.randomUUID(),
-            ownerId = principal.user.id,
+            ownerId = userPrincipal.user.id,
             uploadDate = OffsetDateTime.now(),
             type = Photo.Type.Jpg,
             hash = "hash1",
@@ -213,7 +213,7 @@ internal class PhotoControllerTest : AbstractControllerTest() {
         private val jpgFile = File(javaClass.getResource("/data/photo.jpg").file)
         private val pngPhoto = Photo(
             id = UUID.randomUUID(),
-            ownerId = principal.user.id,
+            ownerId = userPrincipal.user.id,
             uploadDate = OffsetDateTime.now(),
             type = Photo.Type.Png,
             hash = "hash2",
@@ -289,7 +289,7 @@ internal class PhotoControllerTest : AbstractControllerTest() {
     inner class getRawFile {
         private val jpgPhoto = Photo(
             id = UUID.randomUUID(),
-            ownerId = principal.user.id,
+            ownerId = userPrincipal.user.id,
             uploadDate = OffsetDateTime.now(),
             type = Photo.Type.Jpg,
             hash = "hash1",
@@ -298,7 +298,7 @@ internal class PhotoControllerTest : AbstractControllerTest() {
         private val jpgFile = File(javaClass.getResource("/data/photo.jpg").file)
         private val pngPhoto = Photo(
             id = UUID.randomUUID(),
-            ownerId = principal.user.id,
+            ownerId = userPrincipal.user.id,
             uploadDate = OffsetDateTime.now(),
             type = Photo.Type.Png,
             hash = "hash2",
@@ -430,7 +430,7 @@ internal class PhotoControllerTest : AbstractControllerTest() {
         private val gifFile = File(javaClass.getResource("/data/photo.gif").file)
         private val jpgPhoto = Photo(
             id = UUID.randomUUID(),
-            ownerId = principal.user.id,
+            ownerId = userPrincipal.user.id,
             uploadDate = OffsetDateTime.now(),
             type = Photo.Type.Jpg,
             hash = "hash",
@@ -438,7 +438,7 @@ internal class PhotoControllerTest : AbstractControllerTest() {
         )
         private val pngPhoto = Photo(
             id = UUID.randomUUID(),
-            ownerId = principal.user.id,
+            ownerId = userPrincipal.user.id,
             uploadDate = OffsetDateTime.now(),
             type = Photo.Type.Png,
             hash = "hash",

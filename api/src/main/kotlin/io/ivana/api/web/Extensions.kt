@@ -1,17 +1,18 @@
 package io.ivana.api.web
 
-import io.ivana.core.Transform
-import io.ivana.dto.TransformDto
+import io.ivana.api.security.UserPrincipal
+import io.ivana.core.EventSource
+import java.net.InetAddress
+import javax.servlet.http.HttpServletRequest
 
 const val RootApiEndpoint = "/api"
 
-internal fun TransformDto.toTransform() = when (this) {
-    is TransformDto.Rotation -> toTransform()
-}
+const val Bearer = "Bearer"
+const val AccessTokenCookieName = "access_token"
 
-private fun TransformDto.Rotation.Direction.toDirection() = when (this) {
-    TransformDto.Rotation.Direction.Clockwise -> Transform.Rotation.Direction.Clockwise
-    TransformDto.Rotation.Direction.Counterclockwise -> Transform.Rotation.Direction.Counterclockwise
-}
+fun HttpServletRequest.remoteHost() = InetAddress.getByName(getHeader("X-Real-IP") ?: remoteAddr)
 
-private fun TransformDto.Rotation.toTransform() = Transform.Rotation(direction.toDirection())
+fun HttpServletRequest.source(principal: UserPrincipal) = EventSource.User(
+    id = principal.user.id,
+    ip = remoteHost()
+)

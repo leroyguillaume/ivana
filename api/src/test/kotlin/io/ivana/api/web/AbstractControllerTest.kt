@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.nhaarman.mockitokotlin2.reset
 import com.nhaarman.mockitokotlin2.verify
 import com.nhaarman.mockitokotlin2.whenever
-import io.ivana.api.security.AccessTokenCookieName
 import io.ivana.api.security.AuthenticationService
 import io.ivana.api.security.UserPhotoAuthorizationRepository
 import io.ivana.api.security.UserPrincipal
@@ -18,6 +17,7 @@ import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.mock.web.MockMultipartFile
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.ResultMatcher
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart
@@ -28,6 +28,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
 import org.springframework.util.LinkedMultiValueMap
 import java.io.File
 import java.net.InetAddress
+import java.time.OffsetDateTime
 import java.util.*
 import javax.servlet.http.Cookie
 
@@ -44,17 +45,32 @@ abstract class AbstractControllerTest {
     }
 
     protected val jwt = "jwt"
-    protected val principal = UserPrincipal(
+    protected val userPrincipal = UserPrincipal(
+        User(
+            id = UUID.randomUUID(),
+            name = "user",
+            hashedPwd = "hashedPwd",
+            role = Role.User,
+            creationDate = OffsetDateTime.now()
+        )
+    )
+    protected val adminPrincipal = UserPrincipal(
         User(
             id = UUID.randomUUID(),
             name = "admin",
             hashedPwd = "hashedPwd",
-            role = Role.SuperAdmin
+            role = Role.Admin,
+            creationDate = OffsetDateTime.now()
         )
     )
-    protected val source = EventSource.User(
-        id = principal.user.id,
-        ip = InetAddress.getByName("127.0.0.1")
+    protected val superAdminPrincipal = UserPrincipal(
+        User(
+            id = UUID.randomUUID(),
+            name = "superadmin",
+            hashedPwd = "hashedPwd",
+            role = Role.SuperAdmin,
+            creationDate = OffsetDateTime.now()
+        )
     )
 
     @Autowired
@@ -75,9 +91,12 @@ abstract class AbstractControllerTest {
     @MockBean
     protected lateinit var userService: UserService
 
+    @MockBean
+    protected lateinit var pwdEncoder: BCryptPasswordEncoder
+
     @BeforeEach
     fun beforeEach() {
-        reset(authService)
+        reset(authService, photoService, userService, pwdEncoder)
     }
 
     protected fun accessTokenCookie() = Cookie(AccessTokenCookieName, jwt).apply {
@@ -88,10 +107,12 @@ abstract class AbstractControllerTest {
         secure = false
     }
 
-    protected fun authenticated(block: () -> Unit) {
-        whenever(authService.principalFromJwt(jwt)).thenReturn(principal)
-        block()
-        verify(authService).principalFromJwt(jwt)
+    protected fun authenticated(principal: UserPrincipal = userPrincipal, block: CallContext.() -> Unit) {
+        CallContext(principal).apply {
+            whenever(authService.principalFromJwt(jwt)).thenReturn(principal)
+            block()
+            verify(authService).principalFromJwt(jwt)
+        }
     }
 
     protected fun callAndExpectDto(
@@ -179,6 +200,12 @@ abstract class AbstractControllerTest {
         }
     }
 
+    protected fun sizeErrorDto(parameter: String, min: Int = Int.MIN_VALUE, max: Int = Int.MAX_VALUE) =
+        ErrorDto.InvalidParameter(
+            parameter = parameter,
+            reason = "size must be between $min and $max"
+        )
+
     protected fun typeMismatchErrorDto(parameter: String, type: String) = ErrorDto.InvalidParameter(
         parameter = parameter,
         reason = "must be $type"
@@ -194,5 +221,11 @@ abstract class AbstractControllerTest {
         path(cookie.name, cookie.path).match(mvc)
         value(cookie.name, cookie.value).match(mvc)
         version(cookie.name, cookie.version).match(mvc)
+    }
+
+    protected class CallContext(
+        val principal: UserPrincipal
+    ) {
+        val source = EventSource.User(principal.user.id, InetAddress.getByName("127.0.0.1"))
     }
 }

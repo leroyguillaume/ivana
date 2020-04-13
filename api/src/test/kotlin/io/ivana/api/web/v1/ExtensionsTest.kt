@@ -2,12 +2,13 @@
 
 package io.ivana.api.web.v1
 
-import io.ivana.core.LinkedPhotos
-import io.ivana.core.Page
-import io.ivana.core.Photo
+import io.ivana.core.*
 import io.ivana.dto.PageDto
 import io.ivana.dto.PhotoDto
+import io.ivana.dto.RoleDto
+import io.ivana.dto.UserDto
 import io.kotlintest.shouldBe
+import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import java.net.URI
 import java.time.OffsetDateTime
@@ -110,6 +111,42 @@ internal class ExtensionsTest {
             )
         )
         linkedPhotos.toNavigableDto() shouldBe dto
+    }
+
+    @Nested
+    inner class roleToRoleDto {
+        @Test
+        fun user() {
+            Role.User.toDto() shouldBe RoleDto.User
+        }
+
+        @Test
+        fun admin() {
+            Role.Admin.toDto() shouldBe RoleDto.Admin
+        }
+
+        @Test
+        fun super_admin() {
+            Role.SuperAdmin.toDto() shouldBe RoleDto.SuperAdmin
+        }
+    }
+
+    @Test
+    fun userToDto() {
+        val user = User(
+            id = UUID.randomUUID(),
+            name = "admin",
+            hashedPwd = "hashedPwd",
+            role = Role.SuperAdmin,
+            creationDate = OffsetDateTime.now()
+        )
+        val dto = UserDto(
+            id = user.id,
+            name = user.name,
+            role = user.role.toDto(),
+            creationDate = user.creationDate
+        )
+        user.toDto() shouldBe dto
     }
 
     private fun rawUri(id: UUID) = URI("$PhotoApiEndpoint/$id$RawPhotoEndpoint")
