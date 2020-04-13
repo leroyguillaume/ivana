@@ -6,6 +6,7 @@ import com.nhaarman.mockitokotlin2.verify
 import com.nhaarman.mockitokotlin2.whenever
 import io.ivana.api.impl.UserAlreadyExistsException
 import io.ivana.api.web.AbstractControllerTest
+import io.ivana.core.Page
 import io.ivana.core.Role
 import io.ivana.core.User
 import io.ivana.core.UserEvent
@@ -154,6 +155,108 @@ internal class UserControllerTest : AbstractControllerTest() {
             )
             verify(pwdEncoder).encode(creationDto.pwd)
             verify(userService).create(eventContent, source)
+        }
+    }
+
+    @Nested
+    inner class getAll {
+        private val pageNo = 2
+        private val pageSize = 3
+        private val page = Page(
+            content = listOf(
+                User(
+                    id = UUID.randomUUID(),
+                    name = "user1",
+                    hashedPwd = "hashedPwd",
+                    role = Role.User,
+                    creationDate = OffsetDateTime.now()
+                ),
+                User(
+                    id = UUID.randomUUID(),
+                    name = "user2",
+                    hashedPwd = "hashedPwd",
+                    role = Role.User,
+                    creationDate = OffsetDateTime.now()
+                )
+            ),
+            no = pageNo,
+            totalItems = 2,
+            totalPages = 1
+        )
+        private val pageDto = page.toDto { it.toDto() }
+        private val method = HttpMethod.GET
+        private val uri = UserApiEndpoint
+
+        @Test
+        fun `should return 401 if user is anonymous`() {
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                status = HttpStatus.UNAUTHORIZED,
+                respDto = ErrorDto.Unauthorized
+            )
+        }
+
+        @Test
+        fun `should return 400 if parameters are lower than 1`() = authenticated(adminPrincipal) {
+            callAndExpectDto(
+                method = method,
+                params = mapOf(
+                    PageParamName to listOf("-1"),
+                    SizeParamName to listOf("-1")
+                ),
+                uri = uri,
+                reqCookies = listOf(accessTokenCookie()),
+                status = HttpStatus.BAD_REQUEST,
+                respDto = ErrorDto.ValidationError(
+                    errors = listOf(minErrorDto(PageParamName, 1), minErrorDto(SizeParamName, 1))
+                )
+            )
+        }
+
+        @Test
+        fun `should return 403 if user is not admin or super admin`() = authenticated {
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                reqCookies = listOf(accessTokenCookie()),
+                status = HttpStatus.FORBIDDEN,
+                respDto = ErrorDto.Forbidden
+            )
+        }
+
+        @Test
+        fun `should return 200 (admin)`() = authenticated(adminPrincipal) {
+            whenever(userService.getAll(pageNo, pageSize)).thenReturn(page)
+            callAndExpectDto(
+                method = method,
+                params = mapOf(
+                    PageParamName to listOf(pageNo.toString()),
+                    SizeParamName to listOf(pageSize.toString())
+                ),
+                uri = uri,
+                reqCookies = listOf(accessTokenCookie()),
+                status = HttpStatus.OK,
+                respDto = pageDto
+            )
+            verify(userService).getAll(pageNo, pageSize)
+        }
+
+        @Test
+        fun `should return 200 (super admin)`() = authenticated(superAdminPrincipal) {
+            whenever(userService.getAll(pageNo, pageSize)).thenReturn(page)
+            callAndExpectDto(
+                method = method,
+                params = mapOf(
+                    PageParamName to listOf(pageNo.toString()),
+                    SizeParamName to listOf(pageSize.toString())
+                ),
+                uri = uri,
+                reqCookies = listOf(accessTokenCookie()),
+                status = HttpStatus.OK,
+                respDto = pageDto
+            )
+            verify(userService).getAll(pageNo, pageSize)
         }
     }
 

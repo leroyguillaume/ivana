@@ -200,7 +200,7 @@ abstract class AbstractControllerTest {
         }
     }
 
-    protected fun sizeErrorDto(parameter: String, min: Int = Int.MIN_VALUE, max: Int = Int.MAX_VALUE) =
+    protected fun sizeErrorDto(parameter: String, min: Int = 0, max: Int = Int.MAX_VALUE) =
         ErrorDto.InvalidParameter(
             parameter = parameter,
             reason = "size must be between $min and $max"

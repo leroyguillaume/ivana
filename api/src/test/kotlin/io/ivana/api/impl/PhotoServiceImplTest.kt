@@ -45,6 +45,46 @@ internal class PhotoServiceImplTest {
 
     @Nested
     inner class getAll {
+        private val pageNo = 1
+        private val pageSize = 3
+        private val expectedPage = Page(
+            content = listOf(
+                Photo(
+                    id = UUID.randomUUID(),
+                    ownerId = UUID.randomUUID(),
+                    uploadDate = OffsetDateTime.now(),
+                    type = Photo.Type.Jpg,
+                    hash = "hash1",
+                    no = 1
+                ),
+                Photo(
+                    id = UUID.randomUUID(),
+                    ownerId = UUID.randomUUID(),
+                    uploadDate = OffsetDateTime.now(),
+                    type = Photo.Type.Jpg,
+                    hash = "hash2",
+                    no = 2
+                )
+            ),
+            no = pageNo,
+            totalItems = 2,
+            totalPages = 1
+        )
+
+        @Test
+        fun `should return page`() {
+            every { photoRepo.fetchAll(pageNo - 1, pageSize) } returns expectedPage.content
+            every { photoRepo.count() } returns 2
+            val page = service.getAll(pageNo, pageSize)
+            page shouldBe expectedPage
+            verify { photoRepo.fetchAll(pageNo - 1, pageSize) }
+            verify { photoRepo.count() }
+            confirmVerified(photoRepo)
+        }
+    }
+
+    @Nested
+    inner class `getAll with owner id` {
         private val ownerId = UUID.randomUUID()
         private val pageNo = 1
         private val pageSize = 3

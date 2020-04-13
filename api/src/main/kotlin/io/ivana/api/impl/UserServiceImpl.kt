@@ -8,40 +8,40 @@ import java.util.*
 
 @Service
 class UserServiceImpl(
-    private val userRepo: UserRepository,
-    private val userEventRepo: UserEventRepository
-) : UserService {
+    override val repo: UserRepository,
+    private val eventRepo: UserEventRepository
+) : UserService, AbstractEntityService<User>() {
     private companion object {
         val Logger = LoggerFactory.getLogger(UserServiceImpl::class.java)
     }
 
+    override val entityName = "User"
+
     @Transactional
     override fun create(content: UserEvent.Creation.Content, source: EventSource): User {
-        val existingUser = userRepo.fetchByName(content.name)
+        val existingUser = repo.fetchByName(content.name)
         if (existingUser != null) {
             Logger.info("Unable to create user '${content.name}': it already exists")
             throw UserAlreadyExistsException(existingUser)
         }
-        val event = userEventRepo.saveCreationEvent(content, source)
+        val event = eventRepo.saveCreationEvent(content, source)
         when (source) {
             is EventSource.System -> Logger.info("System created user '${content.name}' (${event.subjectId})")
             is EventSource.User ->
                 Logger.info("User ${source.id} (${source.ip}) created user '${content.name}' (${event.subjectId})")
         }
-        return userRepo.fetchById(event.subjectId)!!
+        return repo.fetchById(event.subjectId)!!
     }
 
-    override fun getById(id: UUID) = userRepo.fetchById(id) ?: throw EntityNotFoundException("User $id does not exist")
-
-    override fun getByName(username: String) = userRepo.fetchByName(username)
+    override fun getByName(username: String) = repo.fetchByName(username)
         ?: throw EntityNotFoundException("User '$username' does not exist")
 
     @Transactional
     override fun updatePassword(id: UUID, newHashedPwd: String, source: EventSource) {
-        if (!userRepo.existsById(id)) {
+        if (!repo.existsById(id)) {
             throw EntityNotFoundException("User $id does not exist")
         }
-        userEventRepo.savePasswordUpdateEvent(id, newHashedPwd, source)
+        eventRepo.savePasswordUpdateEvent(id, newHashedPwd, source)
         when (source) {
             is EventSource.System -> Logger.info("System changed password of user $id")
             is EventSource.User -> Logger.info("User ${source.id} (${source.ip}) changed password of user $id")

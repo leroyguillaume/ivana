@@ -17,6 +17,14 @@ abstract class AbstractEntityRepository<E : Entity>(
 
     protected abstract val tableName: String
 
+    override fun count() = jdbc.queryForObject(
+        """
+        SELECT COUNT($IdColumnName)
+        FROM $tableName
+        """,
+        MapSqlParameterSource()
+    ) { rs, _ -> rs.getInt(1) }
+
     override fun existsById(id: UUID) = jdbc.queryForObject(
         """
         SELECT EXISTS(
@@ -27,6 +35,17 @@ abstract class AbstractEntityRepository<E : Entity>(
         """,
         MapSqlParameterSource(mapOf("id" to id))
     ) { rs, _ -> rs.getBoolean(1) }
+
+    override fun fetchAll(offset: Int, limit: Int) = jdbc.query(
+        """
+        SELECT *
+        FROM $tableName
+        ORDER BY $IdColumnName
+        OFFSET :offset
+        LIMIT :limit
+        """,
+        MapSqlParameterSource(mapOf("offset" to offset, "limit" to limit))
+    ) { rs, _ -> entityFromResultSet(rs) }
 
     override fun fetchById(id: UUID) = fetchBy(IdColumnName, id)
 

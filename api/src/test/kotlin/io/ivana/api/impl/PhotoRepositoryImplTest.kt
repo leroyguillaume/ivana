@@ -90,6 +90,15 @@ internal class PhotoRepositoryImplTest {
 
     @Nested
     inner class count {
+        @Test
+        fun `should return count of photos of user`() {
+            val count = repo.count()
+            count shouldBe uploadedPhotos.size
+        }
+    }
+
+    @Nested
+    inner class `count with owner id` {
         private lateinit var ownerId: UUID
 
         @BeforeEach
@@ -128,6 +137,15 @@ internal class PhotoRepositoryImplTest {
 
     @Nested
     inner class fetchAll {
+        @Test
+        fun `should return all photos in interval`() {
+            val photos = repo.fetchAll(1, 10)
+            photos shouldBe uploadedPhotos.sortedBy { it.id.toString() }.subList(1, uploadedPhotos.size)
+        }
+    }
+
+    @Nested
+    inner class `fetchAll with owner id` {
         private lateinit var ownerId: UUID
 
         @BeforeEach
@@ -241,14 +259,6 @@ internal class PhotoRepositoryImplTest {
         type = content.type,
         hash = content.hash,
         no = no
-    )
-
-    private fun UserEvent.Creation.toUser() = User(
-        id = subjectId,
-        name = content.name,
-        hashedPwd = content.hashedPwd,
-        role = content.role,
-        creationDate = date
     )
 
     private data class InitDataEntry(

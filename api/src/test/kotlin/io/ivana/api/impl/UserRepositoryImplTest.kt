@@ -19,10 +19,22 @@ import java.util.*
 @SpringBootTest
 internal class UserRepositoryImplTest {
     private val pwdEncoder = BCryptPasswordEncoder()
-    private val creationEventContent = UserEvent.Creation.Content(
-        name = "admin",
-        hashedPwd = pwdEncoder.encode("changeit"),
-        role = Role.SuperAdmin
+    private val initData = listOf(
+        UserEvent.Creation.Content(
+            name = "user1",
+            hashedPwd = pwdEncoder.encode("changeit"),
+            role = Role.User
+        ),
+        UserEvent.Creation.Content(
+            name = "user2",
+            hashedPwd = pwdEncoder.encode("changeit"),
+            role = Role.Admin
+        ),
+        UserEvent.Creation.Content(
+            name = "user3",
+            hashedPwd = pwdEncoder.encode("changeit"),
+            role = Role.SuperAdmin
+        )
     )
 
     @Autowired
@@ -34,24 +46,32 @@ internal class UserRepositoryImplTest {
     @Autowired
     private lateinit var eventRepo: UserEventRepository
 
-    private lateinit var creationEvent: UserEvent.Creation
-    private lateinit var createdUser: User
+    private lateinit var createdUsers: List<User>
 
     @BeforeEach
     fun beforeEach() {
         cleanDb(jdbc)
-        creationEvent = eventRepo.saveCreationEvent(creationEventContent, EventSource.System)
-        createdUser = User(
-            id = creationEvent.subjectId,
-            name = creationEvent.content.name,
-            hashedPwd = creationEvent.content.hashedPwd,
-            role = creationEvent.content.role,
-            creationDate = creationEvent.date
-        )
+        createdUsers = initData.map { eventRepo.saveCreationEvent(it, EventSource.System).toUser() }
+    }
+
+    @Nested
+    inner class count {
+        @Test
+        fun `should return count of photos of user`() {
+            val count = repo.count()
+            count shouldBe createdUsers.size
+        }
     }
 
     @Nested
     inner class existsById {
+        private lateinit var createdUser: User
+
+        @BeforeEach
+        fun beforeEach() {
+            createdUser = createdUsers[0]
+        }
+
         @Test
         fun `should return false if user does not exist`() {
             val exists = repo.existsById(UUID.randomUUID())
@@ -66,7 +86,23 @@ internal class UserRepositoryImplTest {
     }
 
     @Nested
+    inner class fetchAll {
+        @Test
+        fun `should return all users in interval`() {
+            val photos = repo.fetchAll(1, 10)
+            photos shouldBe createdUsers.sortedBy { it.id.toString() }.subList(1, createdUsers.size)
+        }
+    }
+
+    @Nested
     inner class fetchById {
+        private lateinit var createdUser: User
+
+        @BeforeEach
+        fun beforeEach() {
+            createdUser = createdUsers[0]
+        }
+
         @Test
         fun `should return null if user does not exist`() {
             val user = repo.fetchById(UUID.randomUUID())
@@ -82,6 +118,13 @@ internal class UserRepositoryImplTest {
 
     @Nested
     inner class fetchByName {
+        private lateinit var createdUser: User
+
+        @BeforeEach
+        fun beforeEach() {
+            createdUser = createdUsers[0]
+        }
+
         @Test
         fun `should return null if user does not exist`() {
             val user = repo.fetchByName("gleroy")
