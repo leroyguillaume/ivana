@@ -8,9 +8,7 @@ import io.ivana.api.security.AccessTokenCookieName
 import io.ivana.api.security.AuthenticationService
 import io.ivana.api.security.UserPhotoAuthorizationRepository
 import io.ivana.api.security.UserPrincipal
-import io.ivana.core.PhotoService
-import io.ivana.core.Role
-import io.ivana.core.User
+import io.ivana.core.*
 import io.ivana.dto.ErrorDto
 import org.junit.jupiter.api.BeforeEach
 import org.springframework.beans.factory.annotation.Autowired
@@ -54,6 +52,10 @@ abstract class AbstractControllerTest {
             role = Role.SuperAdmin
         )
     )
+    protected val source = EventSource.User(
+        id = principal.user.id,
+        ip = InetAddress.getByName("127.0.0.1")
+    )
 
     @Autowired
     protected lateinit var mapper: ObjectMapper
@@ -69,6 +71,9 @@ abstract class AbstractControllerTest {
 
     @MockBean
     protected lateinit var photoService: PhotoService
+
+    @MockBean
+    protected lateinit var userService: UserService
 
     @BeforeEach
     fun beforeEach() {

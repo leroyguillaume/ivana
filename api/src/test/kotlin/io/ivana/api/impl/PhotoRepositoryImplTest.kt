@@ -3,6 +3,8 @@
 package io.ivana.api.impl
 
 import io.ivana.core.*
+import io.kotlintest.matchers.boolean.shouldBeFalse
+import io.kotlintest.matchers.boolean.shouldBeTrue
 import io.kotlintest.matchers.types.shouldBeNull
 import io.kotlintest.shouldBe
 import org.junit.jupiter.api.BeforeEach
@@ -99,6 +101,28 @@ internal class PhotoRepositoryImplTest {
         fun `should return count of photos of user`() {
             val count = repo.count(ownerId)
             count shouldBe 3
+        }
+    }
+
+    @Nested
+    inner class existsById {
+        private lateinit var photo: Photo
+
+        @BeforeEach
+        fun beforeEach() {
+            photo = uploadedPhotos[0]
+        }
+
+        @Test
+        fun `should return false if photo does not exist`() {
+            val exists = repo.existsById(UUID.randomUUID())
+            exists.shouldBeFalse()
+        }
+
+        @Test
+        fun `should return true if photo exists`() {
+            val exists = repo.existsById(photo.id)
+            exists.shouldBeTrue()
         }
     }
 

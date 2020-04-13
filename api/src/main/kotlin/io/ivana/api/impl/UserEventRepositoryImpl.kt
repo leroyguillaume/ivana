@@ -37,12 +37,22 @@ class UserEventRepositoryImpl(
         )
 
     override fun saveLoginEvent(source: EventSource.User) = insert<UserEvent.Login>(
-        source.id, UserEventType.Login, UserEventData.Login(source.toData() as EventSourceData.User)
+        subjectId = source.id,
+        type = UserEventType.Login,
+        data = UserEventData.Login(source.toData() as EventSourceData.User)
     )
+
+    override fun savePasswordUpdateEvent(userId: UUID, newHashedPwd: String, source: EventSource) =
+        insert<UserEvent.PasswordUpdate>(
+            subjectId = userId,
+            type = UserEventType.PasswordUpdate,
+            data = UserEventData.PasswordUpdate(source.toData(), UserEventData.PasswordUpdate.Content(newHashedPwd))
+        )
 
     override fun RawEvent<UserEventType>.toEvent() = when (type) {
         UserEventType.Creation -> toCreationEvent()
         UserEventType.Login -> toLoginEvent()
+        UserEventType.PasswordUpdate -> toPasswordUpdateEvent()
     }
 
     private fun RawEvent<UserEventType>.toCreationEvent() =
@@ -67,4 +77,15 @@ class UserEventRepositoryImpl(
             source = data.source.toSource()
         )
     }
+
+    private fun RawEvent<UserEventType>.toPasswordUpdateEvent() =
+        mapper.readValue<UserEventData.PasswordUpdate>(jsonData).let { data ->
+            UserEvent.PasswordUpdate(
+                date = date,
+                subjectId = subjectId,
+                number = number,
+                source = data.source.toSource(),
+                newHashedPwd = data.content.newHashedPwd
+            )
+        }
 }

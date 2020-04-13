@@ -10,6 +10,7 @@ private const val ForbiddenCodeValue = "forbidden"
 private const val InternalErrorCodeValue = "internal_error"
 private const val InvalidParameterCodeValue = "invalid_parameter"
 private const val MalformedRequestCodeValue = "malformed_request"
+private const val MethodNotAllowedCodeValue = "method_not_allowed"
 private const val MissingParameterCodeValue = "missing_parameter"
 private const val NotFoundCodeValue = "not_found"
 private const val UnauthorizedCodeValue = "unauthorized"
@@ -27,6 +28,7 @@ private const val ValidationErrorCodeValue = "validation_error"
     JsonSubTypes.Type(value = ErrorDto.InternalError::class, name = InternalErrorCodeValue),
     JsonSubTypes.Type(value = ErrorDto.InvalidParameter::class, name = InvalidParameterCodeValue),
     JsonSubTypes.Type(value = ErrorDto.MalformedRequest::class, name = MalformedRequestCodeValue),
+    JsonSubTypes.Type(value = ErrorDto.MethodNotAllowed::class, name = MethodNotAllowedCodeValue),
     JsonSubTypes.Type(value = ErrorDto.MissingParameter::class, name = MissingParameterCodeValue),
     JsonSubTypes.Type(value = ErrorDto.NotFound::class, name = NotFoundCodeValue),
     JsonSubTypes.Type(value = ErrorDto.Unauthorized::class, name = UnauthorizedCodeValue),
@@ -49,6 +51,9 @@ sealed class ErrorDto {
 
         @JsonProperty(MalformedRequestCodeValue)
         MalformedRequest,
+
+        @JsonProperty(MethodNotAllowedCodeValue)
+        MethodNotAllowed,
 
         @JsonProperty(MissingParameterCodeValue)
         MissingParameter,
@@ -95,6 +100,12 @@ sealed class ErrorDto {
         override val code = Code.MalformedRequest
 
         override fun equals(other: Any?) = other is MalformedRequest
+    }
+
+    object MethodNotAllowed : ErrorDto() {
+        override val code = Code.MethodNotAllowed
+
+        override fun equals(other: Any?) = other is MethodNotAllowed
     }
 
     data class MissingParameter(

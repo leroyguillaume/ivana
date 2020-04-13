@@ -17,6 +17,17 @@ abstract class AbstractEntityRepository<E : Entity>(
 
     protected abstract val tableName: String
 
+    override fun existsById(id: UUID) = jdbc.queryForObject(
+        """
+        SELECT EXISTS(
+            SELECT 1
+            FROM $tableName
+            WHERE $IdColumnName = :id
+        )
+        """,
+        MapSqlParameterSource(mapOf("id" to id))
+    ) { rs, _ -> rs.getBoolean(1) }
+
     override fun fetchById(id: UUID) = fetchBy(IdColumnName, id)
 
     protected fun fetchBy(columnName: String, value: Any) = fetchBy(Column(columnName, value))

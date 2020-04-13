@@ -15,6 +15,8 @@ const val RootEndpoint = "$RootApiEndpoint/v1"
 
 const val LoginEndpoint = "$RootEndpoint/login"
 const val LogoutEndpoint = "$RootEndpoint/logout"
+const val UserApiEndpoint = "$RootEndpoint/user"
+const val PasswordUpdateEndpoint = "/password"
 const val PhotoApiEndpoint = "$RootEndpoint/photo"
 const val RawPhotoEndpoint = "/raw"
 const val CompressedPhotoEndpoint = "/compressed"

@@ -15,6 +15,7 @@ import org.springframework.http.converter.HttpMessageConversionException
 import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.web.HttpMediaTypeNotSupportedException
+import org.springframework.web.HttpRequestMethodNotSupportedException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestControllerAdvice
@@ -75,6 +76,13 @@ class ErrorController(
             parameter = exception.name,
             reason = "must be ${exception.requiredType!!.simpleName.toLowerCase()}"
         )
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException::class)
+    @ResponseStatus(HttpStatus.METHOD_NOT_ALLOWED)
+    fun handleMethodNotSupported(exception: HttpRequestMethodNotSupportedException): ErrorDto {
+        Logger.debug(exception.message, exception)
+        return ErrorDto.MethodNotAllowed
     }
 
     @ExceptionHandler(HttpMessageConversionException::class)

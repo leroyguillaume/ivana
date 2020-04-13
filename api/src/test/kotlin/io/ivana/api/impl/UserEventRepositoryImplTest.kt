@@ -4,6 +4,7 @@ package io.ivana.api.impl
 
 import io.ivana.core.EventSource
 import io.ivana.core.Role
+import io.ivana.core.User
 import io.ivana.core.UserEvent
 import io.kotlintest.matchers.types.shouldBeNull
 import io.kotlintest.shouldBe
@@ -27,6 +28,9 @@ internal class UserEventRepositoryImplTest {
 
     @Autowired
     private lateinit var repo: UserEventRepositoryImpl
+
+    @Autowired
+    private lateinit var userRepo: UserRepositoryImpl
 
     @BeforeEach
     fun beforeEach() {
@@ -64,6 +68,13 @@ internal class UserEventRepositoryImplTest {
             val event = repo.fetch(expectedEvent.subjectId, expectedEvent.number)
             event shouldBe expectedEvent
         }
+
+        @Test
+        fun `should return password update event with subject id and number`() {
+            val expectedEvent = repo.savePasswordUpdateEvent(UUID.randomUUID(), "newHashedPwd", EventSource.System)
+            val event = repo.fetch(expectedEvent.subjectId, expectedEvent.number)
+            event shouldBe expectedEvent
+        }
     }
 
     @Nested
@@ -80,6 +91,12 @@ internal class UserEventRepositoryImplTest {
                 )
             )
         }
+        private val expectedUser = User(
+            id = UUID.randomUUID(),
+            name = expectedEvent.content.name,
+            hashedPwd = expectedEvent.content.hashedPwd,
+            role = expectedEvent.content.role
+        )
 
         @Test
         fun `should return created event`() {
@@ -88,6 +105,7 @@ internal class UserEventRepositoryImplTest {
                 date = event.date,
                 subjectId = event.subjectId
             )
+            userRepo.fetchById(event.subjectId) shouldBe expectedUser.copy(id = event.subjectId)
         }
     }
 
@@ -106,6 +124,41 @@ internal class UserEventRepositoryImplTest {
         fun `should return created event`() {
             val event = repo.saveLoginEvent(expectedEvent.source)
             event shouldBe expectedEvent.copy(date = event.date)
+        }
+    }
+
+    @Nested
+    inner class savePasswordUpdateEvent {
+        private val creationEventContent = UserEvent.Creation.Content(
+            name = "admin",
+            hashedPwd = pwdEncoder.encode("changeit"),
+            role = Role.SuperAdmin
+        )
+
+        private lateinit var creationEvent: UserEvent.Creation
+        private lateinit var expectedEvent: UserEvent.PasswordUpdate
+
+        @BeforeEach
+        fun beforeEach() {
+            creationEvent = repo.saveCreationEvent(creationEventContent, EventSource.System)
+            expectedEvent = UserEvent.PasswordUpdate(
+                source = EventSource.System,
+                subjectId = creationEvent.subjectId,
+                date = OffsetDateTime.now(),
+                number = 2,
+                newHashedPwd = pwdEncoder.encode("foo123")
+            )
+        }
+
+        @Test
+        fun `should return created event`() {
+            val event = repo.savePasswordUpdateEvent(
+                userId = expectedEvent.subjectId,
+                newHashedPwd = expectedEvent.newHashedPwd,
+                source = expectedEvent.source
+            )
+            event shouldBe expectedEvent.copy(date = event.date)
+            userRepo.fetchById(expectedEvent.subjectId)!!.hashedPwd shouldBe expectedEvent.newHashedPwd
         }
     }
 }

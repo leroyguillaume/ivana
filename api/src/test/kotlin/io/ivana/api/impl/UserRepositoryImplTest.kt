@@ -3,6 +3,8 @@
 package io.ivana.api.impl
 
 import io.ivana.core.*
+import io.kotlintest.matchers.boolean.shouldBeFalse
+import io.kotlintest.matchers.boolean.shouldBeTrue
 import io.kotlintest.matchers.types.shouldBeNull
 import io.kotlintest.shouldBe
 import org.junit.jupiter.api.BeforeEach
@@ -45,6 +47,21 @@ internal class UserRepositoryImplTest {
             hashedPwd = creationEvent.content.hashedPwd,
             role = creationEvent.content.role
         )
+    }
+
+    @Nested
+    inner class existsById {
+        @Test
+        fun `should return false if user does not exist`() {
+            val exists = repo.existsById(UUID.randomUUID())
+            exists.shouldBeFalse()
+        }
+
+        @Test
+        fun `should return true if user exists`() {
+            val exists = repo.existsById(createdUser.id)
+            exists.shouldBeTrue()
+        }
     }
 
     @Nested
