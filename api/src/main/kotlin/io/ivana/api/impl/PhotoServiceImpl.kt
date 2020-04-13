@@ -23,10 +23,10 @@ import kotlin.math.*
 
 @Service
 class PhotoServiceImpl(
-    private val photoRepo: PhotoRepository,
-    private val photoEventRepo: PhotoEventRepository,
+    override val repo: PhotoRepository,
+    private val eventRepo: PhotoEventRepository,
     private val props: IvanaProperties
-) : PhotoService {
+) : PhotoService, AbstractEntityService<Photo>() {
     internal companion object {
         const val RawDirname = "raw"
         const val CompressedDirname = "compressed"
@@ -36,9 +36,11 @@ class PhotoServiceImpl(
         private val Logger = LoggerFactory.getLogger(PhotoServiceImpl::class.java)
     }
 
+    override val entityName = "Photo"
+
     override fun getAll(ownerId: UUID, pageNo: Int, pageSize: Int): Page<Photo> {
-        val content = photoRepo.fetchAll(ownerId, (pageNo - 1) * pageSize, pageSize)
-        val itemsNb = photoRepo.count(ownerId)
+        val content = repo.fetchAll(ownerId, (pageNo - 1) * pageSize, pageSize)
+        val itemsNb = repo.count(ownerId)
         return Page(
             content = content,
             no = pageNo,
@@ -47,9 +49,6 @@ class PhotoServiceImpl(
         )
     }
 
-    override fun getById(id: UUID) = photoRepo.fetchById(id)
-        ?: throw EntityNotFoundException("Photo $id does not exist")
-
     override fun getCompressedFile(photo: Photo) = compressedFile(photo.id, photo.uploadDate, photo.type)
 
     override fun getRawFile(photo: Photo) = rawFile(photo.id, photo.uploadDate, photo.type)
@@ -57,15 +56,15 @@ class PhotoServiceImpl(
     override fun getLinkedById(id: UUID) = getById(id).let { photo ->
         LinkedPhotos(
             current = photo,
-            previous = photoRepo.fetchPreviousOf(photo),
-            next = photoRepo.fetchNextOf(photo)
+            previous = repo.fetchPreviousOf(photo),
+            next = repo.fetchNextOf(photo)
         )
     }
 
     @Transactional
     override fun transform(id: UUID, transform: Transform, source: EventSource.User) {
         transform.perform(getById(id))
-        photoEventRepo.saveTransformEvent(id, transform, source)
+        eventRepo.saveTransformEvent(id, transform, source)
         Logger.info("User ${source.id} (${source.ip}) transformed photo $id")
     }
 
@@ -76,7 +75,7 @@ class PhotoServiceImpl(
         try {
             tmpFile.outputStream().use { input.copyTo(it) }
             val hash = tmpFile.hash()
-            val photo = photoRepo.fetchByHash(source.id, hash)
+            val photo = repo.fetchByHash(source.id, hash)
             if (photo != null) {
                 throw PhotoAlreadyUploadedException(photo)
             }
@@ -84,13 +83,13 @@ class PhotoServiceImpl(
                 type = type,
                 hash = hash
             )
-            val event = photoEventRepo.saveUploadEvent(content, source)
+            val event = eventRepo.saveUploadEvent(content, source)
             val rawFile = saveRawFile(tmpFile, event)
             try {
                 val compressionFile = saveCompressedFile(tmpFile, event)
                 return try {
                     Logger.info("User ${source.id} (${source.ip}) uploaded new photo (${event.subjectId})")
-                    photoRepo.fetchById(event.subjectId)!!
+                    repo.fetchById(event.subjectId)!!
                 } catch (exception: Exception) {
                     compressionFile.deleteAndLog()
                     throw exception

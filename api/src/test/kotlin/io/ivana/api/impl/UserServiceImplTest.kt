@@ -75,7 +75,45 @@ internal class UserServiceImplTest {
     }
 
     @Nested
-    inner class findByName {
+    inner class getAll {
+        private val pageNo = 1
+        private val pageSize = 3
+        private val expectedPage = Page(
+            content = listOf(
+                User(
+                    id = UUID.randomUUID(),
+                    name = "user1",
+                    hashedPwd = "hashedPwd",
+                    role = Role.User,
+                    creationDate = OffsetDateTime.now()
+                ),
+                User(
+                    id = UUID.randomUUID(),
+                    name = "user2",
+                    hashedPwd = "hashedPwd",
+                    role = Role.User,
+                    creationDate = OffsetDateTime.now()
+                )
+            ),
+            no = pageNo,
+            totalItems = 2,
+            totalPages = 1
+        )
+
+        @Test
+        fun `should return page`() {
+            every { userRepo.fetchAll(pageNo - 1, pageSize) } returns expectedPage.content
+            every { userRepo.count() } returns 2
+            val page = service.getAll(pageNo, pageSize)
+            page shouldBe expectedPage
+            verify { userRepo.fetchAll(pageNo - 1, pageSize) }
+            verify { userRepo.count() }
+            confirmVerified(userRepo)
+        }
+    }
+
+    @Nested
+    inner class getByName {
         private val expectedUser = User(
             id = UUID.randomUUID(),
             name = "admin",

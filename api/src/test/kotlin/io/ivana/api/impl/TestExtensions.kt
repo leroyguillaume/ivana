@@ -1,5 +1,7 @@
 package io.ivana.api.impl
 
+import io.ivana.core.User
+import io.ivana.core.UserEvent
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 
@@ -14,3 +16,11 @@ internal fun cleanDb(jdbc: NamedParameterJdbcTemplate) {
         )
     }
 }
+
+fun UserEvent.Creation.toUser() = User(
+    id = subjectId,
+    name = content.name,
+    hashedPwd = content.hashedPwd,
+    role = content.role,
+    creationDate = date
+)

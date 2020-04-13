@@ -8,4 +8,4 @@ data class UserDto(
     val name: String,
     val role: RoleDto,
     val creationDate: OffsetDateTime
-)
+) : EntityDto

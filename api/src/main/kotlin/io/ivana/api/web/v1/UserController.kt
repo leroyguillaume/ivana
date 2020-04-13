@@ -5,10 +5,7 @@ import io.ivana.api.web.source
 import io.ivana.core.Role
 import io.ivana.core.UserEvent
 import io.ivana.core.UserService
-import io.ivana.dto.PasswordUpdateDto
-import io.ivana.dto.RoleDto
-import io.ivana.dto.UserCreationDto
-import io.ivana.dto.UserDto
+import io.ivana.dto.*
 import org.springframework.http.HttpStatus
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.Authentication
@@ -18,6 +15,7 @@ import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.*
 import javax.servlet.http.HttpServletRequest
 import javax.validation.Valid
+import javax.validation.constraints.Min
 
 @RestController
 @RequestMapping(UserApiEndpoint)
@@ -42,6 +40,17 @@ class UserController(
             role = creationDto.role.toRole()
         )
         return userService.create(content, req.source(principal)).toDto()
+    }
+
+    @GetMapping
+    @PreAuthorize("hasAnyAuthority('admin', 'super_admin')")
+    @ResponseStatus(HttpStatus.OK)
+    fun getAll(
+        @RequestParam(name = PageParamName, required = false, defaultValue = "1") @Min(1) page: Int,
+        @RequestParam(name = SizeParamName, required = false, defaultValue = "10") @Min(1) size: Int,
+        auth: Authentication
+    ): PageDto<UserDto> {
+        return userService.getAll(page, size).toDto { it.toDto() }
     }
 
     @Transactional
