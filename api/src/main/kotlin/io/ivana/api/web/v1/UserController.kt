@@ -53,6 +53,11 @@ class UserController(
         return userService.getAll(page, size).toDto { it.toDto() }
     }
 
+
+    @GetMapping(MeEndpoint)
+    @ResponseStatus(HttpStatus.OK)
+    fun me(auth: Authentication) = (auth.principal as UserPrincipal).user.toDto()
+
     @Transactional
     @PutMapping(PasswordUpdateEndpoint)
     @ResponseStatus(HttpStatus.NO_CONTENT)

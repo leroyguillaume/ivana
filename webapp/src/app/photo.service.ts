@@ -11,7 +11,7 @@ import {PhotoUploadResults} from './photo-upload-results'
   providedIn: 'root'
 })
 export class PhotoService {
-  private baseUrl: string = environment.baseUrl
+  private baseUrl: string = `${environment.baseUrl}/api/v1/photo`
 
   constructor(
     private http: HttpClient
@@ -20,7 +20,7 @@ export class PhotoService {
 
   get(id: string): Observable<NavigablePhoto> {
     return this.http.get<NavigablePhoto>(
-      `${this.baseUrl}/api/v1/photo/${id}`,
+      `${this.baseUrl}/${id}`,
       {
         withCredentials: true,
         params: {
@@ -32,7 +32,7 @@ export class PhotoService {
 
   getAll(page: number, size: number): Observable<Page<Photo>> {
     return this.http.get<Page<Photo>>(
-      `${this.baseUrl}/api/v1/photo`,
+      this.baseUrl,
       {
         withCredentials: true,
         params: {
@@ -48,8 +48,6 @@ export class PhotoService {
     for (let i = 0; i < files.length; ++i) {
       data.append('files', files.item(i))
     }
-    return this.http.post<PhotoUploadResults>(`${this.baseUrl}/api/v1/photo`, data, {
-      withCredentials: true
-    })
+    return this.http.post<PhotoUploadResults>(this.baseUrl, data, {withCredentials: true})
   }
 }

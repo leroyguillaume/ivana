@@ -1,0 +1,35 @@
+import {Injectable} from '@angular/core'
+import {HttpClient} from '@angular/common/http'
+import {Observable} from 'rxjs'
+import {Page} from './page'
+import {User} from './user'
+import {environment} from '../environments/environment'
+
+@Injectable({
+  providedIn: 'root'
+})
+export class UserService {
+  private baseUrl: string = `${environment.baseUrl}/api/v1/user`
+
+  constructor(
+    private http: HttpClient
+  ) {
+  }
+
+  getAll(page: number, size: number): Observable<Page<User>> {
+    return this.http.get<Page<User>>(
+      this.baseUrl,
+      {
+        withCredentials: true,
+        params: {
+          page: page.toString(),
+          size: size.toString()
+        }
+      }
+    )
+  }
+
+  me(): Observable<User> {
+    return this.http.get<User>(`${this.baseUrl}/me`, {withCredentials: true})
+  }
+}

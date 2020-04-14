@@ -1,54 +1,46 @@
-import {Component, ElementRef, OnInit, ViewChild} from '@angular/core'
-import {Photo} from '../photo'
+import {Component, OnInit} from '@angular/core'
 import {Page} from '../page'
-import {PhotoService} from '../photo.service'
-import {finalize} from 'rxjs/operators'
-import {faArrowLeft, faArrowRight, faSpinner} from '@fortawesome/free-solid-svg-icons'
-import {environment} from '../../environments/environment'
-import {ActivatedRoute, Router} from '@angular/router'
+import {UserService} from '../user.service'
 import {StateService} from '../state.service'
+import {finalize} from 'rxjs/operators'
+import {ActivatedRoute, Router} from '@angular/router'
 import {IconDefinition} from '@fortawesome/fontawesome-common-types'
+import {faArrowLeft, faArrowRight, faSpinner} from '@fortawesome/free-solid-svg-icons'
+import {User} from '../user'
 import {fetchPageFromQueryParam} from '../util'
 
-export const PhotoPageSize: number = 12
+export const UserPageSize: number = 10
 
 @Component({
-  selector: 'app-home',
-  templateUrl: './home.component.html',
-  styleUrls: ['./home.component.scss']
+  selector: 'app-admin',
+  templateUrl: './admin.component.html',
+  styleUrls: ['./admin.component.css']
 })
-export class HomeComponent implements OnInit {
-  baseUrl: string = environment.baseUrl
-
+export class AdminComponent implements OnInit {
   spinnerIcon: IconDefinition = faSpinner
   previousIcon: IconDefinition = faArrowLeft
   nextIcon: IconDefinition = faArrowRight
 
-  page: Page<Photo> = null
+  page: Page<User> = null
   success: string = null
   error: string = null
   loading: boolean = true
-  uploading: boolean = false
-
-  @ViewChild('files')
-  filesInput: ElementRef
 
   constructor(
-    private photoService: PhotoService,
+    private userService: UserService,
     private stateService: StateService,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
   ) {
   }
 
   fetchPage(no: number): void {
     this.loading = true
-    this.photoService.getAll(no, PhotoPageSize)
+    this.userService.getAll(no, UserPageSize)
       .pipe(finalize(() => this.loading = false))
       .subscribe(
         page => {
           this.page = page
-          this.stateService.currentHomePage = page
           // noinspection JSIgnoredPromiseFromCall
           this.router.navigate([], {
             relativeTo: this.route,
@@ -70,30 +62,12 @@ export class HomeComponent implements OnInit {
 
   ngOnInit(): void {
     fetchPageFromQueryParam(this.route, (no: number) => this.fetchPage(no))
-    this.stateService.uploadingPhotos.subscribe(uploading => this.uploading = uploading)
     this.stateService.error.subscribe(error => this.error = error)
     this.stateService.success.subscribe(success => this.success = success)
-    this.stateService.photosUploaded.subscribe(() => this.fetchPage(this.page.no))
-  }
-
-  openPhoto(id: string): void {
-    this.stateService.startPhotoNavIndex = this.page.content.findIndex(photo => photo.id === id)
-    this.router.navigate(['/photo', id])
   }
 
   previousPage(): void {
     this.fetchPage(this.page.no - 1)
-  }
-
-  selectFiles(): void {
-    this.filesInput.nativeElement.click()
-  }
-
-  upload(): void {
-    const files = this.filesInput.nativeElement.files
-    if (files.length > 0) {
-      this.stateService.uploadPhotos(files)
-    }
   }
 
 }
