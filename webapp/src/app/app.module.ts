@@ -11,6 +11,7 @@ import {NgbModule} from '@ng-bootstrap/ng-bootstrap'
 import {HomeComponent} from './home/home.component'
 import {NavbarComponent} from './navbar/navbar.component'
 import {PhotoComponent} from './photo/photo.component'
+import {AdminComponent} from './admin/admin.component'
 
 @NgModule({
   declarations: [
@@ -18,7 +19,8 @@ import {PhotoComponent} from './photo/photo.component'
     LoginComponent,
     HomeComponent,
     NavbarComponent,
-    PhotoComponent
+    PhotoComponent,
+    AdminComponent
   ],
   imports: [
     BrowserModule,

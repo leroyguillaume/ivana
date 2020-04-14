@@ -261,6 +261,34 @@ internal class UserControllerTest : AbstractControllerTest() {
     }
 
     @Nested
+    inner class me {
+        private val method = HttpMethod.GET
+        private val uri = "$UserApiEndpoint$MeEndpoint"
+        private val dto = userPrincipal.user.toDto()
+
+        @Test
+        fun `should return 401 if user is anonymous`() {
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                status = HttpStatus.UNAUTHORIZED,
+                respDto = ErrorDto.Unauthorized
+            )
+        }
+
+        @Test
+        fun `should return 200`() = authenticated {
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                reqCookies = listOf(accessTokenCookie()),
+                status = HttpStatus.OK,
+                respDto = dto
+            )
+        }
+    }
+
+    @Nested
     inner class updatePassword {
         private val method = HttpMethod.PUT
         private val uri = "$UserApiEndpoint$PasswordUpdateEndpoint"

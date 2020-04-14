@@ -7,7 +7,7 @@ import {finalize, flatMap} from 'rxjs/operators'
 import {environment} from '../../environments/environment'
 import {StateService} from '../state.service'
 import {IconDefinition} from '@fortawesome/fontawesome-common-types'
-import {PageSize} from '../home/home.component'
+import {PhotoPageSize} from '../home/home.component'
 
 @Component({
   selector: 'app-photo',
@@ -34,7 +34,7 @@ export class PhotoComponent implements OnInit {
 
   close(): void {
     const offset = this.stateService.startPhotoNavIndex > -1
-      ? Math.floor((this.stateService.startPhotoNavIndex + this.stateService.currentPhotoNavOffset) / PageSize)
+      ? Math.floor((this.stateService.startPhotoNavIndex + this.stateService.currentPhotoNavOffset) / PhotoPageSize)
       : 0
     // noinspection JSIgnoredPromiseFromCall
     this.router.navigate(['home'], {

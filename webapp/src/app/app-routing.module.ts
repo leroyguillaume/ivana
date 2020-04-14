@@ -5,6 +5,8 @@ import {HomeComponent} from './home/home.component'
 import {AuthenticatedGuard} from './authenticated.guard'
 import {AnonymousGuard} from './anonymous.guard'
 import {PhotoComponent} from './photo/photo.component'
+import {AdminComponent} from './admin/admin.component'
+import {AdminGuard} from './admin.guard'
 
 
 const routes: Routes = [
@@ -24,8 +26,13 @@ const routes: Routes = [
     canActivate: [AuthenticatedGuard]
   },
   {
-    path: '',
+    path: 'admin',
     pathMatch: 'full',
+    component: AdminComponent,
+    canActivate: [AdminGuard]
+  },
+  {
+    path: '**',
     redirectTo: 'home'
   }
 ]

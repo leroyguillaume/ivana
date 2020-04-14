@@ -8,14 +8,12 @@ import io.ivana.api.security.BadCredentialsException
 import io.ivana.api.security.Jwt
 import io.ivana.api.web.AbstractControllerTest
 import io.ivana.api.web.AccessTokenCookieName
-import io.ivana.api.web.Bearer
 import io.ivana.dto.CredentialsDto
 import io.ivana.dto.ErrorDto
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
 import java.net.InetAddress
@@ -123,41 +121,5 @@ internal class LoginControllerTest : AbstractControllerTest() {
                 path = "/"
                 secure = secured
             }
-    }
-
-    @Nested
-    inner class testLogin {
-        private val method = HttpMethod.GET
-        private val uri = LoginEndpoint
-
-        @Test
-        fun `should return 401 if user is anonymous`() {
-            callAndExpectDto(
-                method = method,
-                uri = uri,
-                status = HttpStatus.UNAUTHORIZED,
-                respDto = ErrorDto.Unauthorized
-            )
-        }
-
-        @Test
-        fun `should return 204 (header auth)`() = authenticated {
-            callAndExpectDto(
-                method = method,
-                reqHeaders = mapOf(HttpHeaders.AUTHORIZATION to listOf("$Bearer $jwt")),
-                uri = uri,
-                status = HttpStatus.NO_CONTENT
-            )
-        }
-
-        @Test
-        fun `should return 204 (cookie auth)`() = authenticated {
-            callAndExpectDto(
-                method = method,
-                reqCookies = listOf(accessTokenCookie()),
-                uri = uri,
-                status = HttpStatus.NO_CONTENT
-            )
-        }
     }
 }

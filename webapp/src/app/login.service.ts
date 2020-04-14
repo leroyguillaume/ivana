@@ -3,43 +3,42 @@ import {Credentials} from './credentials'
 import {HttpClient} from '@angular/common/http'
 import {environment} from '../environments/environment'
 import {Observable, of} from 'rxjs'
-import {catchError, finalize, map, tap} from 'rxjs/operators'
+import {catchError, flatMap, tap} from 'rxjs/operators'
+import {User} from './user'
+import {UserService} from './user.service'
 
 @Injectable({
   providedIn: 'root'
 })
 export class LoginService {
-  private firstCall: boolean = true
-  private logged: boolean = false
+  private currentUser: User = null
 
-  private baseUrl: string = environment.baseUrl
+  private baseUrl: string = `${environment.baseUrl}/api/v1/login`
 
   constructor(
-    private readonly http: HttpClient
+    private userService: UserService,
+    private http: HttpClient
   ) {
   }
 
-  get isLogged(): Observable<boolean> {
-    if (!this.logged && this.firstCall) {
-      return this.http.get(`${this.baseUrl}/api/v1/login`, {withCredentials: true})
-        .pipe(
-          map(() => true),
-          catchError(() => of(false)),
-          tap(logged => this.logged = logged),
-          finalize(() => this.firstCall = false)
-        )
+  loggedUser(): Observable<User> {
+    if (!this.currentUser) {
+      return this.userService.me().pipe(
+        catchError(() => of(null)),
+        tap(user => this.currentUser = user),
+      )
     }
-    return of(this.logged)
+    return of(this.currentUser)
   }
 
-  login(username: string, password: string): Observable<any> {
+  login(username: string, password: string): Observable<User> {
     const creds = new Credentials(username, password)
-    return this.http.post(`${this.baseUrl}/api/v1/login`, creds, {withCredentials: true})
-      .pipe(tap(() => this.logged = true))
+    return this.http.post<void>(this.baseUrl, creds, {withCredentials: true})
+      .pipe(flatMap(() => this.userService.me()))
   }
 
-  logout(): Observable<any> {
-    return this.http.get(`${this.baseUrl}/api/v1/logout`, {withCredentials: true})
-      .pipe(tap(() => this.logged = false))
+  logout(): Observable<void> {
+    return this.http.get<void>(this.baseUrl, {withCredentials: true})
+      .pipe(tap(() => this.currentUser = null))
   }
 }
