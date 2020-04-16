@@ -25,7 +25,7 @@ jobs:
       - name: Buid
         run: gradle assemble -x ivana-webapp:assemble
       - name: Test
-        run: gradle clean check -Pdatabase.host=postgres -Pdatabase.port=${{ job.services.postgres.ports[5432] }} -x ivana-webapp:check
+        run: gradle clean check -Pdatabase.host=postgres -Pdatabase.port=${{ job.services.postgres.ports[5432] }} -Pliquibase.runList=main -x ivana-webapp:check
 
   frontend:
     name: Frontend

@@ -14,13 +14,14 @@ import io.mockk.verify
 import org.junit.jupiter.api.*
 import java.io.File
 import java.net.InetAddress
+import java.nio.file.Files
 import java.time.OffsetDateTime
 import java.util.*
 
 internal class PhotoServiceImplTest {
     private companion object {
         private val Props = IvanaProperties(
-            dataDir = File("./data"),
+            dataDir = Files.createTempDirectory("ivana").toFile(),
             compressionQuality = 0.3F
         )
 

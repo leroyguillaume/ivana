@@ -1,3 +1,5 @@
+val webAppSchema = "webapp"
+
 plugins {
     // Gradle
     application
@@ -22,18 +24,22 @@ application {
 }
 
 liquibase {
+    val args = fun(props: DbProperties) = mapOf(
+        "logLevel" to "info",
+        "changeLogFile" to "src/main/resources/db/changelog.yml",
+        "url" to props.jdbcUrl,
+        "username" to props.username,
+        "password" to props.password
+    )
     activities {
         register("main") {
-            val dbProps = dbProperties()
-            arguments = mapOf(
-                "logLevel" to "info",
-                "changeLogFile" to "src/main/resources/db/changelog.yml",
-                "url" to dbProps.jdbcUrl,
-                "username" to dbProps.username,
-                "password" to dbProps.password
-            )
+            arguments = args(dbTestProperties())
+        }
+        register("webapp") {
+            arguments = args(dbProperties())
         }
     }
+    runList = project.property("liquibase.runList")
 }
 
 dependencies {
@@ -130,10 +136,16 @@ tasks {
         }
     }
 
+    processTestResources {
+        filesMatching("**/application.yml") {
+            expand("database" to dbTestProperties())
+        }
+    }
+
     test {
         dependsOn("update")
 
-        val dbProps = dbProperties()
+        val dbProps = dbTestProperties()
         systemProperty("database.url", dbProps.jdbcUrl)
         systemProperty("database.username", dbProps.username)
         systemProperty("database.password", dbProps.password)
@@ -145,11 +157,15 @@ tasks {
         executable = "psql"
         args(
             listOf(
-                "-h", dbProps.host,
-                "-p", dbProps.port,
-                "-U", dbProps.username,
+                "-h",
+                dbProps.host,
+                "-p",
+                dbProps.port,
+                "-U",
+                dbProps.username,
                 dbProps.name,
-                "-c", "DROP SCHEMA \"public\" CASCADE; CREATE SCHEMA \"public\";"
+                "-c",
+                "DROP SCHEMA \"public\" CASCADE; DROP SCHEMA $webAppSchema CASCADE; CREATE SCHEMA \"public\"; CREATE SCHEMA $webAppSchema;"
             )
         )
         environment("PGPASSWORD", dbProps.password)
@@ -160,16 +176,20 @@ data class DbProperties(
     val host: String,
     val port: Int,
     val name: String,
+    val schema: String,
     val username: String,
     val password: String
 ) {
-    val jdbcUrl = "jdbc:postgresql://$host:$port/$name"
+    val jdbcUrl = "jdbc:postgresql://$host:$port/$name?currentSchema=$schema"
 }
 
 fun dbProperties() = DbProperties(
     host = project.property("database.host") as String,
     port = (project.property("database.port") as String).toInt(),
     name = project.property("database.name") as String,
+    schema = webAppSchema,
     username = project.property("database.username") as String,
     password = project.property("database.password") as String
 )
+
+fun dbTestProperties() = dbProperties().copy(schema = "public")
