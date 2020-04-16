@@ -78,7 +78,7 @@ EXECUTE PROCEDURE user_update();
 INSERT INTO user_event (subject_id, number, type, data)
 VALUES
 (
-    uuid_generate_v4(),
+    public.uuid_generate_v4(),
     1,
     'creation',
     ('{"source":{"type":"system"},"content":{"name":"admin","hashedPwd":"$2y$10$JgMWTivQui3cBsGIYcVltO4NEw4QdbXtMtfrlJfCZfSjqEX3uHyyO","role":"super_admin"}}')::jsonb

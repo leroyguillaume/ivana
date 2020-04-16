@@ -6,7 +6,7 @@ cors:
     - http://localhost:4200
 
 ivana:
-  data-dir: ./data
+  data-dir: \${user.home}/ivana
   compression-quality: 0.3
 
 logging:
