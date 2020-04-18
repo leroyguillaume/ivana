@@ -19,8 +19,8 @@ export class LoginComponent implements OnInit {
   error: string = null
 
   loginForm: FormGroup = new FormGroup({
-    username: new FormControl(''),
-    password: new FormControl('')
+    name: new FormControl(''),
+    pwd: new FormControl('')
   })
 
   constructor(
@@ -29,17 +29,17 @@ export class LoginComponent implements OnInit {
   ) {
   }
 
+  get pwd(): AbstractControl {
+    return this.loginForm.get('pwd')
+  }
+
   get username(): AbstractControl {
     return this.loginForm.get('username')
   }
 
-  get password(): AbstractControl {
-    return this.loginForm.get('password')
-  }
-
   login(): void {
     this.loading = true
-    this.loginService.login(this.username.value, this.password.value)
+    this.loginService.login(this.username.value, this.pwd.value)
       .pipe(finalize(() => this.loading = false))
       .subscribe(
         () => this.router.navigate(['home']),

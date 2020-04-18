@@ -13,7 +13,7 @@ import {UserService} from './user.service'
 export class LoginService {
   private currentUser: User = null
 
-  private baseUrl: string = `${environment.baseUrl}/api/v1/login`
+  private baseUrl: string = `${environment.baseUrl}/api/v1`
 
   constructor(
     private userService: UserService,
@@ -33,12 +33,12 @@ export class LoginService {
 
   login(username: string, password: string): Observable<User> {
     const creds = new Credentials(username, password)
-    return this.http.post<void>(this.baseUrl, creds, {withCredentials: true})
+    return this.http.post<void>(`${this.baseUrl}/login`, creds, {withCredentials: true})
       .pipe(flatMap(() => this.userService.me()))
   }
 
   logout(): Observable<void> {
-    return this.http.get<void>(this.baseUrl, {withCredentials: true})
+    return this.http.get<void>(`${this.baseUrl}/logout`, {withCredentials: true})
       .pipe(tap(() => this.currentUser = null))
   }
 }

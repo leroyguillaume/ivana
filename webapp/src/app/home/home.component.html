@@ -1,8 +1,7 @@
 <app-navbar></app-navbar>
 
 <div class="container mt-5">
-  <ngb-alert *ngIf="error" type="danger" dismissible="true" (close)="error = null">{{error}}</ngb-alert>
-  <ngb-alert *ngIf="success" type="success" dismissible="true" (close)="success = null">{{success}}</ngb-alert>
+  <app-error></app-error>
 
   <div class="text-center" *ngIf="loading">
     <fa-icon [icon]="spinnerIcon" spin="true" size="8x"></fa-icon>

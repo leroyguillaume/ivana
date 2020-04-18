@@ -12,6 +12,8 @@ import {HomeComponent} from './home/home.component'
 import {NavbarComponent} from './navbar/navbar.component'
 import {PhotoComponent} from './photo/photo.component'
 import {AdminComponent} from './admin/admin.component'
+import {UserComponent} from './user/user.component'
+import {ErrorComponent} from './error/error.component'
 
 @NgModule({
   declarations: [
@@ -20,7 +22,9 @@ import {AdminComponent} from './admin/admin.component'
     HomeComponent,
     NavbarComponent,
     PhotoComponent,
-    AdminComponent
+    AdminComponent,
+    UserComponent,
+    ErrorComponent
   ],
   imports: [
     BrowserModule,

@@ -1,0 +1,61 @@
+<app-navbar></app-navbar>
+
+<div class="container mt-5">
+  <app-error></app-error>
+
+  <button class="btn btn-secondary mb-2" [routerLink]="['..']">
+    <fa-icon [icon]="leftArrowIcon"></fa-icon>
+    Retour
+  </button>
+
+  <form [formGroup]="userForm" (ngSubmit)="submit()" novalidate>
+    <div class="form-group">
+      <label for="name">Nom d'utilisateur</label>
+      <input id="name"
+             type="text"
+             class="form-control"
+             formControlName="name"
+             required
+             minlength="3"
+             maxlength="50"
+             [ngClass]="{'is-invalid': name.invalid && (name.dirty || name.touched)}">
+      <div *ngIf="name.errors && name.errors.minlength" class="invalid-feedback">
+        Doit contenir au moins 3 caractères.
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="pwd">Mot de passe</label>
+      <input id="pwd"
+             type="password"
+             class="form-control"
+             formControlName="pwd"
+             minlength="8"
+             required
+             [ngClass]="{'is-invalid': pwd.invalid && (pwd.dirty || pwd.touched)}">
+      <div *ngIf="pwd.errors && pwd.errors.minlength" class="invalid-feedback">
+        Doit contenir au moins 8 caractères.
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="role">Role</label>
+      <select id="role"
+              class="form-control"
+              formControlName="role"
+              required
+              [ngClass]="{'is-invalid': role.invalid && (role.dirty || role.touched)}">
+        <option *ngFor="let role of roles" [value]="role.role">{{role.label}}</option>
+      </select>
+    </div>
+
+    <button type="submit"
+            class="btn btn-primary"
+            [disabled]="userForm.invalid || loading"
+            [ngClass]="{'cursor-forbidden': userForm.invalid || loading}">
+      <span *ngIf="!loading"> Créer</span>
+      <fa-icon *ngIf="loading" [icon]="spinnerIcon" spin="true"></fa-icon>
+      <span *ngIf="loading"> Création en cours...</span>
+    </button>
+  </form>
+</div>

@@ -7,6 +7,7 @@ import {AnonymousGuard} from './anonymous.guard'
 import {PhotoComponent} from './photo/photo.component'
 import {AdminComponent} from './admin/admin.component'
 import {AdminGuard} from './admin.guard'
+import {UserComponent} from './user/user.component'
 
 
 const routes: Routes = [
@@ -29,6 +30,12 @@ const routes: Routes = [
     path: 'admin',
     pathMatch: 'full',
     component: AdminComponent,
+    canActivate: [AdminGuard]
+  },
+  {
+    path: 'admin/user',
+    pathMatch: 'full',
+    component: UserComponent,
     canActivate: [AdminGuard]
   },
   {
