@@ -373,7 +373,7 @@ internal class PhotoControllerTest : AbstractControllerTest() {
     @Nested
     inner class transform {
         private val id = UUID.randomUUID()
-        private val method = HttpMethod.POST
+        private val method = HttpMethod.PUT
         private val uri = "$PhotoApiEndpoint/$id$TransformPhotoEndpoint"
 
         @Test

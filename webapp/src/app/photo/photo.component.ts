@@ -1,14 +1,15 @@
 import {Component, HostListener, OnInit} from '@angular/core'
 import {NavigablePhoto} from '../navigable-photo'
-import {faArrowLeft, faSpinner} from '@fortawesome/free-solid-svg-icons'
+import {faArrowLeft, faPencilAlt, faRedo, faSpinner, faTimes, faUndo} from '@fortawesome/free-solid-svg-icons'
 import {PhotoService} from '../photo.service'
 import {ActivatedRoute, Router} from '@angular/router'
-import {finalize, flatMap} from 'rxjs/operators'
+import {finalize} from 'rxjs/operators'
 import {environment} from '../../environments/environment'
 import {StateService} from '../state.service'
 import {IconDefinition} from '@fortawesome/fontawesome-common-types'
 import {PhotoPageSize} from '../home/home.component'
 import {handleError} from '../util'
+import {RotationDirection} from '../rotation-direction'
 
 @Component({
   selector: 'app-photo',
@@ -18,10 +19,17 @@ import {handleError} from '../util'
 export class PhotoComponent implements OnInit {
   spinnerIcon: IconDefinition = faSpinner
   arrowLeftIcon: IconDefinition = faArrowLeft
+  settingsIcon: IconDefinition = faPencilAlt
+  closeIcon: IconDefinition = faTimes
+  rotateClockwiseIcon: IconDefinition = faRedo
+  rotateCounterclockwiseIcon: IconDefinition = faUndo
 
   baseUrl: string = environment.baseUrl
   loading: boolean = true
+  transforming: boolean = false
   error: string = null
+
+  settingsPanelOpened: boolean = false
 
   photo: NavigablePhoto
 
@@ -45,8 +53,18 @@ export class PhotoComponent implements OnInit {
     })
   }
 
+  fetchPhoto(id: string): void {
+    this.loading = true
+    this.photoService.get(id)
+      .pipe(finalize(() => this.loading = false))
+      .subscribe(
+        photo => this.photo = photo,
+        error => handleError(error, this.stateService)
+      )
+  }
+
   @HostListener('window:keyup', ['$event'])
-  keyEvent(event: KeyboardEvent): void {
+  keyUpEvent(event: KeyboardEvent): void {
     switch (event.key) {
       case 'ArrowLeft':
         this.previous()
@@ -70,12 +88,7 @@ export class PhotoComponent implements OnInit {
 
   ngOnInit(): void {
     this.stateService.currentPhotoNavOffset = 0
-    this.route.paramMap
-      .pipe(flatMap(params => this.photoService.get(params.get('id')).pipe(finalize(() => this.loading = false))))
-      .subscribe(
-        photo => this.photo = photo,
-        error => handleError(error, this.stateService)
-      )
+    this.route.paramMap.subscribe(params => this.fetchPhoto(params.get('id')))
   }
 
   previous(): void {
@@ -84,6 +97,24 @@ export class PhotoComponent implements OnInit {
       // noinspection JSIgnoredPromiseFromCall
       this.router.navigate(['photo', this.photo.previous.id])
     }
+  }
+
+  rotate(dir: RotationDirection): void {
+    this.transforming = true
+    this.photoService.rotate(this.photo.id, dir)
+      .pipe(finalize(() => this.transforming = false))
+      .subscribe(
+        () => this.fetchPhoto(this.photo.id),
+        error => handleError(error, this.stateService)
+      )
+  }
+
+  rotateClockwise(): void {
+    this.rotate(RotationDirection.Clockwise)
+  }
+
+  rotateCounterclockwise(): void {
+    this.rotate(RotationDirection.Counterclockwise)
   }
 
 }
