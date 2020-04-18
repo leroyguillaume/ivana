@@ -4,6 +4,7 @@ import {Observable} from 'rxjs'
 import {Page} from './page'
 import {User} from './user'
 import {environment} from '../environments/environment'
+import {Role} from './role'
 
 @Injectable({
   providedIn: 'root'
@@ -14,6 +15,11 @@ export class UserService {
   constructor(
     private http: HttpClient
   ) {
+  }
+
+  create(name: string, pwd: string, role: Role): Observable<User> {
+    const user = {name, pwd, role}
+    return this.http.post<User>(this.baseUrl, user, {withCredentials: true})
   }
 
   getAll(page: number, size: number): Observable<Page<User>> {

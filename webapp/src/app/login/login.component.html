@@ -15,13 +15,13 @@
     </div>
 
     <div class="form-group">
-      <label for="password">Mot de passe</label>
-      <input id="password"
+      <label for="pwd">Mot de passe</label>
+      <input id="pwd"
              type="password"
              class="form-control"
-             formControlName="password"
+             formControlName="pwd"
              required
-             [ngClass]="{'is-invalid': password.invalid && (password.dirty || password.touched)}">
+             [ngClass]="{'is-invalid': pwd.invalid && (pwd.dirty || pwd.touched)}">
     </div>
 
     <button type="submit"

@@ -8,6 +8,7 @@ import {environment} from '../../environments/environment'
 import {StateService} from '../state.service'
 import {IconDefinition} from '@fortawesome/fontawesome-common-types'
 import {PhotoPageSize} from '../home/home.component'
+import {handleError} from '../util'
 
 @Component({
   selector: 'app-photo',
@@ -16,7 +17,7 @@ import {PhotoPageSize} from '../home/home.component'
 })
 export class PhotoComponent implements OnInit {
   spinnerIcon: IconDefinition = faSpinner
-  leftIcon: IconDefinition = faArrowLeft
+  arrowLeftIcon: IconDefinition = faArrowLeft
 
   baseUrl: string = environment.baseUrl
   loading: boolean = true
@@ -73,10 +74,7 @@ export class PhotoComponent implements OnInit {
       .pipe(flatMap(params => this.photoService.get(params.get('id')).pipe(finalize(() => this.loading = false))))
       .subscribe(
         photo => this.photo = photo,
-        error => {
-          console.error(error)
-          this.error = 'Une erreur inattendue s\'est produite. Veuillez réessayer ultérieurement.'
-        }
+        error => handleError(error, this.stateService)
       )
   }
 
