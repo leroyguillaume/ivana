@@ -38,4 +38,9 @@ export class UserService {
   me(): Observable<User> {
     return this.http.get<User>(`${this.baseUrl}/me`, {withCredentials: true})
   }
+
+  updatePassword(newPwd: string): Observable<void> {
+    const body = {newPwd}
+    return this.http.put<void>(`${this.baseUrl}/password`, body, {withCredentials: true})
+  }
 }

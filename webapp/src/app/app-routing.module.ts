@@ -8,6 +8,7 @@ import {PhotoComponent} from './photo/photo.component'
 import {AdminComponent} from './admin/admin.component'
 import {AdminGuard} from './admin.guard'
 import {UserComponent} from './user/user.component'
+import {ChangePasswordComponent} from './change-password/change-password.component'
 
 
 const routes: Routes = [
@@ -37,6 +38,12 @@ const routes: Routes = [
     pathMatch: 'full',
     component: UserComponent,
     canActivate: [AdminGuard]
+  },
+  {
+    path: 'user/password',
+    pathMatch: 'full',
+    component: ChangePasswordComponent,
+    canActivate: [AuthenticatedGuard]
   },
   {
     path: '**',

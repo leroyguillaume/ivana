@@ -1,6 +1,6 @@
 import {Component, ElementRef, OnInit, ViewChild} from '@angular/core'
 import {ActivatedRoute, Router} from '@angular/router'
-import {faSignOutAlt, faSpinner, faUpload} from '@fortawesome/free-solid-svg-icons'
+import {faSignOutAlt, faSpinner, faUpload, faUser} from '@fortawesome/free-solid-svg-icons'
 import {LoginService} from '../login.service'
 import {StateService} from '../state.service'
 import {IconDefinition} from '@fortawesome/fontawesome-common-types'
@@ -15,6 +15,7 @@ export class NavbarComponent implements OnInit {
   logoutIcon: IconDefinition = faSignOutAlt
   uploadIcon: IconDefinition = faUpload
   spinnerIcon: IconDefinition = faSpinner
+  profileIcon: IconDefinition = faUser
 
   opened: boolean = false
   uploading: boolean = false
