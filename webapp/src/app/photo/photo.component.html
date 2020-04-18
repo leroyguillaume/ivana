@@ -5,7 +5,36 @@
     </button>
   </div>
 
+  <div class="settings-button">
+    <button *ngIf="!settingsPanelOpened" class="btn btn-secondary" (click)="settingsPanelOpened = true">
+      <fa-icon [icon]="settingsIcon" size="2x"></fa-icon>
+    </button>
+  </div>
+
   <ngb-alert *ngIf="error" type="danger" dismissible="true" (close)="error = null">{{error}}</ngb-alert>
+
+  <div *ngIf="settingsPanelOpened" class="settings-panel">
+    <div class="container mt-2">
+      <div *ngIf="transforming; else settings" class="text-center mt-3">
+        <fa-icon [icon]="spinnerIcon" spin="true" size="4x"></fa-icon>
+      </div>
+
+      <ng-template #settings>
+        <div class="text-right mb-2">
+          <fa-icon class="clickable" [icon]="closeIcon" (click)="settingsPanelOpened = false" size="2x"></fa-icon>
+        </div>
+        <div class="p-2">
+          <h4>Rotations</h4>
+          <button class="btn btn-secondary mr-2" (click)="rotateClockwise()">
+            <fa-icon [icon]="rotateClockwiseIcon"></fa-icon>
+          </button>
+          <button class="btn btn-secondary" (click)="rotateCounterclockwise()">
+            <fa-icon [icon]="rotateCounterclockwiseIcon"></fa-icon>
+          </button>
+        </div>
+      </ng-template>
+    </div>
+  </div>
 
   <div *ngIf="loading; else photoBlock">
     <div class="text-center">

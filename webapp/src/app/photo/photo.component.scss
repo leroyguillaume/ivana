@@ -1,3 +1,5 @@
+@import "../../variables";
+
 img {
   max-width: 100%;
   height: auto;
@@ -8,4 +10,19 @@ img {
   position: absolute;
   top: 2%;
   left: 1%;
+}
+
+.settings-button {
+  position: absolute;
+  top: 2%;
+  right: 1%;
+}
+
+.settings-panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 15em;
+  height: 100vh;
+  background-color: lighten($body-bg, 10%);
 }

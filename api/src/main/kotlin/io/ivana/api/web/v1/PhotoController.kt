@@ -85,7 +85,7 @@ class PhotoController(
     }
 
     @Transactional
-    @PostMapping("/{id:$UuidRegex}$TransformPhotoEndpoint")
+    @PutMapping("/{id:$UuidRegex}$TransformPhotoEndpoint")
     @PreAuthorize("hasPermission(#id, '$UserPhotoTargetType', 'update')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Suppress("MVCPathVariableInspection", "RegExpUnexpectedAnchor")
