@@ -19,7 +19,7 @@ export class LoginComponent implements OnInit {
   error: string = null
 
   loginForm: FormGroup = new FormGroup({
-    name: new FormControl(''),
+    username: new FormControl(''),
     pwd: new FormControl('')
   })
 

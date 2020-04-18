@@ -14,6 +14,7 @@ import {PhotoComponent} from './photo/photo.component'
 import {AdminComponent} from './admin/admin.component'
 import {UserComponent} from './user/user.component'
 import {ErrorComponent} from './error/error.component'
+import {ChangePasswordComponent} from './change-password/change-password.component'
 
 @NgModule({
   declarations: [
@@ -24,7 +25,8 @@ import {ErrorComponent} from './error/error.component'
     PhotoComponent,
     AdminComponent,
     UserComponent,
-    ErrorComponent
+    ErrorComponent,
+    ChangePasswordComponent
   ],
   imports: [
     BrowserModule,

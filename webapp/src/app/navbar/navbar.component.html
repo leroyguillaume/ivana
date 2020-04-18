@@ -31,11 +31,20 @@
         <input name="files" type="file" (change)="upload()" multiple hidden #files>
       </li>
 
-      <li class="nav-item clickable">
-        <a class="nav-link" (click)="logout()">
-          <fa-icon [icon]="logoutIcon"></fa-icon>
-          Déconnexion
+      <li class="nav-item dropdown" ngbDropdown display="dynamic">
+        <a class="nav-link dropdown-toggle clickable" ngbDropdownToggle>
+          <fa-icon [icon]="profileIcon"></fa-icon>
+          {{currentUser.name}}
         </a>
+        <div ngbDropdownMenu>
+          <button class="btn btn-secondary" routerLink="/user/password" ngbDropdownItem>
+            Changer mon mot de passe
+          </button>
+          <button class="btn btn-secondary" (click)="logout()" ngbDropdownItem>
+            <fa-icon [icon]="logoutIcon"></fa-icon>
+            Déconnexion
+          </button>
+        </div>
       </li>
     </ul>
   </div>

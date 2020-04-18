@@ -5,7 +5,7 @@ import {StateService} from '../state.service'
 import {finalize} from 'rxjs/operators'
 import {ActivatedRoute, Router} from '@angular/router'
 import {IconDefinition} from '@fortawesome/fontawesome-common-types'
-import {faArrowLeft, faArrowRight, faPlus, faSpinner} from '@fortawesome/free-solid-svg-icons'
+import {faArrowLeft, faArrowRight, faSpinner, faUserPlus} from '@fortawesome/free-solid-svg-icons'
 import {User} from '../user'
 import {fetchPageFromQueryParam, handleError} from '../util'
 
@@ -20,7 +20,7 @@ export class AdminComponent implements OnInit {
   spinnerIcon: IconDefinition = faSpinner
   previousIcon: IconDefinition = faArrowLeft
   nextIcon: IconDefinition = faArrowRight
-  plusIcon: IconDefinition = faPlus
+  plusIcon: IconDefinition = faUserPlus
 
   page: Page<User> = null
   loading: boolean = true
