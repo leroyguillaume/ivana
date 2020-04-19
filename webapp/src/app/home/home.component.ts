@@ -8,6 +8,7 @@ import {ActivatedRoute, Router} from '@angular/router'
 import {StateService} from '../state.service'
 import {IconDefinition} from '@fortawesome/fontawesome-common-types'
 import {fetchPageFromQueryParam, handleError} from '../util'
+import {forkJoin} from 'rxjs'
 
 export const PhotoPageSize: number = 12
 
@@ -32,6 +33,19 @@ export class HomeComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router
   ) {
+  }
+
+  deleteSelectedPhotos(selectedPhotos: Set<string>): void {
+    if (window.confirm(`Êtes-vous certain(e) de vouloir supprimer ces ${selectedPhotos.size} photo(s) ?`)) {
+      forkJoin(Array.from(selectedPhotos.values()).map(id => this.photoService.delete(id)))
+        .subscribe(
+          () => {
+            this.stateService.success.next('Toutes les photos ont été supprimées !')
+            this.fetchPage(this.page.no)
+          },
+          error => handleError(error, this.stateService)
+        )
+    }
   }
 
   fetchPage(no: number): void {

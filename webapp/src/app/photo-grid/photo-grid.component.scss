@@ -1,0 +1,13 @@
+@import "../../variables";
+
+.selected {
+  border-style: solid;
+  border-color: map-get($theme-colors, 'secondary');
+}
+
+.thumbnail {
+  width: 100%;
+  height: 200px;
+  border-radius: 5px;
+  object-fit: cover;
+}

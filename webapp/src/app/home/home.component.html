@@ -18,6 +18,9 @@
   </div>
 
   <div *ngIf="!loading && page.totalItems > 0">
-    <app-photo-grid [page]="page" (pageChange)="fetchPage($event)"></app-photo-grid>
+    <app-photo-grid [page]="page"
+                    (pageChange)="fetchPage($event)"
+                    (selectedPhotosDelete)="deleteSelectedPhotos($event)">
+    </app-photo-grid>
   </div>
 </div>
