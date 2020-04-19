@@ -3,8 +3,7 @@ import {Photo} from '../photo'
 import {Page} from '../page'
 import {PhotoService} from '../photo.service'
 import {finalize} from 'rxjs/operators'
-import {faArrowLeft, faArrowRight, faSpinner} from '@fortawesome/free-solid-svg-icons'
-import {environment} from '../../environments/environment'
+import {faSpinner} from '@fortawesome/free-solid-svg-icons'
 import {ActivatedRoute, Router} from '@angular/router'
 import {StateService} from '../state.service'
 import {IconDefinition} from '@fortawesome/fontawesome-common-types'
@@ -18,13 +17,9 @@ export const PhotoPageSize: number = 12
   styleUrls: ['./home.component.scss']
 })
 export class HomeComponent implements OnInit {
-  baseUrl: string = environment.baseUrl
-
   spinnerIcon: IconDefinition = faSpinner
-  previousIcon: IconDefinition = faArrowLeft
-  nextIcon: IconDefinition = faArrowRight
 
-  page: Page<Photo> = null
+  page: Page<Photo>
   loading: boolean = true
   uploading: boolean = false
 
@@ -59,23 +54,10 @@ export class HomeComponent implements OnInit {
       )
   }
 
-  nextPage(): void {
-    this.fetchPage(this.page.no + 1)
-  }
-
   ngOnInit(): void {
     fetchPageFromQueryParam(this.route, (no: number) => this.fetchPage(no))
     this.stateService.uploadingPhotos.subscribe(uploading => this.uploading = uploading)
     this.stateService.photosUploaded.subscribe(() => this.fetchPage(this.page.no))
-  }
-
-  openPhoto(id: string): void {
-    this.stateService.startPhotoNavIndex = this.page.content.findIndex(photo => photo.id === id)
-    this.router.navigate(['/photo', id])
-  }
-
-  previousPage(): void {
-    this.fetchPage(this.page.no - 1)
   }
 
   selectFiles(): void {
