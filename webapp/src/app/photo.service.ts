@@ -19,6 +19,10 @@ export class PhotoService {
   ) {
   }
 
+  delete(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/${id}`, {withCredentials: true})
+  }
+
   get(id: string): Observable<NavigablePhoto> {
     return this.http.get<NavigablePhoto>(
       `${this.baseUrl}/${id}`,

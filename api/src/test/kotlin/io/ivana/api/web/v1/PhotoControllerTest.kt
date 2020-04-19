@@ -30,6 +30,50 @@ import java.util.*
 @AutoConfigureMockMvc
 internal class PhotoControllerTest : AbstractControllerTest() {
     @Nested
+    inner class delete {
+        private val photoId = UUID.randomUUID()
+        private val method = HttpMethod.DELETE
+        private val uri = "$PhotoApiEndpoint/$photoId"
+
+        @Test
+        fun `should return 401 if user is anonymous`() {
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                status = HttpStatus.UNAUTHORIZED,
+                respDto = ErrorDto.Unauthorized
+            )
+        }
+
+        @Test
+        fun `should return 403 if user does not have permission`() = authenticated {
+            whenever(userPhotoAuthzRepo.fetch(principal.user.id, photoId))
+                .thenReturn(EnumSet.complementOf(EnumSet.of(Permission.Delete)))
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                reqCookies = listOf(accessTokenCookie()),
+                status = HttpStatus.FORBIDDEN,
+                respDto = ErrorDto.Forbidden
+            )
+            verify(userPhotoAuthzRepo).fetch(principal.user.id, photoId)
+        }
+
+        @Test
+        fun `should return 204`() = authenticated {
+            whenever(userPhotoAuthzRepo.fetch(principal.user.id, photoId)).thenReturn(setOf(Permission.Delete))
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                reqCookies = listOf(accessTokenCookie()),
+                status = HttpStatus.NO_CONTENT
+            )
+            verify(userPhotoAuthzRepo).fetch(principal.user.id, photoId)
+            verify(photoService).delete(photoId, source)
+        }
+    }
+
+    @Nested
     inner class get {
         private val linkedPhotos = LinkedPhotos(
             current = Photo(

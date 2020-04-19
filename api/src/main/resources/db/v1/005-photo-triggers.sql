@@ -32,6 +32,7 @@ CREATE FUNCTION photo_update() RETURNS trigger
 $$
 BEGIN
     CASE WHEN new.type = 'upload' THEN CALL insert_photo(new);
+        WHEN new.type = 'deletion' THEN DELETE FROM photo WHERE id = new.subject_id;
         ELSE
         END CASE;
     RETURN new;

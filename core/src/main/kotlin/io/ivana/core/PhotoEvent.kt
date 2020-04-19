@@ -4,6 +4,13 @@ import java.time.OffsetDateTime
 import java.util.*
 
 sealed class PhotoEvent : Event {
+    data class Deletion(
+        override val date: OffsetDateTime,
+        override val subjectId: UUID,
+        override val number: Long,
+        override val source: EventSource.User
+    ) : PhotoEvent()
+
     data class Transform(
         override val date: OffsetDateTime,
         override val subjectId: UUID,

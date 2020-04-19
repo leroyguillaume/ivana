@@ -38,6 +38,14 @@ class PhotoServiceImpl(
 
     override val entityName = "Photo"
 
+    override fun delete(id: UUID, source: EventSource.User) {
+        if (!repo.existsById(id)) {
+            throw EntityNotFoundException("$entityName $id does not exist")
+        }
+        eventRepo.saveDeletionEvent(id, source)
+        Logger.info("User ${source.id} (${source.ip}) deleted photo $id")
+    }
+
     override fun getAll(ownerId: UUID, pageNo: Int, pageSize: Int): Page<Photo> {
         val content = repo.fetchAll(ownerId, (pageNo - 1) * pageSize, pageSize)
         val itemsNb = repo.count(ownerId)

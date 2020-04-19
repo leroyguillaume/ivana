@@ -7,6 +7,10 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
 private const val RotationTransformTypeValue = "rotation"
 
 internal sealed class PhotoEventData : EventData {
+    data class Deletion(
+        override val source: EventSourceData.User
+    ) : PhotoEventData()
+
     data class Transform(
         override val source: EventSourceData.User,
         val content: Content

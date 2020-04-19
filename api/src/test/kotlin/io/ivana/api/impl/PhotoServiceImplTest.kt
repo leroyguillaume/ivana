@@ -45,6 +45,35 @@ internal class PhotoServiceImplTest {
     }
 
     @Nested
+    inner class delete {
+        private val event = PhotoEvent.Deletion(
+            date = OffsetDateTime.now(),
+            subjectId = UUID.randomUUID(),
+            number = 1,
+            source = EventSource.User(UUID.randomUUID(), InetAddress.getByName("127.0.0.1"))
+        )
+
+        @Test
+        fun `should throw exception if photo does not exist`() {
+            every { photoRepo.existsById(event.subjectId) } returns false
+            val exception = assertThrows<EntityNotFoundException> { service.delete(event.subjectId, event.source) }
+            exception shouldHaveMessage "Photo ${event.subjectId} does not exist"
+            verify { photoRepo.existsById(event.subjectId) }
+            confirmVerified(photoRepo)
+        }
+
+        @Test
+        fun `should delete photo`() {
+            every { photoRepo.existsById(event.subjectId) } returns true
+            every { photoEventRepo.saveDeletionEvent(event.subjectId, event.source) } returns event
+            service.delete(event.subjectId, event.source)
+            verify { photoRepo.existsById(event.subjectId) }
+            verify { photoEventRepo.saveDeletionEvent(event.subjectId, event.source) }
+            confirmVerified(photoRepo)
+        }
+    }
+
+    @Nested
     inner class getAll {
         private val pageNo = 1
         private val pageSize = 3
