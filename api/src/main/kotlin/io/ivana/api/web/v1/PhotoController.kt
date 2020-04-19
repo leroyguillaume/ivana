@@ -107,7 +107,6 @@ class PhotoController(
         photoService.transform(id, transformDto.toTransform(), req.source(auth.principal as UserPrincipal))
     }
 
-    @Transactional
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     fun upload(
