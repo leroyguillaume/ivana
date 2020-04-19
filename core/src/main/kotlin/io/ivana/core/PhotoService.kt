@@ -5,6 +5,8 @@ import java.io.InputStream
 import java.util.*
 
 interface PhotoService : EntityService<Photo> {
+    fun delete(id: UUID, source: EventSource.User)
+
     fun getAll(ownerId: UUID, pageNo: Int, pageSize: Int): Page<Photo>
 
     fun getCompressedFile(photo: Photo): File

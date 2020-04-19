@@ -23,13 +23,18 @@
         <div class="text-right mb-2">
           <fa-icon class="clickable" [icon]="closeIcon" (click)="settingsPanelOpened = false" size="2x"></fa-icon>
         </div>
-        <div class="p-2">
+        <div class="text-center">
           <h4>Rotations</h4>
           <button class="btn btn-secondary mr-2" (click)="rotateClockwise()">
             <fa-icon [icon]="rotateClockwiseIcon"></fa-icon>
           </button>
           <button class="btn btn-secondary" (click)="rotateCounterclockwise()">
             <fa-icon [icon]="rotateCounterclockwiseIcon"></fa-icon>
+          </button>
+
+          <button class="btn btn-danger mt-4" (click)="delete()">
+            <fa-icon [icon]="trashIcon"></fa-icon>
+            Supprimer
           </button>
         </div>
       </ng-template>

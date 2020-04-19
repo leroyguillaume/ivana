@@ -43,6 +43,15 @@ class PhotoController(
         private val Logger = LoggerFactory.getLogger(PhotoController::class.java)
     }
 
+    @DeleteMapping("/{id:$UuidRegex}")
+    @PreAuthorize("hasPermission(#id, '$UserPhotoTargetType', 'delete')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Suppress("MVCPathVariableInspection", "RegExpUnexpectedAnchor")
+    fun delete(@PathVariable id: UUID, auth: Authentication, req: HttpServletRequest) {
+        val principal = auth.principal as UserPrincipal
+        photoService.delete(id, req.source(principal))
+    }
+
     @GetMapping("/{id:$UuidRegex}")
     @PreAuthorize("hasPermission(#id, '$UserPhotoTargetType', 'read')")
     @ResponseStatus(HttpStatus.OK)

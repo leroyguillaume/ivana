@@ -1,6 +1,6 @@
 import {Component, HostListener, OnInit} from '@angular/core'
 import {NavigablePhoto} from '../navigable-photo'
-import {faArrowLeft, faPencilAlt, faRedo, faSpinner, faTimes, faUndo} from '@fortawesome/free-solid-svg-icons'
+import {faArrowLeft, faPencilAlt, faRedo, faSpinner, faTimes, faTrash, faUndo} from '@fortawesome/free-solid-svg-icons'
 import {PhotoService} from '../photo.service'
 import {ActivatedRoute, Router} from '@angular/router'
 import {finalize} from 'rxjs/operators'
@@ -23,6 +23,7 @@ export class PhotoComponent implements OnInit {
   closeIcon: IconDefinition = faTimes
   rotateClockwiseIcon: IconDefinition = faRedo
   rotateCounterclockwiseIcon: IconDefinition = faUndo
+  trashIcon: IconDefinition = faTrash
 
   baseUrl: string = environment.baseUrl
   loading: boolean = true
@@ -51,6 +52,24 @@ export class PhotoComponent implements OnInit {
         page: (this.stateService.currentHomePage?.no || 1) + offset
       }
     })
+  }
+
+  delete(): void {
+    if (window.confirm('Êtes-vous certain(e) de vouloir supprimer cette photo ?')) {
+      this.photoService.delete(this.photo.id)
+        .subscribe(
+          () => {
+            if (this.photo.next) {
+              this.next()
+            } else if (this.photo.previous) {
+              this.previous()
+            } else {
+              this.close()
+            }
+          },
+          error => handleError(error, this.stateService)
+        )
+    }
   }
 
   fetchPhoto(id: string): void {

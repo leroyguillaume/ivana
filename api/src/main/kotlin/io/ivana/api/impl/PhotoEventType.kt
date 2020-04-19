@@ -1,6 +1,7 @@
 package io.ivana.api.impl
 
 enum class PhotoEventType : EventType {
+    Deletion,
     Transform,
     Upload;
 

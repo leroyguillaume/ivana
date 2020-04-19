@@ -38,7 +38,10 @@ internal class PhotoEventRepositoryImplTest {
     private lateinit var repo: PhotoEventRepositoryImpl
 
     @Autowired
-    private lateinit var authRepo: UserPhotoAuthorizationRepository
+    private lateinit var photoRepo: PhotoRepositoryImpl
+
+    @Autowired
+    private lateinit var authzRepo: UserPhotoAuthorizationRepository
 
     private lateinit var creationEvent: UserEvent.Creation
     private lateinit var createdUser: User
@@ -68,6 +71,16 @@ internal class PhotoEventRepositoryImplTest {
         }
 
         @Test
+        fun `should return deletion event with subject id and number`() {
+            val expectedEvent = repo.saveDeletionEvent(
+                photoId = UUID.randomUUID(),
+                source = EventSource.User(createdUser.id, InetAddress.getByName("127.0.0.1"))
+            )
+            val event = repo.fetch(expectedEvent.subjectId, expectedEvent.number)
+            event shouldBe expectedEvent
+        }
+
+        @Test
         fun `should return transform event with subject id and number`() {
             val expectedEvent = repo.saveTransformEvent(
                 photoId = UUID.randomUUID(),
@@ -89,6 +102,38 @@ internal class PhotoEventRepositoryImplTest {
             )
             val event = repo.fetch(expectedEvent.subjectId, expectedEvent.number)
             event shouldBe expectedEvent
+        }
+    }
+
+    @Nested
+    inner class saveDeletionEvent {
+        private lateinit var expectedEvent: PhotoEvent.Deletion
+
+        @BeforeEach
+        fun beforeEach() {
+            val uploadEvent = repo.saveUploadEvent(
+                content = PhotoEvent.Upload.Content(
+                    type = Photo.Type.Jpg,
+                    hash = "hash"
+                ),
+                source = EventSource.User(createdUser.id, InetAddress.getByName("127.0.0.1"))
+            )
+            expectedEvent = PhotoEvent.Deletion(
+                date = OffsetDateTime.now(),
+                subjectId = uploadEvent.subjectId,
+                number = 2,
+                source = uploadEvent.source
+            )
+        }
+
+        @Test
+        fun `should return created event`() {
+            val event = repo.saveDeletionEvent(expectedEvent.subjectId, expectedEvent.source)
+            event shouldBe expectedEvent.copy(
+                date = event.date,
+                subjectId = event.subjectId
+            )
+            photoRepo.fetchById(expectedEvent.subjectId).shouldBeNull()
         }
     }
 
@@ -122,6 +167,7 @@ internal class PhotoEventRepositoryImplTest {
     @Nested
     inner class saveUploadEvent {
         private lateinit var expectedEvent: PhotoEvent.Upload
+        private lateinit var exepctedPhoto: Photo
 
         @BeforeEach
         fun beforeEach() {
@@ -136,6 +182,14 @@ internal class PhotoEventRepositoryImplTest {
                     )
                 )
             }
+            exepctedPhoto = Photo(
+                id = expectedEvent.subjectId,
+                ownerId = createdUser.id,
+                uploadDate = expectedEvent.date,
+                type = expectedEvent.content.type,
+                hash = expectedEvent.content.hash,
+                no = 1
+            )
         }
 
         @Test
@@ -145,7 +199,11 @@ internal class PhotoEventRepositoryImplTest {
                 date = event.date,
                 subjectId = event.subjectId
             )
-            val permissions = authRepo.fetch(createdUser.id, event.subjectId)
+            photoRepo.fetchById(event.subjectId) shouldBe exepctedPhoto.copy(
+                id = event.subjectId,
+                uploadDate = event.date
+            )
+            val permissions = authzRepo.fetch(createdUser.id, event.subjectId)
             permissions shouldContainExactly Permission.values().toSet()
         }
     }

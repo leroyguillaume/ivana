@@ -23,6 +23,13 @@ class PhotoEventRepositoryImpl(
     override val tableName = TableName
     override val eventTypes = PhotoEventType.values()
 
+    override fun saveDeletionEvent(photoId: UUID, source: EventSource.User) =
+        insert<PhotoEvent.Deletion>(
+            subjectId = photoId,
+            type = PhotoEventType.Deletion,
+            data = PhotoEventData.Deletion(source.toData() as EventSourceData.User)
+        )
+
     override fun saveTransformEvent(photoId: UUID, transform: Transform, source: EventSource.User) =
         insert<PhotoEvent.Transform>(
             subjectId = photoId,
@@ -47,9 +54,20 @@ class PhotoEventRepositoryImpl(
         )
 
     override fun RawEvent<PhotoEventType>.toEvent() = when (type) {
+        PhotoEventType.Deletion -> toDeletionEvent()
         PhotoEventType.Transform -> toTransformEvent()
         PhotoEventType.Upload -> toUploadEvent()
     }
+
+    private fun RawEvent<PhotoEventType>.toDeletionEvent() =
+        mapper.readValue<PhotoEventData.Deletion>(jsonData).let { data ->
+            PhotoEvent.Deletion(
+                date = date,
+                subjectId = subjectId,
+                number = number,
+                source = data.source.toSource()
+            )
+        }
 
     private fun RawEvent<PhotoEventType>.toTransformEvent() =
         mapper.readValue<PhotoEventData.Transform>(jsonData).let { data ->
