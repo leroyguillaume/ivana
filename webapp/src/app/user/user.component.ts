@@ -2,7 +2,7 @@ import {Component, OnInit} from '@angular/core'
 import {faArrowLeft, faSpinner} from '@fortawesome/free-solid-svg-icons'
 import {IconDefinition} from '@fortawesome/fontawesome-common-types'
 import {AbstractControl, FormControl, FormGroup} from '@angular/forms'
-import {Role} from '../role'
+import {Role, RoleLabels} from '../role'
 import {UserService} from '../user.service'
 import {finalize} from 'rxjs/operators'
 import {StateService} from '../state.service'
@@ -17,16 +17,7 @@ export class UserComponent implements OnInit {
   leftArrowIcon: IconDefinition = faArrowLeft
   spinnerIcon: IconDefinition = faSpinner
 
-  roles: { role: Role, label: string }[] = [
-    {
-      role: Role.User,
-      label: 'Simple utilisateur'
-    },
-    {
-      role: Role.Admin,
-      label: 'Administrateur'
-    }
-  ]
+  roleLabels: { role: Role, label: string }[] = RoleLabels
   loading: boolean = false
 
   userForm: FormGroup = new FormGroup({

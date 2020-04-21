@@ -35,12 +35,24 @@
       <tr>
         <th>Nom</th>
         <th>Date de création</th>
+        <th>Role</th>
+        <th>Action</th>
       </tr>
       </thead>
       <tbody>
       <tr *ngFor="let user of page.content">
         <td>{{user.name}}</td>
         <td>{{user.creationDate | date: 'long'}}</td>
+        <td>{{roleLabels.get(user.role)}}</td>
+        <td>
+          <button
+            *ngIf="currentUser.id !== user.id && (currentUser.role === Role.SuperAdmin || currentUser.role > user.role)"
+            class="btn btn-danger"
+            (click)="delete(user)">
+            <fa-icon [icon]="trashIcon"></fa-icon>
+            Supprimer
+          </button>
+        </td>
       </tr>
       </tbody>
     </table>

@@ -33,6 +33,18 @@ class UserServiceImpl(
         return repo.fetchById(event.subjectId)!!
     }
 
+    @Transactional
+    override fun delete(id: UUID, source: EventSource) {
+        if (!repo.existsById(id)) {
+            throw EntityNotFoundException("$entityName $id does not exist")
+        }
+        eventRepo.saveDeletionEvent(id, source)
+        when (source) {
+            is EventSource.System -> Logger.info("System deleted user $id")
+            is EventSource.User -> Logger.info("User ${source.id} (${source.ip}) deleted user $id")
+        }
+    }
+
     override fun getByName(username: String) = repo.fetchByName(username)
         ?: throw EntityNotFoundException("User '$username' does not exist")
 

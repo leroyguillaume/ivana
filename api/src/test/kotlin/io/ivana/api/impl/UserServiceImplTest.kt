@@ -13,6 +13,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import java.net.InetAddress
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -71,6 +72,35 @@ internal class UserServiceImplTest {
             verify { userEventRepo.saveCreationEvent(creationEvent.content, creationEvent.source) }
             verify { userRepo.fetchById(expectedUser.id) }
             confirmVerified(userRepo, userEventRepo)
+        }
+    }
+
+    @Nested
+    inner class delete {
+        private val event = UserEvent.Deletion(
+            date = OffsetDateTime.now(),
+            subjectId = UUID.randomUUID(),
+            number = 1,
+            source = EventSource.User(UUID.randomUUID(), InetAddress.getByName("127.0.0.1"))
+        )
+
+        @Test
+        fun `should throw exception if user does not exist`() {
+            every { userRepo.existsById(event.subjectId) } returns false
+            val exception = assertThrows<EntityNotFoundException> { service.delete(event.subjectId, event.source) }
+            exception shouldHaveMessage "User ${event.subjectId} does not exist"
+            verify { userRepo.existsById(event.subjectId) }
+            confirmVerified(userRepo)
+        }
+
+        @Test
+        fun `should delete user`() {
+            every { userRepo.existsById(event.subjectId) } returns true
+            every { userEventRepo.saveDeletionEvent(event.subjectId, event.source) } returns event
+            service.delete(event.subjectId, event.source)
+            verify { userRepo.existsById(event.subjectId) }
+            verify { userEventRepo.saveDeletionEvent(event.subjectId, event.source) }
+            confirmVerified(userRepo)
         }
     }
 

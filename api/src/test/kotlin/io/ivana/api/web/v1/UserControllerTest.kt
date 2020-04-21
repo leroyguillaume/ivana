@@ -2,6 +2,7 @@
 
 package io.ivana.api.web.v1
 
+import com.nhaarman.mockitokotlin2.never
 import com.nhaarman.mockitokotlin2.verify
 import com.nhaarman.mockitokotlin2.whenever
 import io.ivana.api.impl.UserAlreadyExistsException
@@ -155,6 +156,172 @@ internal class UserControllerTest : AbstractControllerTest() {
             )
             verify(pwdEncoder).encode(creationDto.pwd)
             verify(userService).create(eventContent, source)
+        }
+    }
+
+    @Nested
+    inner class delete {
+        private val userId = UUID.randomUUID()
+        private val method = HttpMethod.DELETE
+        private val uri = "$UserApiEndpoint/$userId"
+
+        @Test
+        fun `should return 401 if user is anonymous`() {
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                status = HttpStatus.UNAUTHORIZED,
+                respDto = ErrorDto.Unauthorized
+            )
+        }
+
+        @Test
+        fun `should return 403 if user does not exist`() = authenticated {
+            whenever(userRepo.fetchById(userId)).thenReturn(null)
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                reqCookies = listOf(accessTokenCookie()),
+                status = HttpStatus.FORBIDDEN,
+                respDto = ErrorDto.Forbidden
+            )
+            verify(userRepo).fetchById(userId)
+        }
+
+        @Test
+        fun `should return 403 if user tries to delete user`() = authenticated {
+            whenever(userRepo.fetchById(userId)).thenReturn(userPrincipal.user) // Trick here: userId != userPrincipal.user.id
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                reqCookies = listOf(accessTokenCookie()),
+                status = HttpStatus.FORBIDDEN,
+                respDto = ErrorDto.Forbidden
+            )
+            verify(userRepo).fetchById(userId)
+        }
+
+        @Test
+        fun `should return 403 if user tries to delete admin`() = authenticated {
+            whenever(userRepo.fetchById(userId)).thenReturn(adminPrincipal.user)
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                reqCookies = listOf(accessTokenCookie()),
+                status = HttpStatus.FORBIDDEN,
+                respDto = ErrorDto.Forbidden
+            )
+            verify(userRepo).fetchById(userId)
+        }
+
+        @Test
+        fun `should return 403 if user tries to delete super admin`() = authenticated {
+            whenever(userRepo.fetchById(userId)).thenReturn(superAdminPrincipal.user)
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                reqCookies = listOf(accessTokenCookie()),
+                status = HttpStatus.FORBIDDEN,
+                respDto = ErrorDto.Forbidden
+            )
+            verify(userRepo).fetchById(userId)
+        }
+
+        @Test
+        fun `should return 403 if admin tries to delete admin`() = authenticated(adminPrincipal) {
+            whenever(userRepo.fetchById(userId)).thenReturn(adminPrincipal.user)
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                reqCookies = listOf(accessTokenCookie()),
+                status = HttpStatus.FORBIDDEN,
+                respDto = ErrorDto.Forbidden
+            )
+            verify(userRepo).fetchById(userId)
+        }
+
+        @Test
+        fun `should return 403 if admin tries to delete super admin`() = authenticated(adminPrincipal) {
+            whenever(userRepo.fetchById(userId)).thenReturn(superAdminPrincipal.user)
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                reqCookies = listOf(accessTokenCookie()),
+                status = HttpStatus.FORBIDDEN,
+                respDto = ErrorDto.Forbidden
+            )
+            verify(userRepo).fetchById(userId)
+        }
+
+        @Test
+        fun `should return 403 if admin tries to delete itself`() = authenticated(adminPrincipal) {
+            callAndExpectDto(
+                method = method,
+                uri = "$UserApiEndpoint/${principal.user.id}",
+                reqCookies = listOf(accessTokenCookie()),
+                status = HttpStatus.FORBIDDEN,
+                respDto = ErrorDto.Forbidden
+            )
+        }
+
+        @Test
+        fun `should return 403 if super admin tries to delete itself`() = authenticated(superAdminPrincipal) {
+            callAndExpectDto(
+                method = method,
+                uri = "$UserApiEndpoint/${principal.user.id}",
+                reqCookies = listOf(accessTokenCookie()),
+                status = HttpStatus.FORBIDDEN,
+                respDto = ErrorDto.Forbidden
+            )
+        }
+
+        @Test
+        fun `should return 204 if admin deleted user`() = authenticated(adminPrincipal) {
+            whenever(userRepo.fetchById(userId)).thenReturn(userPrincipal.user)
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                reqCookies = listOf(accessTokenCookie()),
+                status = HttpStatus.NO_CONTENT
+            )
+            verify(userRepo).fetchById(userId)
+            verify(userService).delete(userId, source)
+        }
+
+        @Test
+        fun `should return 204 if super admin deleted user`() = authenticated(superAdminPrincipal) {
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                reqCookies = listOf(accessTokenCookie()),
+                status = HttpStatus.NO_CONTENT
+            )
+            verify(userRepo, never()).fetchById(userId)
+            verify(userService).delete(userId, source)
+        }
+
+        @Test
+        fun `should return 204 if super admin deleted admin`() = authenticated(superAdminPrincipal) {
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                reqCookies = listOf(accessTokenCookie()),
+                status = HttpStatus.NO_CONTENT
+            )
+            verify(userRepo, never()).fetchById(userId)
+            verify(userService).delete(userId, source)
+        }
+
+        @Test
+        fun `should return 204 if super admin deleted super admin`() = authenticated(superAdminPrincipal) {
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                reqCookies = listOf(accessTokenCookie()),
+                status = HttpStatus.NO_CONTENT
+            )
+            verify(userRepo, never()).fetchById(userId)
+            verify(userService).delete(userId, source)
         }
     }
 

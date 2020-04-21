@@ -4,6 +4,7 @@ enum class UserEventType(
     override val sqlValue: String
 ) : EventType {
     Creation("creation"),
+    Deletion("deletion"),
     Login("login"),
     PasswordUpdate("password_update");
 

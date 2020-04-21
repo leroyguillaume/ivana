@@ -36,6 +36,13 @@ class UserEventRepositoryImpl(
             )
         )
 
+    override fun saveDeletionEvent(userId: UUID, source: EventSource) =
+        insert<UserEvent.Deletion>(
+            subjectId = userId,
+            type = UserEventType.Deletion,
+            data = UserEventData.Deletion(source.toData())
+        )
+
     override fun saveLoginEvent(source: EventSource.User) = insert<UserEvent.Login>(
         subjectId = source.id,
         type = UserEventType.Login,
@@ -51,6 +58,7 @@ class UserEventRepositoryImpl(
 
     override fun RawEvent<UserEventType>.toEvent() = when (type) {
         UserEventType.Creation -> toCreationEvent()
+        UserEventType.Deletion -> toDeletionEvent()
         UserEventType.Login -> toLoginEvent()
         UserEventType.PasswordUpdate -> toPasswordUpdateEvent()
     }
@@ -66,6 +74,16 @@ class UserEventRepositoryImpl(
                     hashedPwd = data.content.hashedPwd,
                     role = data.content.role.role
                 )
+            )
+        }
+
+    private fun RawEvent<UserEventType>.toDeletionEvent() =
+        mapper.readValue<UserEventData.Deletion>(jsonData).let { data ->
+            UserEvent.Deletion(
+                date = date,
+                subjectId = subjectId,
+                number = number,
+                source = data.source.toSource()
             )
         }
 
