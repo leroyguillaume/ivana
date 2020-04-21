@@ -1,6 +1,7 @@
 package io.ivana.api.web.v1
 
 import io.ivana.api.security.UserPrincipal
+import io.ivana.api.security.UserTargetType
 import io.ivana.api.web.source
 import io.ivana.core.Role
 import io.ivana.core.UserEvent
@@ -13,6 +14,7 @@ import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.*
+import java.util.*
 import javax.servlet.http.HttpServletRequest
 import javax.validation.Valid
 import javax.validation.constraints.Min
@@ -40,6 +42,16 @@ class UserController(
             role = creationDto.role.toRole()
         )
         return userService.create(content, req.source(principal)).toDto()
+    }
+
+    @Transactional
+    @DeleteMapping("/{id:$UuidRegex}")
+    @PreAuthorize("hasPermission(#id, '$UserTargetType', 'delete')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Suppress("MVCPathVariableInspection", "RegExpUnexpectedAnchor")
+    fun delete(@PathVariable id: UUID, auth: Authentication, req: HttpServletRequest) {
+        val principal = auth.principal as UserPrincipal
+        userService.delete(id, req.source(principal))
     }
 
     @GetMapping

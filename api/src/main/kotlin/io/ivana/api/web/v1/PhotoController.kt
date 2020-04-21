@@ -2,7 +2,7 @@ package io.ivana.api.web.v1
 
 import io.ivana.api.impl.PhotoAlreadyUploadedException
 import io.ivana.api.security.CustomAuthentication
-import io.ivana.api.security.UserPhotoTargetType
+import io.ivana.api.security.PhotoTargetType
 import io.ivana.api.security.UserPrincipal
 import io.ivana.api.web.source
 import io.ivana.core.EventSource
@@ -43,8 +43,9 @@ class PhotoController(
         private val Logger = LoggerFactory.getLogger(PhotoController::class.java)
     }
 
+    @Transactional
     @DeleteMapping("/{id:$UuidRegex}")
-    @PreAuthorize("hasPermission(#id, '$UserPhotoTargetType', 'delete')")
+    @PreAuthorize("hasPermission(#id, '$PhotoTargetType', 'delete')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Suppress("MVCPathVariableInspection", "RegExpUnexpectedAnchor")
     fun delete(@PathVariable id: UUID, auth: Authentication, req: HttpServletRequest) {
@@ -53,7 +54,7 @@ class PhotoController(
     }
 
     @GetMapping("/{id:$UuidRegex}")
-    @PreAuthorize("hasPermission(#id, '$UserPhotoTargetType', 'read')")
+    @PreAuthorize("hasPermission(#id, '$PhotoTargetType', 'read')")
     @ResponseStatus(HttpStatus.OK)
     @Suppress("MVCPathVariableInspection", "RegExpUnexpectedAnchor")
     fun get(
@@ -77,7 +78,7 @@ class PhotoController(
     }
 
     @GetMapping("/{id:$UuidRegex}$CompressedPhotoEndpoint")
-    @PreAuthorize("hasPermission(#id, '$UserPhotoTargetType', 'read')")
+    @PreAuthorize("hasPermission(#id, '$PhotoTargetType', 'read')")
     @Suppress("MVCPathVariableInspection", "RegExpUnexpectedAnchor")
     fun getCompressedFile(@PathVariable id: UUID) = photoService.getById(id).let { photo ->
         val file = photoService.getCompressedFile(photo)
@@ -85,7 +86,7 @@ class PhotoController(
     }
 
     @GetMapping("/{id:$UuidRegex}$RawPhotoEndpoint")
-    @PreAuthorize("hasPermission(#id, '$UserPhotoTargetType', 'read')")
+    @PreAuthorize("hasPermission(#id, '$PhotoTargetType', 'read')")
     @ResponseStatus(HttpStatus.OK)
     @Suppress("MVCPathVariableInspection", "RegExpUnexpectedAnchor")
     fun getRawFile(@PathVariable id: UUID) = photoService.getById(id).let { photo ->
@@ -95,7 +96,7 @@ class PhotoController(
 
     @Transactional
     @PutMapping("/{id:$UuidRegex}$TransformPhotoEndpoint")
-    @PreAuthorize("hasPermission(#id, '$UserPhotoTargetType', 'update')")
+    @PreAuthorize("hasPermission(#id, '$PhotoTargetType', 'update')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Suppress("MVCPathVariableInspection", "RegExpUnexpectedAnchor")
     fun transform(

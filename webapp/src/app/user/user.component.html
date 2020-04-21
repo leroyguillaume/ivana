@@ -45,7 +45,7 @@
               formControlName="role"
               required
               [ngClass]="{'is-invalid': role.invalid && (role.dirty || role.touched)}">
-        <option *ngFor="let role of roles" [value]="role.role">{{role.label}}</option>
+        <option *ngFor="let role of roleLabels" [value]="role.role">{{role.label}}</option>
       </select>
     </div>
 

@@ -19,6 +19,13 @@ sealed class UserEvent : Event {
         override val number = 1L
     }
 
+    data class Deletion(
+        override val date: OffsetDateTime,
+        override val subjectId: UUID,
+        override val number: Long,
+        override val source: EventSource
+    ) : UserEvent()
+
     data class Login(
         override val date: OffsetDateTime,
         override val subjectId: UUID,

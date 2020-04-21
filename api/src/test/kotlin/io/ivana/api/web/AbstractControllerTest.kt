@@ -83,6 +83,9 @@ abstract class AbstractControllerTest {
     protected lateinit var userPhotoAuthzRepo: UserPhotoAuthorizationRepository
 
     @MockBean
+    protected lateinit var userRepo: UserRepository
+
+    @MockBean
     protected lateinit var authService: AuthenticationService
 
     @MockBean

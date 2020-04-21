@@ -12,6 +12,10 @@ internal sealed class UserEventData : EventData {
         )
     }
 
+    data class Deletion(
+        override val source: EventSourceData
+    ) : UserEventData()
+
     data class Login(
         override val source: EventSourceData.User
     ) : UserEventData()

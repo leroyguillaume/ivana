@@ -2,6 +2,7 @@ package io.ivana.api.web
 
 import com.nhaarman.mockitokotlin2.verify
 import com.nhaarman.mockitokotlin2.whenever
+import io.ivana.api.impl.EntityNotFoundException
 import io.ivana.api.security.BadJwtException
 import io.ivana.api.web.v1.*
 import io.ivana.dto.ErrorDto
@@ -102,7 +103,7 @@ internal class ErrorControllerTest : AbstractControllerTest() {
     }
 
     @Test
-    fun `should return 404`() = authenticated {
+    fun `should return 405`() = authenticated {
         callAndExpectDto(
             method = HttpMethod.POST,
             uri = "$UserApiEndpoint$PasswordUpdateEndpoint",
@@ -110,6 +111,19 @@ internal class ErrorControllerTest : AbstractControllerTest() {
             reqContent = mapper.writeValueAsString(PasswordUpdateDto("changeit")),
             status = HttpStatus.METHOD_NOT_ALLOWED,
             respDto = ErrorDto.MethodNotAllowed
+        )
+    }
+
+    @Test
+    fun `should return 404`() = authenticated(superAdminPrincipal) {
+        val id = UUID.randomUUID()
+        whenever(userService.delete(id, source)).thenAnswer { throw EntityNotFoundException("") }
+        callAndExpectDto(
+            method = HttpMethod.DELETE,
+            uri = "$UserApiEndpoint/$id",
+            reqCookies = listOf(accessTokenCookie()),
+            status = HttpStatus.NOT_FOUND,
+            respDto = ErrorDto.NotFound
         )
     }
 }

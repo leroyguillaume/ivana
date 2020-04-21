@@ -22,6 +22,10 @@ export class UserService {
     return this.http.post<User>(this.baseUrl, user, {withCredentials: true})
   }
 
+  delete(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/${id}`, {withCredentials: true})
+  }
+
   getAll(page: number, size: number): Observable<Page<User>> {
     return this.http.get<Page<User>>(
       this.baseUrl,

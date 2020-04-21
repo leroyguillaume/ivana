@@ -38,6 +38,7 @@ class PhotoServiceImpl(
 
     override val entityName = "Photo"
 
+    @Transactional
     override fun delete(id: UUID, source: EventSource.User) {
         if (!repo.existsById(id)) {
             throw EntityNotFoundException("$entityName $id does not exist")

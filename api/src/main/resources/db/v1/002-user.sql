@@ -1,5 +1,5 @@
 -- @formatter:off
-CREATE TYPE user_event_type AS enum ('creation', 'login', 'password_update');
+CREATE TYPE user_event_type AS enum ('creation', 'deletion', 'login', 'password_update');
 
 CREATE TYPE user_role AS enum ('user', 'admin', 'super_admin');
 
@@ -62,6 +62,7 @@ $$
 BEGIN
     CASE
         WHEN new.type = 'creation' THEN CALL insert_user(new);
+        WHEN new.type = 'deletion' THEN DELETE FROM "user" WHERE id = new.subject_id;
         WHEN new.type = 'password_update' THEN CALL update_user_password(new);
         ELSE
     END CASE;

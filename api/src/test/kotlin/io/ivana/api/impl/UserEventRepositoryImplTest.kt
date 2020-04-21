@@ -63,6 +63,13 @@ internal class UserEventRepositoryImplTest {
         }
 
         @Test
+        fun `should return deletion event with subject id and number`() {
+            val expectedEvent = repo.saveDeletionEvent(UUID.randomUUID(), EventSource.System)
+            val event = repo.fetch(expectedEvent.subjectId, expectedEvent.number)
+            event shouldBe expectedEvent
+        }
+
+        @Test
         fun `should return login event with subject id and number`() {
             val expectedEvent = repo.saveLoginEvent(EventSource.User(subjectId, InetAddress.getByName("127.0.0.1")))
             val event = repo.fetch(expectedEvent.subjectId, expectedEvent.number)
@@ -110,6 +117,39 @@ internal class UserEventRepositoryImplTest {
                 id = event.subjectId,
                 creationDate = event.date
             )
+        }
+    }
+
+    @Nested
+    inner class saveDeletionEvent {
+        private lateinit var expectedEvent: UserEvent.Deletion
+
+        @BeforeEach
+        fun beforeEach() {
+            val creationEvent = repo.saveCreationEvent(
+                content = UserEvent.Creation.Content(
+                    name = "admin",
+                    hashedPwd = "hashedPwd",
+                    role = Role.SuperAdmin
+                ),
+                source = EventSource.System
+            )
+            expectedEvent = UserEvent.Deletion(
+                date = OffsetDateTime.now(),
+                subjectId = creationEvent.subjectId,
+                number = 2,
+                source = creationEvent.source
+            )
+        }
+
+        @Test
+        fun `should return created event`() {
+            val event = repo.saveDeletionEvent(expectedEvent.subjectId, expectedEvent.source)
+            event shouldBe expectedEvent.copy(
+                date = event.date,
+                subjectId = event.subjectId
+            )
+            userRepo.fetchById(expectedEvent.subjectId).shouldBeNull()
         }
     }
 
