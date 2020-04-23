@@ -1,6 +1,7 @@
 package io.ivana.api.config
 
 import io.ivana.api.security.CustomPermissionEvaluator
+import io.ivana.api.security.UserAlbumAuthorizationRepository
 import io.ivana.api.security.UserPhotoAuthorizationRepository
 import io.ivana.core.UserRepository
 import org.springframework.context.annotation.Configuration
@@ -12,9 +13,10 @@ import org.springframework.security.config.annotation.method.configuration.Globa
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 class MethodSecurityConfiguration(
     private val userPhotoAuthzRepo: UserPhotoAuthorizationRepository,
+    private val userAlbumAuthzRepo: UserAlbumAuthorizationRepository,
     private val userRepo: UserRepository
 ) : GlobalMethodSecurityConfiguration() {
     override fun createExpressionHandler() = DefaultMethodSecurityExpressionHandler().apply {
-        setPermissionEvaluator(CustomPermissionEvaluator(userPhotoAuthzRepo, userRepo))
+        setPermissionEvaluator(CustomPermissionEvaluator(userPhotoAuthzRepo, userAlbumAuthzRepo, userRepo))
     }
 }

@@ -3,10 +3,7 @@
 package io.ivana.api.web.v1
 
 import io.ivana.core.*
-import io.ivana.dto.PageDto
-import io.ivana.dto.PhotoDto
-import io.ivana.dto.RoleDto
-import io.ivana.dto.UserDto
+import io.ivana.dto.*
 import io.kotlintest.shouldBe
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -15,6 +12,22 @@ import java.time.OffsetDateTime
 import java.util.*
 
 internal class ExtensionsTest {
+    @Test
+    fun albumToDto() {
+        val album = Album(
+            id = UUID.randomUUID(),
+            ownerId = UUID.randomUUID(),
+            name = "album",
+            creationDate = OffsetDateTime.now()
+        )
+        val dto = AlbumDto(
+            id = album.id,
+            name = album.name,
+            creationDate = album.creationDate
+        )
+        album.toDto() shouldBe dto
+    }
+
     @Test
     fun pageToDto() {
         val page = Page(

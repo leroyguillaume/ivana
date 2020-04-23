@@ -7,11 +7,13 @@ import org.springframework.security.core.Authentication
 import java.io.Serializable
 import java.util.*
 
+const val AlbumTargetType = "album"
 const val PhotoTargetType = "photo"
 const val UserTargetType = "user"
 
 class CustomPermissionEvaluator(
     private val userPhotoAuthzRepo: UserPhotoAuthorizationRepository,
+    private val userAlbumAuthzRepo: UserAlbumAuthorizationRepository,
     private val userRepo: UserRepository
 ) : PermissionEvaluator {
     override fun hasPermission(authentication: Authentication, targetDomainObject: Any, permission: Any): Boolean {
@@ -33,9 +35,13 @@ class CustomPermissionEvaluator(
         return when (targetType) {
             PhotoTargetType -> checkPhotoAuthz(principal, targetId, permission)
             UserTargetType -> checkUserAuthz(principal, targetId, permission)
+            AlbumTargetType -> checkAlbumAuthz(principal, targetId, permission)
             else -> throw IllegalArgumentException("Unsupported target type '$targetType'")
         }
     }
+
+    private fun checkAlbumAuthz(principal: UserPrincipal, targetId: UUID, permission: Permission) =
+        userAlbumAuthzRepo.fetch(principal.user.id, targetId).contains(permission)
 
     private fun checkPhotoAuthz(principal: UserPrincipal, targetId: UUID, permission: Permission) =
         userPhotoAuthzRepo.fetch(principal.user.id, targetId).contains(permission)

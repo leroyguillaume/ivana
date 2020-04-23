@@ -10,8 +10,8 @@ import java.util.*
 
 @Repository
 class UserRepositoryImpl(
-    jdbc: NamedParameterJdbcTemplate
-) : UserRepository, AbstractEntityRepository<User>(jdbc) {
+    override val jdbc: NamedParameterJdbcTemplate
+) : UserRepository, AbstractEntityRepository<User>() {
     internal companion object {
         const val TableName = "\"user\""
         const val NameColumnName = "name"

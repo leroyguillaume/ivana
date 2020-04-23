@@ -17,10 +17,18 @@ databaseChangeLog:
             splitStatements: false
             relativeToChangelogFile: true
         - sqlFile:
-            path: 004-authorization.sql
+            path: 004-album.sql
             splitStatements: false
             relativeToChangelogFile: true
         - sqlFile:
-            path: 005-photo-triggers.sql
+            path: 005-authorization.sql
+            splitStatements: false
+            relativeToChangelogFile: true
+        - sqlFile:
+            path: 006-photo-triggers.sql
+            splitStatements: false
+            relativeToChangelogFile: true
+        - sqlFile:
+            path: 007-album-triggers.sql
             splitStatements: false
             relativeToChangelogFile: true

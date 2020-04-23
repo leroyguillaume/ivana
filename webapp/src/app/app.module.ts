@@ -16,6 +16,9 @@ import {UserComponent} from './user/user.component'
 import {ErrorComponent} from './error/error.component'
 import {ChangePasswordComponent} from './change-password/change-password.component'
 import {PhotoGridComponent} from './photo-grid/photo-grid.component'
+import {AlbumListComponent} from './album-list/album-list.component'
+import {AlbumModalComponent} from './album-modal/album-modal.component'
+import {AlbumGridComponent} from './album-grid/album-grid.component'
 
 @NgModule({
   declarations: [
@@ -28,7 +31,10 @@ import {PhotoGridComponent} from './photo-grid/photo-grid.component'
     UserComponent,
     ErrorComponent,
     ChangePasswordComponent,
-    PhotoGridComponent
+    PhotoGridComponent,
+    AlbumListComponent,
+    AlbumModalComponent,
+    AlbumGridComponent
   ],
   imports: [
     BrowserModule,

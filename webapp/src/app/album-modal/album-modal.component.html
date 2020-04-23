@@ -1,0 +1,33 @@
+<div class="modal-header">
+  <h4 class="modal-title">Nouvel album</h4>
+  <fa-icon class="clickable" [icon]="closeIcon" (click)="activeModal.dismiss()" size="2x"></fa-icon>
+</div>
+<div class="modal-body">
+  <form [formGroup]="albumForm" (ngSubmit)="submit()" novalidate>
+    <div class="form-group">
+      <label for="name">Nom</label>
+      <input id="name"
+             type="text"
+             class="form-control"
+             formControlName="name"
+             required
+             minlength="3"
+             maxlength="50"
+             [ngClass]="{'is-invalid': name.invalid && (name.dirty || name.touched)}">
+      <div *ngIf="name.errors && name.errors.minlength" class="invalid-feedback">
+        Doit contenir au moins 3 caractères.
+      </div>
+    </div>
+
+    <div class="text-right">
+      <button type="submit"
+              class="btn btn-primary"
+              [disabled]="albumForm.invalid || loading"
+              [ngClass]="{'cursor-forbidden': albumForm.invalid || loading}">
+        <span *ngIf="!loading"> Créer</span>
+        <fa-icon *ngIf="loading" [icon]="spinnerIcon" spin="true"></fa-icon>
+        <span *ngIf="loading"> Création en cours...</span>
+      </button>
+    </div>
+  </form>
+</div>

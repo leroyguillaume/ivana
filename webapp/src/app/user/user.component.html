@@ -49,13 +49,15 @@
       </select>
     </div>
 
-    <button type="submit"
-            class="btn btn-primary"
-            [disabled]="userForm.invalid || loading"
-            [ngClass]="{'cursor-forbidden': userForm.invalid || loading}">
-      <span *ngIf="!loading"> Créer</span>
-      <fa-icon *ngIf="loading" [icon]="spinnerIcon" spin="true"></fa-icon>
-      <span *ngIf="loading"> Création en cours...</span>
-    </button>
+    <div class="text-right">
+      <button type="submit"
+              class="btn btn-primary"
+              [disabled]="userForm.invalid || loading"
+              [ngClass]="{'cursor-forbidden': userForm.invalid || loading}">
+        <span *ngIf="!loading"> Créer</span>
+        <fa-icon *ngIf="loading" [icon]="spinnerIcon" spin="true"></fa-icon>
+        <span *ngIf="loading"> Création en cours...</span>
+      </button>
+    </div>
   </form>
 </div>

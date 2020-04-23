@@ -8,12 +8,12 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import java.sql.ResultSet
 import java.util.*
 
-abstract class AbstractEntityRepository<E : Entity>(
-    protected val jdbc: NamedParameterJdbcTemplate
-) : EntityRepository<E> {
+abstract class AbstractEntityRepository<E : Entity> : EntityRepository<E> {
     internal companion object {
         const val IdColumnName = "id"
     }
+
+    protected abstract val jdbc: NamedParameterJdbcTemplate
 
     protected abstract val tableName: String
 
