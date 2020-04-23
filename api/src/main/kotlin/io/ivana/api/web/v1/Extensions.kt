@@ -17,6 +17,7 @@ const val PhotoApiEndpoint = "$RootEndpoint/photo"
 const val RawPhotoEndpoint = "/raw"
 const val CompressedPhotoEndpoint = "/compressed"
 const val TransformPhotoEndpoint = "/transform"
+const val AlbumApiEndpoint = "$RootEndpoint/album"
 
 const val FilesParamName = "files"
 const val NavigableParamName = "navigable"
@@ -24,6 +25,12 @@ const val PageParamName = "page"
 const val SizeParamName = "size"
 
 const val UuidRegex = "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}"
+
+fun Album.toDto() = AlbumDto(
+    id = id,
+    name = name,
+    creationDate = creationDate
+)
 
 fun <E : Entity, D : EntityDto> Page<E>.toDto(mapper: (E) -> D) = PageDto(
     content = content.map(mapper),

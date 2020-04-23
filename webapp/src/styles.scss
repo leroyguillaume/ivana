@@ -12,3 +12,9 @@
 .clickable.disabled {
   cursor: not-allowed;
 }
+
+.selected {
+  border-style: solid;
+  border-color: map-get($theme-colors, 'secondary');
+  border-radius: 5px;
+}

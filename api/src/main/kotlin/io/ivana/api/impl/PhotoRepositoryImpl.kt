@@ -12,11 +12,10 @@ import java.util.*
 
 @Repository
 class PhotoRepositoryImpl(
-    jdbc: NamedParameterJdbcTemplate
-) : PhotoRepository, AbstractEntityRepository<Photo>(jdbc) {
+    override val jdbc: NamedParameterJdbcTemplate
+) : PhotoRepository, AbstractOwnableEntityRepository<Photo>() {
     internal companion object {
         const val TableName = "photo"
-        const val OwnerIdColumnName = "owner_id"
         const val UploadedDateColumnName = "upload_date"
         const val TypeColumnName = "type"
         const val HashColumnName = "hash"
@@ -25,15 +24,7 @@ class PhotoRepositoryImpl(
 
     override val tableName = TableName
 
-    override fun count(ownerId: UUID) = jdbc.queryForObject(
-        """
-        SELECT COUNT($IdColumnName)
-        FROM $tableName
-        WHERE $OwnerIdColumnName = :owner_id
-        """,
-        MapSqlParameterSource(mapOf("owner_id" to ownerId))
-    ) { rs, _ -> rs.getInt(1) }
-
+    // TODO: Remove this override and user order as parameter
     override fun fetchAll(ownerId: UUID, offset: Int, limit: Int) = jdbc.query(
         """
         SELECT *

@@ -15,6 +15,7 @@ export class StateService {
   uploadingPhotos: BehaviorSubject<boolean> = new BehaviorSubject(false)
   photosUploaded: EventEmitter<void> = new EventEmitter()
   selectedPhotos: BehaviorSubject<Set<string>> = new BehaviorSubject<Set<string>>(new Set())
+  selectedAlbums: BehaviorSubject<Set<string>> = new BehaviorSubject<Set<string>>(new Set())
 
   currentHomePage: Page<Photo> = null
 

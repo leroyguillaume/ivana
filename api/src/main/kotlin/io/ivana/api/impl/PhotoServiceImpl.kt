@@ -18,7 +18,10 @@ import java.util.*
 import javax.imageio.IIOImage
 import javax.imageio.ImageIO
 import javax.imageio.ImageWriteParam
-import kotlin.math.*
+import kotlin.math.abs
+import kotlin.math.cos
+import kotlin.math.floor
+import kotlin.math.sin
 
 
 @Service
@@ -26,7 +29,7 @@ class PhotoServiceImpl(
     override val repo: PhotoRepository,
     private val eventRepo: PhotoEventRepository,
     private val props: IvanaProperties
-) : PhotoService, AbstractEntityService<Photo>() {
+) : PhotoService, AbstractOwnableEntityService<Photo>() {
     internal companion object {
         const val RawDirname = "raw"
         const val CompressedDirname = "compressed"
@@ -45,17 +48,6 @@ class PhotoServiceImpl(
         }
         eventRepo.saveDeletionEvent(id, source)
         Logger.info("User ${source.id} (${source.ip}) deleted photo $id")
-    }
-
-    override fun getAll(ownerId: UUID, pageNo: Int, pageSize: Int): Page<Photo> {
-        val content = repo.fetchAll(ownerId, (pageNo - 1) * pageSize, pageSize)
-        val itemsNb = repo.count(ownerId)
-        return Page(
-            content = content,
-            no = pageNo,
-            totalItems = itemsNb,
-            totalPages = ceil(itemsNb.toDouble() / pageSize.toDouble()).toInt()
-        )
     }
 
     override fun getCompressedFile(photo: Photo) = compressedFile(photo.id, photo.uploadDate, photo.type)

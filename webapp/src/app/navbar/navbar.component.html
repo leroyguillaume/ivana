@@ -9,6 +9,9 @@
       <li class="nav-item" [ngClass]="{'active': currentUrl.startsWith('/home')}">
         <a class="nav-link" routerLink="/home">Mes photos</a>
       </li>
+      <li class="nav-item" [ngClass]="{'active': currentUrl.startsWith('/album')}">
+        <a class="nav-link" routerLink="/album">Mes albums</a>
+      </li>
       <li *ngIf="currentUserIsAdmin" class="nav-item" [ngClass]="{'active': currentUrl.startsWith('/admin')}">
         <a class="nav-link" routerLink="/admin">Administration</a>
       </li>

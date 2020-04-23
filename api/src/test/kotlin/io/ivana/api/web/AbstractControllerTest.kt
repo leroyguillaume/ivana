@@ -5,6 +5,7 @@ import com.nhaarman.mockitokotlin2.reset
 import com.nhaarman.mockitokotlin2.verify
 import com.nhaarman.mockitokotlin2.whenever
 import io.ivana.api.security.AuthenticationService
+import io.ivana.api.security.UserAlbumAuthorizationRepository
 import io.ivana.api.security.UserPhotoAuthorizationRepository
 import io.ivana.api.security.UserPrincipal
 import io.ivana.core.*
@@ -83,6 +84,9 @@ abstract class AbstractControllerTest {
     protected lateinit var userPhotoAuthzRepo: UserPhotoAuthorizationRepository
 
     @MockBean
+    protected lateinit var userAlbumAuthzRepo: UserAlbumAuthorizationRepository
+
+    @MockBean
     protected lateinit var userRepo: UserRepository
 
     @MockBean
@@ -93,6 +97,9 @@ abstract class AbstractControllerTest {
 
     @MockBean
     protected lateinit var userService: UserService
+
+    @MockBean
+    protected lateinit var albumService: AlbumService
 
     @MockBean
     protected lateinit var pwdEncoder: BCryptPasswordEncoder

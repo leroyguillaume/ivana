@@ -1,0 +1,25 @@
+<app-navbar></app-navbar>
+
+<div class="container mt-5">
+  <app-error></app-error>
+
+  <div class="text-center" *ngIf="loading">
+    <fa-icon [icon]="spinnerIcon" spin="true" size="8x"></fa-icon>
+  </div>
+
+  <div class="text-center" *ngIf="!loading && page.totalItems === 0">
+    <h1 class="mb-3">Vous n'avez pas encore d'albums... Créez-en un !</h1>
+    <button class="btn btn-primary" (click)="openAlbumModal()" [disabled]="creating">
+      <fa-icon [icon]="spinnerIcon" spin="true" *ngIf="creating"></fa-icon>
+      <span *ngIf="creating"> Création en cours...</span>
+      <span *ngIf="!creating">C'est parti !</span>
+    </button>
+  </div>
+
+  <div *ngIf="!loading && page.totalItems > 0">
+    <app-album-grid [page]="page"
+                    (pageChange)="fetchPage($event)"
+                    (albumCreate)="openAlbumModal()">
+    </app-album-grid>
+  </div>
+</div>
