@@ -3,14 +3,14 @@ CREATE PROCEDURE insert_photo(event record)
     LANGUAGE plpgsql AS
 $$
 DECLARE
-    user_id uuid;
+    _user_id uuid;
 BEGIN
-    user_id = (event.data #>> '{source,id}')::uuid;
+    _user_id = (event.data #>> '{source,id}')::uuid;
     INSERT INTO photo
     VALUES
     (
         event.subject_id,
-        user_id,
+        _user_id,
         event.date,
         (event.data #>> '{content,type}')::photo_type,
         event.data #>> '{content,hash}'
@@ -18,7 +18,7 @@ BEGIN
     INSERT INTO user_photo_authorization
     VALUES
     (
-        user_id,
+        _user_id,
         event.subject_id,
         true,
         true,

@@ -17,7 +17,7 @@ export class StateService {
   selectedPhotos: BehaviorSubject<Set<string>> = new BehaviorSubject<Set<string>>(new Set())
   selectedAlbums: BehaviorSubject<Set<string>> = new BehaviorSubject<Set<string>>(new Set())
 
-  currentHomePage: Page<Photo> = null
+  currentPhotosPage: Page<Photo> = null
 
   startPhotoNavIndex: number = -1
   currentPhotoNavOffset: number = 0

@@ -5,6 +5,7 @@ import {Page} from './page'
 import {User} from './user'
 import {environment} from '../environments/environment'
 import {Album} from './album'
+import {Photo} from './photo'
 
 @Injectable({
   providedIn: 'root'
@@ -22,6 +23,10 @@ export class AlbumService {
     return this.http.post<Album>(this.baseUrl, album, {withCredentials: true})
   }
 
+  get(id: string): Observable<Album> {
+    return this.http.get<Album>(`${this.baseUrl}/${id}`, {withCredentials: true})
+  }
+
   getAll(page: number, size: number): Observable<Page<Album>> {
     return this.http.get<Page<User>>(
       this.baseUrl,
@@ -34,4 +39,19 @@ export class AlbumService {
       }
     )
   }
+
+  getAllPhotos(albumId: string, page: number, size: number): Observable<Page<Photo>> {
+    return this.http.get<Page<Photo>>(
+      `${this.baseUrl}/${albumId}/content`,
+      {
+        withCredentials: true,
+        params: {
+          page: page.toString(),
+          size: size.toString()
+        }
+      }
+    )
+  }
+
+
 }

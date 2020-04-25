@@ -52,4 +52,15 @@ class AlbumController(
         val principal = auth.principal as UserPrincipal
         return albumService.getAll(principal.user.id, page, size).toDto { it.toDto() }
     }
+
+    @GetMapping("/{id:$UuidRegex}$ContentEndpoint")
+    @PreAuthorize("hasPermission(#id, '$AlbumTargetType', 'read')")
+    @ResponseStatus(HttpStatus.OK)
+    @Suppress("MVCPathVariableInspection", "RegExpUnexpectedAnchor")
+    fun getAllPhotos(
+        @PathVariable id: UUID,
+        @RequestParam(name = PageParamName, required = false, defaultValue = "1") @Min(1) page: Int,
+        @RequestParam(name = SizeParamName, required = false, defaultValue = "10") @Min(1) size: Int,
+        auth: Authentication
+    ) = albumService.getAllPhotos(id, page, size).toDto { it.toSimpleDto() }
 }

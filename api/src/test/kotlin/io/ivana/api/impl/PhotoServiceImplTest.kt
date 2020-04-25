@@ -104,7 +104,7 @@ internal class PhotoServiceImplTest {
         @Test
         fun `should return page`() {
             every { photoRepo.fetchAll(pageNo - 1, pageSize) } returns expectedPage.content
-            every { photoRepo.count() } returns 2
+            every { photoRepo.count() } returns expectedPage.totalItems
             val page = service.getAll(pageNo, pageSize)
             page shouldBe expectedPage
             verify { photoRepo.fetchAll(pageNo - 1, pageSize) }
@@ -145,7 +145,7 @@ internal class PhotoServiceImplTest {
         @Test
         fun `should return page`() {
             every { photoRepo.fetchAll(ownerId, pageNo - 1, pageSize) } returns expectedPage.content
-            every { photoRepo.count(ownerId) } returns 2
+            every { photoRepo.count(ownerId) } returns expectedPage.totalItems
             val page = service.getAll(ownerId, pageNo, pageSize)
             page shouldBe expectedPage
             verify { photoRepo.fetchAll(ownerId, pageNo - 1, pageSize) }

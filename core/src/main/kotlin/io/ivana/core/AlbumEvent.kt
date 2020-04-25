@@ -12,4 +12,18 @@ sealed class AlbumEvent : Event {
     ) : AlbumEvent() {
         override val number = 1L
     }
+
+    data class Update(
+        override val date: OffsetDateTime,
+        override val subjectId: UUID,
+        override val number: Long,
+        override val source: EventSource.User,
+        val content: Content
+    ) : AlbumEvent() {
+        data class Content(
+            val name: String,
+            val photosToAdd: List<UUID>,
+            val photosToRemove: List<UUID>
+        )
+    }
 }
