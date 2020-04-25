@@ -5,6 +5,7 @@ package io.ivana.api.impl
 import io.ivana.api.security.Permission
 import io.ivana.api.security.UserAlbumAuthorizationRepository
 import io.ivana.core.*
+import io.kotlintest.matchers.collections.shouldBeEmpty
 import io.kotlintest.matchers.collections.shouldContainExactly
 import io.kotlintest.matchers.types.shouldBeNull
 import io.kotlintest.shouldBe
@@ -43,6 +44,12 @@ internal class AlbumEventRepositoryImplTest {
     @Autowired
     private lateinit var authzRepo: UserAlbumAuthorizationRepository
 
+    @Autowired
+    private lateinit var photoEventRepo: PhotoEventRepository
+
+    @Autowired
+    private lateinit var photoRepo: PhotoRepository
+
     private lateinit var userCreationEvent: UserEvent.Creation
     private lateinit var createdUser: User
 
@@ -71,10 +78,25 @@ internal class AlbumEventRepositoryImplTest {
         }
 
         @Test
-        fun `should return upload event with subject id and number`() {
+        fun `should return creation event with subject id and number`() {
             val expectedEvent = repo.saveCreationEvent(
                 name = "album",
                 source = EventSource.User(createdUser.id, InetAddress.getByName("127.0.0.1"))
+            )
+            val event = repo.fetch(expectedEvent.subjectId, expectedEvent.number)
+            event shouldBe expectedEvent
+        }
+
+        @Test
+        fun `should return update event with subject id and number`() {
+            val expectedEvent = repo.saveUpdateEvent(
+                id = UUID.randomUUID(),
+                source = EventSource.User(createdUser.id, InetAddress.getByName("127.0.0.1")),
+                content = AlbumEvent.Update.Content(
+                    name = "album",
+                    photosToAdd = emptyList(),
+                    photosToRemove = emptyList()
+                )
             )
             val event = repo.fetch(expectedEvent.subjectId, expectedEvent.number)
             event shouldBe expectedEvent
@@ -117,6 +139,96 @@ internal class AlbumEventRepositoryImplTest {
             )
             val permissions = authzRepo.fetch(createdUser.id, event.subjectId)
             permissions shouldContainExactly Permission.values().toSet()
+        }
+    }
+
+    @Nested
+    inner class saveUpdateEvent {
+        private lateinit var source: EventSource.User
+        private lateinit var photo1: Photo
+        private lateinit var photo2: Photo
+        private lateinit var albumCreationEvent: AlbumEvent.Creation
+        private lateinit var expectedAddEvent: AlbumEvent.Update
+        private lateinit var expectedRemoveEvent: AlbumEvent.Update
+        private lateinit var expectedAlbum: Album
+
+        @BeforeEach
+        fun beforeEach() {
+            source = EventSource.User(createdUser.id, InetAddress.getByName("127.0.0.1"))
+            photo1 = photoEventRepo.saveUploadEvent(
+                source = source,
+                content = PhotoEvent.Upload.Content(
+                    type = Photo.Type.Jpg,
+                    hash = "hash1"
+                )
+            ).toPhoto(1)
+            photo2 = photoEventRepo.saveUploadEvent(
+                source = source,
+                content = PhotoEvent.Upload.Content(
+                    type = Photo.Type.Jpg,
+                    hash = "hash2"
+                )
+            ).toPhoto(2)
+            albumCreationEvent = repo.saveCreationEvent("album", source)
+            expectedAddEvent = AlbumEvent.Update(
+                date = OffsetDateTime.now(),
+                subjectId = albumCreationEvent.subjectId,
+                number = 2,
+                source = source,
+                content = AlbumEvent.Update.Content(
+                    name = "album2",
+                    photosToAdd = listOf(photo1.id, photo2.id),
+                    photosToRemove = emptyList()
+                )
+            )
+            expectedRemoveEvent = expectedAddEvent.copy(
+                number = 3,
+                content = expectedAddEvent.content.copy(
+                    photosToAdd = emptyList(),
+                    photosToRemove = expectedAddEvent.content.photosToAdd
+                )
+            )
+            expectedAlbum = Album(
+                id = expectedAddEvent.subjectId,
+                ownerId = createdUser.id,
+                name = expectedAddEvent.content.name,
+                creationDate = albumCreationEvent.date
+            )
+        }
+
+        @Test
+        fun `should return created event (add)`() {
+            val addEvent = repo.saveUpdateEvent(
+                id = expectedAddEvent.subjectId,
+                content = expectedAddEvent.content,
+                source = expectedAddEvent.source
+            )
+            addEvent shouldBe expectedAddEvent.copy(
+                date = addEvent.date,
+                subjectId = addEvent.subjectId
+            )
+            albumRepo.fetchById(addEvent.subjectId) shouldBe expectedAlbum
+            photoRepo.fetchAllOfAlbum(albumCreationEvent.subjectId, 0, 10).shouldContainExactly(listOf(photo1, photo2))
+        }
+
+        @Test
+        fun `should return created event (remove)`() {
+            repo.saveUpdateEvent(
+                id = expectedAddEvent.subjectId,
+                content = expectedAddEvent.content,
+                source = expectedAddEvent.source
+            )
+            val removeEvent = repo.saveUpdateEvent(
+                id = expectedRemoveEvent.subjectId,
+                content = expectedRemoveEvent.content,
+                source = expectedRemoveEvent.source
+            )
+            removeEvent shouldBe expectedRemoveEvent.copy(
+                date = removeEvent.date,
+                subjectId = removeEvent.subjectId
+            )
+            albumRepo.fetchById(removeEvent.subjectId) shouldBe expectedAlbum
+            photoRepo.fetchAllOfAlbum(albumCreationEvent.subjectId, 0, 10).shouldBeEmpty()
         }
     }
 }

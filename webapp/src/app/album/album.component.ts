@@ -1,25 +1,25 @@
 import {Component, ElementRef, OnInit, ViewChild} from '@angular/core'
-import {Photo} from '../photo'
-import {Page} from '../page'
-import {PhotoService} from '../photo.service'
-import {finalize} from 'rxjs/operators'
-import {faSpinner} from '@fortawesome/free-solid-svg-icons'
-import {ActivatedRoute, Router} from '@angular/router'
-import {StateService} from '../state.service'
 import {IconDefinition} from '@fortawesome/fontawesome-common-types'
+import {faSpinner} from '@fortawesome/free-solid-svg-icons'
+import {Page} from '../page'
+import {Photo} from '../photo'
+import {StateService} from '../state.service'
+import {ActivatedRoute, Router} from '@angular/router'
 import {fetchPageFromQueryParam, handleError} from '../util'
-import {forkJoin} from 'rxjs'
-
-export const PhotoPageSize: number = 12
+import {finalize, flatMap, map} from 'rxjs/operators'
+import {PhotoPageSize} from '../home/home.component'
+import {AlbumService} from '../album.service'
+import {Album} from '../album'
 
 @Component({
-  selector: 'app-home',
-  templateUrl: './home.component.html',
-  styleUrls: ['./home.component.scss']
+  selector: 'app-album',
+  templateUrl: './album.component.html',
+  styleUrls: ['./album.component.css']
 })
-export class HomeComponent implements OnInit {
+export class AlbumComponent implements OnInit {
   spinnerIcon: IconDefinition = faSpinner
 
+  album: Album
   page: Page<Photo>
   loading: boolean = true
   uploading: boolean = false
@@ -28,7 +28,7 @@ export class HomeComponent implements OnInit {
   filesInput: ElementRef
 
   constructor(
-    private photoService: PhotoService,
+    private albumService: AlbumService,
     private stateService: StateService,
     private route: ActivatedRoute,
     private router: Router
@@ -36,21 +36,12 @@ export class HomeComponent implements OnInit {
   }
 
   deleteSelectedPhotos(selectedPhotos: Set<string>): void {
-    if (window.confirm(`Êtes-vous certain(e) de vouloir supprimer ces ${selectedPhotos.size} photo(s) ?`)) {
-      forkJoin(Array.from(selectedPhotos.values()).map(id => this.photoService.delete(id)))
-        .subscribe(
-          () => {
-            this.stateService.success.next('Toutes les photos ont été supprimées !')
-            this.fetchPage(this.page.no)
-          },
-          error => handleError(error, this.stateService)
-        )
-    }
+
   }
 
   fetchPage(no: number): void {
     this.loading = true
-    this.photoService.getAll(no, PhotoPageSize)
+    this.albumService.getAllPhotos(this.album.id, no, PhotoPageSize)
       .pipe(finalize(() => this.loading = false))
       .subscribe(
         page => {
@@ -69,7 +60,12 @@ export class HomeComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    fetchPageFromQueryParam(this.route, (no: number) => this.fetchPage(no))
+    this.route.paramMap
+      .pipe(map(params => params.get('id')), flatMap(id => this.albumService.get(id)))
+      .subscribe(album => {
+        this.album = album
+        fetchPageFromQueryParam(this.route, (no: number) => this.fetchPage(no))
+      })
     this.stateService.uploadingPhotos.subscribe(uploading => this.uploading = uploading)
     this.stateService.photosUploaded.subscribe(() => this.fetchPage(this.page.no))
   }
@@ -84,5 +80,4 @@ export class HomeComponent implements OnInit {
       this.stateService.uploadPhotos(files)
     }
   }
-
 }

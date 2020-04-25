@@ -18,6 +18,7 @@ const val RawPhotoEndpoint = "/raw"
 const val CompressedPhotoEndpoint = "/compressed"
 const val TransformPhotoEndpoint = "/transform"
 const val AlbumApiEndpoint = "$RootEndpoint/album"
+const val ContentEndpoint = "/content"
 
 const val FilesParamName = "files"
 const val NavigableParamName = "navigable"

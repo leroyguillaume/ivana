@@ -10,6 +10,7 @@ import {AdminGuard} from './admin.guard'
 import {UserComponent} from './user/user.component'
 import {ChangePasswordComponent} from './change-password/change-password.component'
 import {AlbumListComponent} from './album-list/album-list.component'
+import {AlbumComponent} from './album/album.component'
 
 
 const routes: Routes = [
@@ -50,6 +51,12 @@ const routes: Routes = [
     path: 'album',
     pathMatch: 'full',
     component: AlbumListComponent,
+    canActivate: [AuthenticatedGuard]
+  },
+  {
+    path: 'album/:id',
+    pathMatch: 'full',
+    component: AlbumComponent,
     canActivate: [AuthenticatedGuard]
   },
   {

@@ -8,6 +8,7 @@ import io.ivana.api.security.Permission
 import io.ivana.api.web.AbstractControllerTest
 import io.ivana.core.Album
 import io.ivana.core.Page
+import io.ivana.core.Photo
 import io.ivana.dto.AlbumCreationDto
 import io.ivana.dto.AlbumNameMaxSize
 import io.ivana.dto.AlbumNameMinSize
@@ -209,6 +210,101 @@ internal class AlbumControllerTest : AbstractControllerTest() {
                 respDto = pageDto
             )
             verify(albumService).getAll(principal.user.id, pageNo, pageSize)
+        }
+    }
+
+    @Nested
+    inner class getAllPhotos {
+        private val albumId = UUID.randomUUID()
+        private val pageNo = 2
+        private val pageSize = 3
+        private val page = Page(
+            content = listOf(
+                Photo(
+                    id = UUID.randomUUID(),
+                    ownerId = userPrincipal.user.id,
+                    uploadDate = OffsetDateTime.now(),
+                    type = Photo.Type.Jpg,
+                    hash = "hash1",
+                    no = 1
+                ),
+                Photo(
+                    id = UUID.randomUUID(),
+                    ownerId = userPrincipal.user.id,
+                    uploadDate = OffsetDateTime.now(),
+                    type = Photo.Type.Jpg,
+                    hash = "hash2",
+                    no = 2
+                )
+            ),
+            no = pageNo,
+            totalItems = 2,
+            totalPages = 1
+        )
+        private val pageDto = page.toDto { it.toSimpleDto() }
+        private val method = HttpMethod.GET
+        private val uri = "$AlbumApiEndpoint/$albumId$ContentEndpoint"
+
+        @Test
+        fun `should return 401 if user is anonymous`() {
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                status = HttpStatus.UNAUTHORIZED,
+                respDto = ErrorDto.Unauthorized
+            )
+        }
+
+        @Test
+        fun `should return 400 if parameters are lower than 1`() = authenticated {
+            whenever(userAlbumAuthzRepo.fetch(principal.user.id, albumId)).thenReturn(setOf(Permission.Read))
+            callAndExpectDto(
+                method = method,
+                params = mapOf(
+                    PageParamName to listOf("-1"),
+                    SizeParamName to listOf("-1")
+                ),
+                uri = uri,
+                reqCookies = listOf(accessTokenCookie()),
+                status = HttpStatus.BAD_REQUEST,
+                respDto = ErrorDto.ValidationError(
+                    errors = listOf(minErrorDto(PageParamName, 1), minErrorDto(SizeParamName, 1))
+                )
+            )
+            verify(userAlbumAuthzRepo).fetch(principal.user.id, albumId)
+        }
+
+        @Test
+        fun `should return 403 if user does not have permission`() = authenticated {
+            whenever(userAlbumAuthzRepo.fetch(principal.user.id, albumId))
+                .thenReturn(EnumSet.complementOf(EnumSet.of(Permission.Read)))
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                reqCookies = listOf(accessTokenCookie()),
+                status = HttpStatus.FORBIDDEN,
+                respDto = ErrorDto.Forbidden
+            )
+            verify(userAlbumAuthzRepo).fetch(principal.user.id, albumId)
+        }
+
+        @Test
+        fun `should return 200`() = authenticated {
+            whenever(userAlbumAuthzRepo.fetch(principal.user.id, albumId)).thenReturn(setOf(Permission.Read))
+            whenever(albumService.getAllPhotos(albumId, pageNo, pageSize)).thenReturn(page)
+            callAndExpectDto(
+                method = method,
+                params = mapOf(
+                    PageParamName to listOf(pageNo.toString()),
+                    SizeParamName to listOf(pageSize.toString())
+                ),
+                uri = uri,
+                reqCookies = listOf(accessTokenCookie()),
+                status = HttpStatus.OK,
+                respDto = pageDto
+            )
+            verify(userAlbumAuthzRepo).fetch(principal.user.id, albumId)
+            verify(albumService).getAllPhotos(albumId, pageNo, pageSize)
         }
     }
 }

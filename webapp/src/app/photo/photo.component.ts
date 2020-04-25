@@ -49,7 +49,7 @@ export class PhotoComponent implements OnInit {
     // noinspection JSIgnoredPromiseFromCall
     this.router.navigate(['home'], {
       queryParams: {
-        page: (this.stateService.currentHomePage?.no || 1) + offset
+        page: (this.stateService.currentPhotosPage?.no || 1) + offset
       }
     })
   }

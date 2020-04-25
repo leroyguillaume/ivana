@@ -69,6 +69,9 @@ internal class PhotoRepositoryImplTest {
     @Autowired
     private lateinit var userEventRepo: UserEventRepository
 
+    @Autowired
+    private lateinit var albumEventRepo: AlbumEventRepository
+
     private lateinit var uploadedPhotos: List<Photo>
 
     @BeforeEach
@@ -110,6 +113,34 @@ internal class PhotoRepositoryImplTest {
         fun `should return count of photos of user`() {
             val count = repo.count(ownerId)
             count shouldBe 3
+        }
+    }
+
+    @Nested
+    inner class countOfAlbum {
+        private lateinit var ownerId: UUID
+        private lateinit var albumCreationEvent: AlbumEvent.Creation
+
+        @BeforeEach
+        fun beforeEach() {
+            ownerId = uploadedPhotos[0].ownerId
+            val source = EventSource.User(ownerId, InetAddress.getByName("127.0.0.1"))
+            albumCreationEvent = albumEventRepo.saveCreationEvent("album", source)
+            albumEventRepo.saveUpdateEvent(
+                id = albumCreationEvent.subjectId,
+                content = AlbumEvent.Update.Content(
+                    name = albumCreationEvent.albumName,
+                    photosToAdd = uploadedPhotos.filter { it.ownerId == ownerId }.map { it.id },
+                    photosToRemove = emptyList()
+                ),
+                source = source
+            )
+        }
+
+        @Test
+        fun `should return count of photos of album`() {
+            val count = repo.countOfAlbum(albumCreationEvent.subjectId)
+            count shouldBe uploadedPhotos.count { it.ownerId == ownerId }
         }
     }
 
@@ -156,6 +187,33 @@ internal class PhotoRepositoryImplTest {
         @Test
         fun `should return all photos in interval`() {
             val photos = repo.fetchAll(ownerId, 1, 10)
+            photos shouldBe uploadedPhotos.subList(1, 3)
+        }
+    }
+
+    @Nested
+    inner class fetchAllOfAlbum {
+        private lateinit var albumCreationEvent: AlbumEvent.Creation
+
+        @BeforeEach
+        fun beforeEach() {
+            val ownerId = uploadedPhotos[0].ownerId
+            val source = EventSource.User(ownerId, InetAddress.getByName("127.0.0.1"))
+            albumCreationEvent = albumEventRepo.saveCreationEvent("album", source)
+            albumEventRepo.saveUpdateEvent(
+                id = albumCreationEvent.subjectId,
+                content = AlbumEvent.Update.Content(
+                    name = albumCreationEvent.albumName,
+                    photosToAdd = uploadedPhotos.filter { it.ownerId == ownerId }.map { it.id },
+                    photosToRemove = emptyList()
+                ),
+                source = source
+            )
+        }
+
+        @Test
+        fun `should return all photos in interval`() {
+            val photos = repo.fetchAllOfAlbum(albumCreationEvent.subjectId, 1, 10)
             photos shouldBe uploadedPhotos.subList(1, 3)
         }
     }
@@ -251,15 +309,6 @@ internal class PhotoRepositoryImplTest {
             photo shouldBe uploadedPhotos[1]
         }
     }
-
-    private fun PhotoEvent.Upload.toPhoto(no: Int) = Photo(
-        id = subjectId,
-        ownerId = source.id,
-        uploadDate = date,
-        type = content.type,
-        hash = content.hash,
-        no = no
-    )
 
     private data class InitDataEntry(
         val userCreationContent: UserEvent.Creation.Content,

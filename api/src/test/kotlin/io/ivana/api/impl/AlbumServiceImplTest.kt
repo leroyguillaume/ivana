@@ -20,14 +20,16 @@ import java.util.*
 internal class AlbumServiceImplTest {
     private lateinit var albumRepo: AlbumRepository
     private lateinit var albumEventRepo: AlbumEventRepository
+    private lateinit var photoRepo: PhotoRepository
     private lateinit var service: AlbumServiceImpl
 
     @BeforeEach
     fun beforeEach() {
         albumRepo = mockk()
         albumEventRepo = mockk()
+        photoRepo = mockk()
 
-        service = AlbumServiceImpl(albumRepo, albumEventRepo)
+        service = AlbumServiceImpl(albumRepo, albumEventRepo, photoRepo)
     }
 
     @Nested
@@ -129,6 +131,47 @@ internal class AlbumServiceImplTest {
             verify { albumRepo.fetchAll(ownerId, pageNo - 1, pageSize) }
             verify { albumRepo.count(ownerId) }
             confirmVerified(albumRepo)
+        }
+    }
+
+    @Nested
+    inner class getAllPhotos {
+        private val albumId = UUID.randomUUID()
+        private val pageNo = 1
+        private val pageSize = 3
+        private val expectedPage = Page(
+            content = listOf(
+                Photo(
+                    id = UUID.randomUUID(),
+                    ownerId = UUID.randomUUID(),
+                    uploadDate = OffsetDateTime.now(),
+                    type = Photo.Type.Jpg,
+                    hash = "hash1",
+                    no = 1
+                ),
+                Photo(
+                    id = UUID.randomUUID(),
+                    ownerId = UUID.randomUUID(),
+                    uploadDate = OffsetDateTime.now(),
+                    type = Photo.Type.Jpg,
+                    hash = "hash2",
+                    no = 2
+                )
+            ),
+            no = pageNo,
+            totalItems = 2,
+            totalPages = 1
+        )
+
+        @Test
+        fun `should return page`() {
+            every { photoRepo.fetchAllOfAlbum(albumId, pageNo - 1, pageSize) } returns expectedPage.content
+            every { photoRepo.countOfAlbum(albumId) } returns expectedPage.totalItems
+            val page = service.getAllPhotos(albumId, pageNo, pageSize)
+            page shouldBe expectedPage
+            verify { photoRepo.fetchAllOfAlbum(albumId, pageNo - 1, pageSize) }
+            verify { photoRepo.countOfAlbum(albumId) }
+            confirmVerified(photoRepo)
         }
     }
 

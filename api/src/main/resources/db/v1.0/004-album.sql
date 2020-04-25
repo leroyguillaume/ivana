@@ -36,7 +36,7 @@ FROM album_event
 WHERE subject_id = $1;
 $$;
 
-CREATE FUNCTION next_album_photo_order(album_id uuid) RETURNS bigint
+CREATE FUNCTION next_album_photo_order(id uuid) RETURNS bigint
     LANGUAGE SQL AS
 $$
 SELECT COALESCE(MAX("order"), 0) + 1
