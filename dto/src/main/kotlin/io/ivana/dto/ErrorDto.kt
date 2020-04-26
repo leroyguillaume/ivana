@@ -4,7 +4,9 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import java.net.URI
+import java.util.*
 
+private const val AlbumAlreadyContainsPhotosCodeValue = "album_already_contains_photos"
 private const val DuplicateResourceCodeValue = "duplicate_resource"
 private const val ForbiddenCodeValue = "forbidden"
 private const val InternalErrorCodeValue = "internal_error"
@@ -13,6 +15,7 @@ private const val MalformedRequestCodeValue = "malformed_request"
 private const val MethodNotAllowedCodeValue = "method_not_allowed"
 private const val MissingParameterCodeValue = "missing_parameter"
 private const val NotFoundCodeValue = "not_found"
+private const val PhotosNotFoundCodeValue = "photos_not_found"
 private const val UnauthorizedCodeValue = "unauthorized"
 private const val UnsupportedMediaTypeCodeValue = "unsupported_media_type"
 private const val ValidationErrorCodeValue = "validation_error"
@@ -23,6 +26,7 @@ private const val ValidationErrorCodeValue = "validation_error"
     property = "code"
 )
 @JsonSubTypes(
+    JsonSubTypes.Type(value = ErrorDto.AlbumAlreadyContainsPhotos::class, name = AlbumAlreadyContainsPhotosCodeValue),
     JsonSubTypes.Type(value = ErrorDto.DuplicateResource::class, name = DuplicateResourceCodeValue),
     JsonSubTypes.Type(value = ErrorDto.Forbidden::class, name = ForbiddenCodeValue),
     JsonSubTypes.Type(value = ErrorDto.InternalError::class, name = InternalErrorCodeValue),
@@ -31,12 +35,16 @@ private const val ValidationErrorCodeValue = "validation_error"
     JsonSubTypes.Type(value = ErrorDto.MethodNotAllowed::class, name = MethodNotAllowedCodeValue),
     JsonSubTypes.Type(value = ErrorDto.MissingParameter::class, name = MissingParameterCodeValue),
     JsonSubTypes.Type(value = ErrorDto.NotFound::class, name = NotFoundCodeValue),
+    JsonSubTypes.Type(value = ErrorDto.PhotosNotFound::class, name = PhotosNotFoundCodeValue),
     JsonSubTypes.Type(value = ErrorDto.Unauthorized::class, name = UnauthorizedCodeValue),
     JsonSubTypes.Type(value = ErrorDto.UnsupportedMediaType::class, name = UnsupportedMediaTypeCodeValue),
     JsonSubTypes.Type(value = ErrorDto.ValidationError::class, name = ValidationErrorCodeValue)
 )
 sealed class ErrorDto {
     enum class Code {
+        @JsonProperty(AlbumAlreadyContainsPhotosCodeValue)
+        AlbumAlreadyContainsPhotos,
+
         @JsonProperty(DuplicateResourceCodeValue)
         DuplicateResource,
 
@@ -61,6 +69,9 @@ sealed class ErrorDto {
         @JsonProperty(NotFoundCodeValue)
         NotFound,
 
+        @JsonProperty(PhotosNotFoundCodeValue)
+        PhotosNotFound,
+
         @JsonProperty(UnauthorizedCodeValue)
         Unauthorized,
 
@@ -69,6 +80,12 @@ sealed class ErrorDto {
 
         @JsonProperty(ValidationErrorCodeValue)
         ValidationError
+    }
+
+    data class AlbumAlreadyContainsPhotos(
+        val photosIds: Set<UUID>
+    ) : ErrorDto() {
+        override val code = Code.AlbumAlreadyContainsPhotos
     }
 
     data class DuplicateResource(
@@ -118,6 +135,12 @@ sealed class ErrorDto {
         override val code = Code.NotFound
 
         override fun equals(other: Any?) = other is NotFound
+    }
+
+    data class PhotosNotFound(
+        val photosIds: Set<UUID>
+    ) : ErrorDto() {
+        override val code = Code.PhotosNotFound
     }
 
     object Unauthorized : ErrorDto() {

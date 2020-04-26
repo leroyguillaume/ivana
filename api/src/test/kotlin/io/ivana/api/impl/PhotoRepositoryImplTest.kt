@@ -269,6 +269,22 @@ internal class PhotoRepositoryImplTest {
     }
 
     @Nested
+    inner class fetchExistingIds {
+        private lateinit var expectedExistingIds: Set<UUID>
+
+        @BeforeEach
+        fun beforeEach() {
+            expectedExistingIds = uploadedPhotos.map { it.id }.toSet()
+        }
+
+        @Test
+        fun `should return existing ids`() {
+            val existingIds = repo.fetchExistingIds(expectedExistingIds + setOf(UUID.randomUUID()))
+            existingIds shouldBe expectedExistingIds
+        }
+    }
+
+    @Nested
     inner class fetchNextOf {
         @Test
         fun `should return null if photo does not exist`() {

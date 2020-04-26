@@ -23,6 +23,9 @@
         <div class="text-right mb-2">
           <fa-icon class="clickable" [icon]="closeIcon" (click)="settingsPanelOpened = false" size="2x"></fa-icon>
         </div>
+
+        <app-error></app-error>
+
         <div class="text-center">
           <h4>Rotations</h4>
           <button class="btn btn-secondary mr-2" (click)="rotateClockwise()">
@@ -30,6 +33,11 @@
           </button>
           <button class="btn btn-secondary" (click)="rotateCounterclockwise()">
             <fa-icon [icon]="rotateCounterclockwiseIcon"></fa-icon>
+          </button>
+
+          <button class="btn btn-primary mt-4" (click)="openAlbumSelectionModal()">
+            <fa-icon [icon]="plusIcon"></fa-icon>
+            Ajouter à l'album...
           </button>
 
           <button class="btn btn-danger mt-4" (click)="delete()">

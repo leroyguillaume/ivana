@@ -163,6 +163,22 @@ internal class AlbumRepositoryImplTest {
         }
     }
 
+    @Nested
+    inner class fetchExistingIds {
+        private lateinit var expectedExistingIds: Set<UUID>
+
+        @BeforeEach
+        fun beforeEach() {
+            expectedExistingIds = createdAlbums.map { it.id }.toSet()
+        }
+
+        @Test
+        fun `should return existing ids`() {
+            val existingIds = repo.fetchExistingIds(expectedExistingIds + setOf(UUID.randomUUID()))
+            existingIds shouldBe expectedExistingIds
+        }
+    }
+
     private fun AlbumEvent.Creation.toAlbum() = Album(
         id = subjectId,
         ownerId = source.id,

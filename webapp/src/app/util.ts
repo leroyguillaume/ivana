@@ -1,6 +1,8 @@
 import {map} from 'rxjs/operators'
 import {ActivatedRoute} from '@angular/router'
 import {StateService} from './state.service'
+import {HttpErrorResponse} from '@angular/common/http'
+import {ApiError} from './api-error'
 
 export function fetchPageFromQueryParam(route: ActivatedRoute, fetchPage: (no: number) => void): void {
   route.queryParamMap
@@ -15,7 +17,15 @@ export function fetchPageFromQueryParam(route: ActivatedRoute, fetchPage: (no: n
     })
 }
 
-export function handleError(error, stateService: StateService): void {
+export function handleError(error: HttpErrorResponse, stateService: StateService): void {
   console.error(error)
-  stateService.error.next('Une erreur inattendue s\'est produite. Veuillez réessayer ultérieurement.')
+  const dto: ApiError = error.error
+  switch (dto.code) {
+    case 'album_already_contains_photos':
+      stateService.error.next('L\'album sélectionné contient déjà une ou plusieurs de ces photos.')
+      break
+    default:
+      stateService.error.next('Une erreur inattendue s\'est produite. Veuillez réessayer ultérieurement.')
+      break
+  }
 }

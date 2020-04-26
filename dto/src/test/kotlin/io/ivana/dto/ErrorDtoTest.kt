@@ -2,8 +2,18 @@ package io.ivana.dto
 
 import org.junit.jupiter.api.Nested
 import java.net.URI
+import java.util.*
 
 internal class ErrorDtoTest {
+    @Nested
+    inner class AlbumAlreadyContainsPhotos : JsonTest(
+        filename = "error/album-already-contains-photos.json",
+        expectedValue = ErrorDto.AlbumAlreadyContainsPhotos(
+            photosIds = setOf(UUID.fromString("61f11547-a340-441c-bce7-551234d5d361"))
+        ),
+        deserializeAs = typeOf<ErrorDto>()
+    )
+
     @Nested
     inner class DuplicateResource : JsonTest(
         filename = "error/duplicate-resource.json",
@@ -60,6 +70,15 @@ internal class ErrorDtoTest {
     inner class NotFound : JsonTest(
         filename = "error/not-found.json",
         expectedValue = ErrorDto.NotFound,
+        deserializeAs = typeOf<ErrorDto>()
+    )
+
+    @Nested
+    inner class PhotosNotFound : JsonTest(
+        filename = "error/photos-not-found.json",
+        expectedValue = ErrorDto.PhotosNotFound(
+            photosIds = setOf(UUID.fromString("61f11547-a340-441c-bce7-551234d5d361"))
+        ),
         deserializeAs = typeOf<ErrorDto>()
     )
 

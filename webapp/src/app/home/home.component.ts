@@ -40,7 +40,7 @@ export class HomeComponent implements OnInit {
       forkJoin(Array.from(selectedPhotos.values()).map(id => this.photoService.delete(id)))
         .subscribe(
           () => {
-            this.stateService.success.next('Toutes les photos ont été supprimées !')
+            this.stateService.success.next('Les photos ont été supprimées !')
             this.fetchPage(this.page.no)
           },
           error => handleError(error, this.stateService)
@@ -72,6 +72,7 @@ export class HomeComponent implements OnInit {
     fetchPageFromQueryParam(this.route, (no: number) => this.fetchPage(no))
     this.stateService.uploadingPhotos.subscribe(uploading => this.uploading = uploading)
     this.stateService.photosUploaded.subscribe(() => this.fetchPage(this.page.no))
+    this.stateService.currentAlbum = null
   }
 
   selectFiles(): void {

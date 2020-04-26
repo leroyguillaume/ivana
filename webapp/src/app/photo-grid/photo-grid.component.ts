@@ -1,12 +1,17 @@
 import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core'
 import {IconDefinition} from '@fortawesome/fontawesome-common-types'
-import {faArrowLeft, faArrowRight, faTrash} from '@fortawesome/free-solid-svg-icons'
+import {faArrowLeft, faArrowRight, faPlus, faTrash} from '@fortawesome/free-solid-svg-icons'
 import {Page} from '../page'
 import {Photo} from '../photo'
 import {StateService} from '../state.service'
 import {Router} from '@angular/router'
 import {environment} from '../../environments/environment'
 import {PhotoService} from '../photo.service'
+import {NgbModal} from '@ng-bootstrap/ng-bootstrap'
+import {AlbumSelectionModalComponent} from '../album-selection-modal/album-selection-modal.component'
+import {AlbumService} from '../album.service'
+import {Album} from '../album'
+import {handleError} from '../util'
 
 @Component({
   selector: 'app-photo-grid',
@@ -17,6 +22,7 @@ export class PhotoGridComponent implements OnInit {
   previousIcon: IconDefinition = faArrowLeft
   nextIcon: IconDefinition = faArrowRight
   trashIcon: IconDefinition = faTrash
+  plusIcon: IconDefinition = faPlus
 
   baseUrl: string = environment.baseUrl
 
@@ -33,12 +39,14 @@ export class PhotoGridComponent implements OnInit {
 
   constructor(
     private photoService: PhotoService,
+    private albumService: AlbumService,
     private stateService: StateService,
+    private modalService: NgbModal,
     private router: Router
   ) {
   }
 
-  deleteSelectedPhotos(): void {
+  emitSelectedPhotosDelete(): void {
     this.selectedPhotosDelete.emit(this.selectedPhotos)
   }
 
@@ -47,7 +55,16 @@ export class PhotoGridComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.stateService.selectedPhotos.subscribe(selectedPhotos => this.selectedPhotos = selectedPhotos)
+  }
+
+  openAlbumSelectionModal(): void {
+    this.modalService.open(AlbumSelectionModalComponent).result.then((album: Album) => {
+      this.albumService.update(album.id, album.name, Array.from(this.selectedPhotos))
+        .subscribe(
+          updatedAlbum => this.stateService.success.next(`Photos ajoutées à l'album ${updatedAlbum.name} !`),
+          error => handleError(error, this.stateService)
+        )
+    })
   }
 
   openPhoto(id: string): void {
@@ -70,7 +87,6 @@ export class PhotoGridComponent implements OnInit {
     } else {
       this.selectedPhotos.add(photo.id)
     }
-    this.stateService.selectedPhotos.next(this.selectedPhotos)
   }
 
 }

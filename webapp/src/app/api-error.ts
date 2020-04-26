@@ -1,7 +1,6 @@
-export class Error {
+export class ApiError {
   constructor(
     public readonly code: string,
-    public readonly resourceUri: string
   ) {
   }
 }
