@@ -19,13 +19,14 @@ internal fun cleanDb(jdbc: NamedParameterJdbcTemplate) {
     }
 }
 
-fun PhotoEvent.Upload.toPhoto(no: Int) = Photo(
+fun PhotoEvent.Upload.toPhoto(no: Int, version: Int = 1) = Photo(
     id = subjectId,
     ownerId = source.id,
     uploadDate = date,
     type = content.type,
     hash = content.hash,
-    no = no
+    no = no,
+    version = version
 )
 
 fun UserEvent.Creation.toUser() = User(

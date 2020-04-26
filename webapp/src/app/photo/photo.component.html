@@ -1,4 +1,4 @@
-<div class="container m-auto p-0">
+<div class="container m-0 p-0 text-center photo-page">
   <div class="back-button">
     <button class="btn btn-secondary" (click)="close()">
       <fa-icon [icon]="arrowLeftIcon" size="2x"></fa-icon>
@@ -15,11 +15,6 @@
 
   <div *ngIf="settingsPanelOpened" class="settings-panel">
     <div class="container mt-2">
-      <div *ngIf="transforming; else settings" class="text-center mt-3">
-        <fa-icon [icon]="spinnerIcon" spin="true" size="4x"></fa-icon>
-      </div>
-
-      <ng-template #settings>
         <div class="text-right mb-2">
           <fa-icon class="clickable" [icon]="closeIcon" (click)="settingsPanelOpened = false" size="2x"></fa-icon>
         </div>
@@ -45,7 +40,6 @@
             Supprimer
           </button>
         </div>
-      </ng-template>
     </div>
   </div>
 
@@ -57,7 +51,7 @@
 
   <ng-template #photoBlock>
     <div class="text-center">
-      <img src="{{baseUrl}}{{photo.rawUri}}">
+      <img src="{{baseUrl}}{{photo.rawUri}}" style="transform: rotate({{rotationDegrees}}deg);">
     </div>
   </ng-template>
 </div>

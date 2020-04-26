@@ -38,7 +38,8 @@ internal class ExtensionsTest {
                     uploadDate = OffsetDateTime.now(),
                     type = Photo.Type.Jpg,
                     hash = "hash1",
-                    no = 1
+                    no = 1,
+                    version = 1
                 ),
                 Photo(
                     id = UUID.randomUUID(),
@@ -46,7 +47,8 @@ internal class ExtensionsTest {
                     uploadDate = OffsetDateTime.now(),
                     type = Photo.Type.Png,
                     hash = "hash2",
-                    no = 2
+                    no = 2,
+                    version = 1
                 )
             ),
             no = 1,
@@ -70,7 +72,8 @@ internal class ExtensionsTest {
             uploadDate = OffsetDateTime.now(),
             type = Photo.Type.Jpg,
             hash = "hash",
-            no = 1
+            no = 1,
+            version = 1
         )
         val dto = PhotoDto.Simple(
             id = photo.id,
@@ -89,7 +92,8 @@ internal class ExtensionsTest {
                 uploadDate = OffsetDateTime.now(),
                 type = Photo.Type.Jpg,
                 hash = "hash2",
-                no = 2
+                no = 2,
+                version = 1
             ),
             previous = Photo(
                 id = UUID.randomUUID(),
@@ -97,7 +101,8 @@ internal class ExtensionsTest {
                 uploadDate = OffsetDateTime.now(),
                 type = Photo.Type.Jpg,
                 hash = "hash1",
-                no = 1
+                no = 1,
+                version = 1
             ),
             next = Photo(
                 id = UUID.randomUUID(),
@@ -105,7 +110,8 @@ internal class ExtensionsTest {
                 uploadDate = OffsetDateTime.now(),
                 type = Photo.Type.Jpg,
                 hash = "hash",
-                no = 3
+                no = 3,
+                version = 1
             )
         )
         val dto = PhotoDto.Navigable(

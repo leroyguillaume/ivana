@@ -32,13 +32,14 @@ export class PhotoComponent implements OnInit {
 
   baseUrl: string = environment.baseUrl
   loading: boolean = true
-  transforming: boolean = false
   error: string = null
 
   settingsPanelOpened: boolean = false
 
   photo: NavigablePhoto
   currentAlbum: Album
+
+  rotationDegrees: number = 0
 
   constructor(
     private photoService: PhotoService,
@@ -138,22 +139,22 @@ export class PhotoComponent implements OnInit {
     }
   }
 
-  rotate(dir: RotationDirection): void {
-    this.transforming = true
-    this.photoService.rotate(this.photo.id, dir)
-      .pipe(finalize(() => this.transforming = false))
-      .subscribe(
-        () => this.fetchPhoto(this.photo.id),
-        error => handleError(error, this.stateService, this.router)
-      )
+  rotate(direction: RotationDirection): void {
+    this.photoService.rotate(this.photo.id, direction).subscribe(
+      () => {
+      },
+      error => console.error(error)
+    )
   }
 
   rotateClockwise(): void {
     this.rotate(RotationDirection.Clockwise)
+    this.rotationDegrees += 90.
   }
 
   rotateCounterclockwise(): void {
     this.rotate(RotationDirection.Counterclockwise)
+    this.rotationDegrees -= 90.
   }
 
 }

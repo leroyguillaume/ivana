@@ -20,6 +20,7 @@ class PhotoRepositoryImpl(
         const val TypeColumnName = "type"
         const val HashColumnName = "hash"
         const val NoColumnName = "no"
+        const val VersionColumnName = "version"
 
         const val AlbumPhotoTableName = "album_photo"
         const val AlbumIdColumnName = "album_id"
@@ -118,7 +119,8 @@ class PhotoRepositoryImpl(
         uploadDate = rs.getObject(UploadedDateColumnName, OffsetDateTime::class.java),
         type = rs.getPhotoType(),
         hash = rs.getString(HashColumnName),
-        no = rs.getInt(NoColumnName)
+        no = rs.getInt(NoColumnName),
+        version = rs.getInt(VersionColumnName)
     )
 
     private fun ResultSet.getPhotoType() = getString(TypeColumnName).let { type ->

@@ -82,7 +82,8 @@ internal class PhotoControllerTest : AbstractControllerTest() {
                 uploadDate = OffsetDateTime.now(),
                 type = Photo.Type.Jpg,
                 hash = "hash1",
-                no = 1
+                no = 1,
+                version = 1
             ),
             previous = Photo(
                 id = UUID.randomUUID(),
@@ -90,7 +91,8 @@ internal class PhotoControllerTest : AbstractControllerTest() {
                 uploadDate = OffsetDateTime.now(),
                 type = Photo.Type.Jpg,
                 hash = "hash2",
-                no = 2
+                no = 2,
+                version = 1
             ),
             next = Photo(
                 id = UUID.randomUUID(),
@@ -98,7 +100,8 @@ internal class PhotoControllerTest : AbstractControllerTest() {
                 uploadDate = OffsetDateTime.now(),
                 type = Photo.Type.Jpg,
                 hash = "hash3",
-                no = 3
+                no = 3,
+                version = 1
             )
         )
         private val photoSimpleDto = linkedPhotos.current.toSimpleDto()
@@ -180,7 +183,8 @@ internal class PhotoControllerTest : AbstractControllerTest() {
                     uploadDate = OffsetDateTime.now(),
                     type = Photo.Type.Jpg,
                     hash = "hash1",
-                    no = 1
+                    no = 1,
+                    version = 1
                 ),
                 Photo(
                     id = UUID.randomUUID(),
@@ -188,7 +192,8 @@ internal class PhotoControllerTest : AbstractControllerTest() {
                     uploadDate = OffsetDateTime.now(),
                     type = Photo.Type.Jpg,
                     hash = "hash2",
-                    no = 2
+                    no = 2,
+                    version = 1
                 )
             ),
             no = pageNo,
@@ -252,7 +257,8 @@ internal class PhotoControllerTest : AbstractControllerTest() {
             uploadDate = OffsetDateTime.now(),
             type = Photo.Type.Jpg,
             hash = "hash1",
-            no = 1
+            no = 1,
+            version = 1
         )
         private val jpgFile = File(javaClass.getResource("/data/photo.jpg").file)
         private val pngPhoto = Photo(
@@ -261,7 +267,8 @@ internal class PhotoControllerTest : AbstractControllerTest() {
             uploadDate = OffsetDateTime.now(),
             type = Photo.Type.Png,
             hash = "hash2",
-            no = 2
+            no = 2,
+            version = 1
         )
         private val pngFile = File(javaClass.getResource("/data/photo.png").file)
         private val method = HttpMethod.GET
@@ -337,7 +344,8 @@ internal class PhotoControllerTest : AbstractControllerTest() {
             uploadDate = OffsetDateTime.now(),
             type = Photo.Type.Jpg,
             hash = "hash1",
-            no = 1
+            no = 1,
+            version = 1
         )
         private val jpgFile = File(javaClass.getResource("/data/photo.jpg").file)
         private val pngPhoto = Photo(
@@ -346,7 +354,8 @@ internal class PhotoControllerTest : AbstractControllerTest() {
             uploadDate = OffsetDateTime.now(),
             type = Photo.Type.Png,
             hash = "hash2",
-            no = 2
+            no = 2,
+            version = 1
         )
         private val pngFile = File(javaClass.getResource("/data/photo.png").file)
         private val method = HttpMethod.GET
@@ -478,7 +487,8 @@ internal class PhotoControllerTest : AbstractControllerTest() {
             uploadDate = OffsetDateTime.now(),
             type = Photo.Type.Jpg,
             hash = "hash",
-            no = 1
+            no = 1,
+            version = 1
         )
         private val pngPhoto = Photo(
             id = UUID.randomUUID(),
@@ -486,7 +496,8 @@ internal class PhotoControllerTest : AbstractControllerTest() {
             uploadDate = OffsetDateTime.now(),
             type = Photo.Type.Png,
             hash = "hash",
-            no = 2
+            no = 2,
+            version = 1
         )
         private val uri = PhotoApiEndpoint
 

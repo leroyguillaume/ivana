@@ -139,19 +139,25 @@ internal class PhotoEventRepositoryImplTest {
 
     @Nested
     inner class saveTransformEvent {
+        private val uploadContent = PhotoEvent.Upload.Content(
+            type = Photo.Type.Jpg,
+            hash = "hash"
+        )
+
+        private lateinit var expectedPhoto: Photo
         private lateinit var expectedEvent: PhotoEvent.Transform
 
         @BeforeEach
         fun beforeEach() {
-            expectedEvent = UUID.randomUUID().let { id ->
-                PhotoEvent.Transform(
-                    date = OffsetDateTime.now(),
-                    subjectId = id,
-                    number = 1,
-                    source = EventSource.User(createdUser.id, InetAddress.getByName("127.0.0.1")),
-                    transform = Transform.Rotation(Transform.Rotation.Direction.Clockwise)
-                )
-            }
+            val source = EventSource.User(createdUser.id, InetAddress.getByName("127.0.0.1"))
+            expectedPhoto = repo.saveUploadEvent(uploadContent, source).toPhoto(1, 2)
+            expectedEvent = PhotoEvent.Transform(
+                date = OffsetDateTime.now(),
+                subjectId = expectedPhoto.id,
+                number = 2,
+                source = source,
+                transform = Transform.Rotation(Transform.Rotation.Direction.Clockwise)
+            )
         }
 
         @Test
@@ -161,13 +167,14 @@ internal class PhotoEventRepositoryImplTest {
                 date = event.date,
                 subjectId = event.subjectId
             )
+            photoRepo.fetchById(expectedPhoto.id) shouldBe expectedPhoto
         }
     }
 
     @Nested
     inner class saveUploadEvent {
         private lateinit var expectedEvent: PhotoEvent.Upload
-        private lateinit var exepctedPhoto: Photo
+        private lateinit var expectedPhoto: Photo
 
         @BeforeEach
         fun beforeEach() {
@@ -182,13 +189,14 @@ internal class PhotoEventRepositoryImplTest {
                     )
                 )
             }
-            exepctedPhoto = Photo(
+            expectedPhoto = Photo(
                 id = expectedEvent.subjectId,
                 ownerId = createdUser.id,
                 uploadDate = expectedEvent.date,
                 type = expectedEvent.content.type,
                 hash = expectedEvent.content.hash,
-                no = 1
+                no = 1,
+                version = 1
             )
         }
 
@@ -199,7 +207,7 @@ internal class PhotoEventRepositoryImplTest {
                 date = event.date,
                 subjectId = event.subjectId
             )
-            photoRepo.fetchById(event.subjectId) shouldBe exepctedPhoto.copy(
+            photoRepo.fetchById(event.subjectId) shouldBe expectedPhoto.copy(
                 id = event.subjectId,
                 uploadDate = event.date
             )

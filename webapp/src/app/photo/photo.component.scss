@@ -1,7 +1,7 @@
 @import "../../variables";
 
 img {
-  max-width: 100%;
+  max-width: 100vw;
   height: auto;
   max-height: 100vh;
 }
@@ -10,12 +10,19 @@ img {
   position: absolute;
   top: 2%;
   left: 1%;
+  z-index: 1;
+}
+
+.photo-page {
+  max-width: 100vw;
+  max-height: 100vh;
 }
 
 .settings-button {
   position: absolute;
   top: 2%;
   right: 1%;
+  z-index: 1;
 }
 
 .settings-panel {
@@ -25,4 +32,5 @@ img {
   width: 15em;
   height: 100vh;
   background-color: $panel-bg;
+  z-index: 2;
 }

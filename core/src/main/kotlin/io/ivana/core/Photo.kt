@@ -9,7 +9,8 @@ data class Photo(
     val uploadDate: OffsetDateTime,
     val type: Type,
     val hash: String,
-    val no: Int
+    val no: Int,
+    val version: Int
 ) : OwnableEntity {
     enum class Type {
         Jpg,

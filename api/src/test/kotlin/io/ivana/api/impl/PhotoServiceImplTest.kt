@@ -85,7 +85,8 @@ internal class PhotoServiceImplTest {
                     uploadDate = OffsetDateTime.now(),
                     type = Photo.Type.Jpg,
                     hash = "hash1",
-                    no = 1
+                    no = 1,
+                    version = 1
                 ),
                 Photo(
                     id = UUID.randomUUID(),
@@ -93,7 +94,8 @@ internal class PhotoServiceImplTest {
                     uploadDate = OffsetDateTime.now(),
                     type = Photo.Type.Jpg,
                     hash = "hash2",
-                    no = 2
+                    no = 2,
+                    version = 1
                 )
             ),
             no = pageNo,
@@ -126,7 +128,8 @@ internal class PhotoServiceImplTest {
                     uploadDate = OffsetDateTime.now(),
                     type = Photo.Type.Jpg,
                     hash = "hash1",
-                    no = 1
+                    no = 1,
+                    version = 1
                 ),
                 Photo(
                     id = UUID.randomUUID(),
@@ -134,7 +137,8 @@ internal class PhotoServiceImplTest {
                     uploadDate = OffsetDateTime.now(),
                     type = Photo.Type.Jpg,
                     hash = "hash2",
-                    no = 2
+                    no = 2,
+                    version = 1
                 )
             ),
             no = pageNo,
@@ -162,7 +166,8 @@ internal class PhotoServiceImplTest {
             uploadDate = OffsetDateTime.now(),
             type = Photo.Type.Jpg,
             hash = "hash",
-            no = 1
+            no = 1,
+            version = 1
         )
 
         @Test
@@ -192,7 +197,8 @@ internal class PhotoServiceImplTest {
             uploadDate = OffsetDateTime.now(),
             type = Photo.Type.Jpg,
             hash = "hash",
-            no = 1
+            no = 1,
+            version = 1
         )
         private val expectedFile = compressedFile(photo.id, photo.uploadDate, "jpg")
 
@@ -211,7 +217,8 @@ internal class PhotoServiceImplTest {
             uploadDate = OffsetDateTime.now(),
             type = Photo.Type.Jpg,
             hash = "hash",
-            no = 1
+            no = 1,
+            version = 1
         )
         private val expectedFile = rawFile(photo.id, photo.uploadDate, "jpg")
 
@@ -231,7 +238,8 @@ internal class PhotoServiceImplTest {
                 uploadDate = OffsetDateTime.now(),
                 type = Photo.Type.Jpg,
                 hash = "hash",
-                no = 2
+                no = 2,
+                version = 1
             )
         )
         private val completeLinkedPhotos = defaultLinkedPhotos.copy(
@@ -241,7 +249,8 @@ internal class PhotoServiceImplTest {
                 uploadDate = OffsetDateTime.now(),
                 type = Photo.Type.Jpg,
                 hash = "hash",
-                no = 1
+                no = 1,
+                version = 1
             ),
             previous = Photo(
                 id = UUID.randomUUID(),
@@ -249,7 +258,8 @@ internal class PhotoServiceImplTest {
                 uploadDate = OffsetDateTime.now(),
                 type = Photo.Type.Jpg,
                 hash = "hash",
-                no = 3
+                no = 3,
+                version = 1
             )
         )
 
@@ -299,7 +309,8 @@ internal class PhotoServiceImplTest {
             uploadDate = OffsetDateTime.now(),
             type = Photo.Type.Jpg,
             hash = "hash",
-            no = 1
+            no = 1,
+            version = 1
         )
         private val pngPhoto = Photo(
             id = UUID.randomUUID(),
@@ -307,7 +318,8 @@ internal class PhotoServiceImplTest {
             uploadDate = OffsetDateTime.now(),
             type = Photo.Type.Png,
             hash = "hash",
-            no = 1
+            no = 1,
+            version = 1
         )
         private val jpgFile = File(javaClass.getResource("/data/photo.jpg").file)
         private val pngFile = File(javaClass.getResource("/data/photo.png").file)
@@ -359,7 +371,7 @@ internal class PhotoServiceImplTest {
                     )
                 } returns clockwiseRotationEvent
                 service.transform(jpgPhoto.id, clockwiseRotationEvent.transform, clockwiseRotationEvent.source)
-                rawFile(jpgPhoto.id, jpgPhoto.uploadDate, jpgPhoto.type.extension()).readBytes().shouldBe(
+                rawFile(jpgPhoto.id, jpgPhoto.uploadDate, jpgPhoto.type.extension(), 2).readBytes().shouldBe(
                     jpgClockwiseRotatedFile.readBytes()
                 )
                 verify { photoRepo.fetchById(jpgPhoto.id) }
@@ -388,7 +400,7 @@ internal class PhotoServiceImplTest {
                     transform = counterclockwiseRotationEvent.transform,
                     source = counterclockwiseRotationEvent.source
                 )
-                rawFile(jpgPhoto.id, jpgPhoto.uploadDate, jpgPhoto.type.extension()).readBytes().shouldBe(
+                rawFile(jpgPhoto.id, jpgPhoto.uploadDate, jpgPhoto.type.extension(), 2).readBytes().shouldBe(
                     jpgCounterclockwiseRotatedFile.readBytes()
                 )
                 verify { photoRepo.fetchById(jpgPhoto.id) }
@@ -413,7 +425,7 @@ internal class PhotoServiceImplTest {
                     )
                 } returns clockwiseRotationEvent
                 service.transform(pngPhoto.id, clockwiseRotationEvent.transform, clockwiseRotationEvent.source)
-                rawFile(pngPhoto.id, pngPhoto.uploadDate, pngPhoto.type.extension()).readBytes().shouldBe(
+                rawFile(pngPhoto.id, pngPhoto.uploadDate, pngPhoto.type.extension(), 2).readBytes().shouldBe(
                     pngClockwiseRotatedFile.readBytes()
                 )
                 verify { photoRepo.fetchById(pngPhoto.id) }
@@ -442,7 +454,7 @@ internal class PhotoServiceImplTest {
                     transform = counterclockwiseRotationEvent.transform,
                     source = counterclockwiseRotationEvent.source
                 )
-                rawFile(pngPhoto.id, pngPhoto.uploadDate, pngPhoto.type.extension()).readBytes().shouldBe(
+                rawFile(pngPhoto.id, pngPhoto.uploadDate, pngPhoto.type.extension(), 2).readBytes().shouldBe(
                     pngCounterclockwiseRotatedFile.readBytes()
                 )
                 verify { photoRepo.fetchById(pngPhoto.id) }
@@ -496,7 +508,8 @@ internal class PhotoServiceImplTest {
             uploadDate = jpgEvent.date,
             type = jpgEvent.content.type,
             hash = jpgEvent.content.hash,
-            no = 1
+            no = 1,
+            version = 1
         )
         private val pngPhoto = Photo(
             id = pngEvent.subjectId,
@@ -504,7 +517,8 @@ internal class PhotoServiceImplTest {
             uploadDate = pngEvent.date,
             type = pngEvent.content.type,
             hash = pngEvent.content.hash,
-            no = 2
+            no = 2,
+            version = 1
         )
 
         @Test
@@ -549,27 +563,29 @@ internal class PhotoServiceImplTest {
         }
     }
 
-    private fun compressedFile(id: UUID, uploadDate: OffsetDateTime, extension: String) = photoFile(
+    private fun compressedFile(id: UUID, uploadDate: OffsetDateTime, extension: String, version: Int = 1) = photoFile(
         rootDir = Props.dataDir.resolve(PhotoServiceImpl.CompressedDirname),
         id = id,
         uploadDate = uploadDate,
-        extension = extension
+        extension = extension,
+        version = version
     )
 
-    private fun photoFile(rootDir: File, id: UUID, uploadDate: OffsetDateTime, extension: String) =
+    private fun photoFile(rootDir: File, id: UUID, uploadDate: OffsetDateTime, extension: String, version: Int) =
         uploadDate.let { date ->
             rootDir
                 .resolve(date.year.toString())
                 .resolve(date.monthValue.toString())
                 .resolve(date.dayOfMonth.toString())
-                .resolve("$id.$extension")
+                .resolve("${id}_$version.$extension")
         }
 
-    private fun rawFile(id: UUID, uploadDate: OffsetDateTime, extension: String) = photoFile(
+    private fun rawFile(id: UUID, uploadDate: OffsetDateTime, extension: String, version: Int = 1) = photoFile(
         rootDir = Props.dataDir.resolve(PhotoServiceImpl.RawDirname),
         id = id,
         uploadDate = uploadDate,
-        extension = extension
+        extension = extension,
+        version = version
     )
 
     private fun Photo.Type.extension() = when (this) {
