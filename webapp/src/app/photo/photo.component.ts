@@ -38,6 +38,7 @@ export class PhotoComponent implements OnInit {
   settingsPanelOpened: boolean = false
 
   photo: NavigablePhoto
+  currentAlbum: Album
 
   constructor(
     private photoService: PhotoService,
@@ -53,7 +54,7 @@ export class PhotoComponent implements OnInit {
     const offset = this.stateService.startPhotoNavIndex > -1
       ? Math.floor((this.stateService.startPhotoNavIndex + this.stateService.currentPhotoNavOffset) / PhotoPageSize)
       : 0
-    const route = this.stateService.currentAlbum ? ['album', this.stateService.currentAlbum.id] : ['home']
+    const route = this.currentAlbum ? ['/album', this.currentAlbum.id] : ['/home']
     // noinspection JSIgnoredPromiseFromCall
     this.router.navigate(route, {
       queryParams: {
@@ -75,7 +76,7 @@ export class PhotoComponent implements OnInit {
               this.close()
             }
           },
-          error => handleError(error, this.stateService)
+          error => handleError(error, this.stateService, this.router)
         )
     }
   }
@@ -86,7 +87,7 @@ export class PhotoComponent implements OnInit {
       .pipe(finalize(() => this.loading = false))
       .subscribe(
         photo => this.photo = photo,
-        error => handleError(error, this.stateService)
+        error => handleError(error, this.stateService, this.router)
       )
   }
 
@@ -116,6 +117,7 @@ export class PhotoComponent implements OnInit {
   ngOnInit(): void {
     this.stateService.currentPhotoNavOffset = 0
     this.route.paramMap.subscribe(params => this.fetchPhoto(params.get('id')))
+    this.stateService.currentAlbum.subscribe(album => this.currentAlbum = album)
   }
 
   openAlbumSelectionModal(): void {
@@ -123,7 +125,7 @@ export class PhotoComponent implements OnInit {
       this.albumService.update(album.id, album.name, [this.photo.id])
         .subscribe(
           updatedAlbum => this.stateService.success.next(`Photo ajoutée à l'album ${updatedAlbum.name} !`),
-          error => handleError(error, this.stateService)
+          error => handleError(error, this.stateService, this.router)
         )
     })
   }
@@ -142,7 +144,7 @@ export class PhotoComponent implements OnInit {
       .pipe(finalize(() => this.transforming = false))
       .subscribe(
         () => this.fetchPhoto(this.photo.id),
-        error => handleError(error, this.stateService)
+        error => handleError(error, this.stateService, this.router)
       )
   }
 

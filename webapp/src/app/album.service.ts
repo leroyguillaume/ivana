@@ -23,6 +23,10 @@ export class AlbumService {
     return this.http.post<Album>(this.baseUrl, dto, {withCredentials: true})
   }
 
+  delete(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/${id}`, {withCredentials: true})
+  }
+
   get(id: string): Observable<Album> {
     return this.http.get<Album>(`${this.baseUrl}/${id}`, {withCredentials: true})
   }

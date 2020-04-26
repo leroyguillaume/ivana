@@ -13,6 +13,13 @@ sealed class AlbumEvent : Event {
         override val number = 1L
     }
 
+    data class Deletion(
+        override val date: OffsetDateTime,
+        override val subjectId: UUID,
+        override val number: Long,
+        override val source: EventSource.User
+    ) : AlbumEvent()
+
     data class Update(
         override val date: OffsetDateTime,
         override val subjectId: UUID,

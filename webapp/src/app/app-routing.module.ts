@@ -11,6 +11,7 @@ import {UserComponent} from './user/user.component'
 import {ChangePasswordComponent} from './change-password/change-password.component'
 import {AlbumListComponent} from './album-list/album-list.component'
 import {AlbumComponent} from './album/album.component'
+import {ForbiddenComponent} from './forbidden/forbidden.component'
 
 
 const routes: Routes = [
@@ -57,6 +58,12 @@ const routes: Routes = [
     path: 'album/:id',
     pathMatch: 'full',
     component: AlbumComponent,
+    canActivate: [AuthenticatedGuard]
+  },
+  {
+    path: 'forbidden',
+    pathMatch: 'full',
+    component: ForbiddenComponent,
     canActivate: [AuthenticatedGuard]
   },
   {

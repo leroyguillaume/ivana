@@ -1,12 +1,16 @@
 <div class="text-right mb-3">
   <div ngbDropdown>
     <button class="btn btn-primary mr-2" ngbDropdownToggle [disabled]="selectedPhotos.size === 0">Actions</button>
+    <button *ngIf="currentAlbum" class="btn btn-danger mr-2" (click)="emitAlbumDelete()">
+      <fa-icon [icon]="trashIcon"></fa-icon>
+      Supprimer
+    </button>
     <div ngbDropdownMenu>
       <button class="btn" (click)="openAlbumSelectionModal()" ngbDropdownItem>
         <fa-icon [icon]="plusIcon"></fa-icon>
         Ajouter à l'album...
       </button>
-      <button class="btn" (click)="emitSelectedPhotosDelete()" ngbDropdownItem>
+      <button class="btn btn-danger" (click)="emitSelectedPhotosDelete()" ngbDropdownItem>
         <fa-icon [icon]="trashIcon"></fa-icon>
         Supprimer
       </button>

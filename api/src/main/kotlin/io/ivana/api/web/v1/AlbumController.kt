@@ -38,6 +38,16 @@ class AlbumController(
         return albumService.create(creationDto.name, req.source(principal)).toDto()
     }
 
+    @Transactional
+    @DeleteMapping("/{id:$UuidRegex}")
+    @PreAuthorize("hasPermission(#id, '$AlbumTargetType', 'delete')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Suppress("MVCPathVariableInspection", "RegExpUnexpectedAnchor")
+    fun delete(@PathVariable id: UUID, auth: Authentication, req: HttpServletRequest) {
+        val principal = auth.principal as UserPrincipal
+        albumService.delete(id, req.source(principal))
+    }
+
     @GetMapping("/{id:$UuidRegex}")
     @PreAuthorize("hasPermission(#id, '$AlbumTargetType', 'read')")
     @ResponseStatus(HttpStatus.OK)

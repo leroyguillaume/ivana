@@ -54,7 +54,7 @@ export class AdminComponent implements OnInit {
             this.fetchPage(this.page.no)
             this.stateService.success.next(`L'utilisateur '${user.name}' a été supprimé !`)
           },
-          error => handleError(error, this.stateService)
+          error => handleError(error, this.stateService, this.router)
         )
     }
   }
@@ -74,7 +74,7 @@ export class AdminComponent implements OnInit {
             }
           })
         },
-        error => handleError(error, this.stateService)
+        error => handleError(error, this.stateService, this.router)
       )
   }
 

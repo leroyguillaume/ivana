@@ -6,6 +6,7 @@ import {IconDefinition} from '@fortawesome/fontawesome-common-types'
 import {faSpinner} from '@fortawesome/free-solid-svg-icons'
 import {finalize} from 'rxjs/operators'
 import {handleError} from '../util'
+import {Router} from '@angular/router'
 
 @Component({
   selector: 'app-change-password',
@@ -24,7 +25,8 @@ export class ChangePasswordComponent implements OnInit {
 
   constructor(
     private userService: UserService,
-    private stateService: StateService
+    private stateService: StateService,
+    private router: Router
   ) {
   }
 
@@ -49,7 +51,7 @@ export class ChangePasswordComponent implements OnInit {
       .pipe(finalize(() => this.loading = false))
       .subscribe(
         () => this.stateService.success.next('Mot de passe mis à jour !'),
-        error => handleError(error, this.stateService)
+        error => handleError(error, this.stateService, this.router)
       )
   }
 }

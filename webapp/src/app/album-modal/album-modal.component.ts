@@ -7,6 +7,7 @@ import {finalize} from 'rxjs/operators'
 import {handleError} from '../util'
 import {AlbumService} from '../album.service'
 import {StateService} from '../state.service'
+import {Router} from '@angular/router'
 
 @Component({
   selector: 'app-album-modal',
@@ -26,7 +27,8 @@ export class AlbumModalComponent implements OnInit {
   constructor(
     private albumService: AlbumService,
     private stateService: StateService,
-    public activeModal: NgbActiveModal
+    public activeModal: NgbActiveModal,
+    private router: Router
   ) {
   }
 
@@ -46,7 +48,7 @@ export class AlbumModalComponent implements OnInit {
       }))
       .subscribe(
         () => this.stateService.success.next('Album créé !'),
-        error => handleError(error, this.stateService)
+        error => handleError(error, this.stateService, this.router)
       )
   }
 

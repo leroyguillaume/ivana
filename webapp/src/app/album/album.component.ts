@@ -34,6 +34,19 @@ export class AlbumComponent implements OnInit {
   ) {
   }
 
+  deleteAlbum(): void {
+    if (window.confirm(`Êtes-vous certain(e) de vouloir supprimer cet album ?`)) {
+      this.albumService.delete(this.album.id).subscribe(
+        () => {
+          this.stateService.success.next('L\'album a été supprimé !')
+          // noinspection JSIgnoredPromiseFromCall
+          this.router.navigate(['/album'])
+        },
+        error => handleError(error, this.stateService, this.router)
+      )
+    }
+  }
+
   fetchPage(no: number): void {
     this.loading = true
     this.albumService.getAllPhotos(this.album.id, no, PhotoPageSize)
@@ -50,7 +63,7 @@ export class AlbumComponent implements OnInit {
             }
           })
         },
-        error => handleError(error, this.stateService)
+        error => handleError(error, this.stateService, this.router)
       )
   }
 
@@ -59,7 +72,7 @@ export class AlbumComponent implements OnInit {
       .pipe(map(params => params.get('id')), flatMap(id => this.albumService.get(id)))
       .subscribe(album => {
         this.album = album
-        this.stateService.currentAlbum = album
+        this.stateService.currentAlbum.next(album)
         fetchPageFromQueryParam(this.route, (no: number) => this.fetchPage(no))
       })
   }
@@ -71,7 +84,7 @@ export class AlbumComponent implements OnInit {
           this.stateService.success.next('Les photos ont été supprimées de cet album !')
           this.fetchPage(this.page.no)
         },
-        error => handleError(error, this.stateService)
+        error => handleError(error, this.stateService, this.router)
       )
     }
   }

@@ -10,6 +10,7 @@ import {Album} from '../album'
 import {AlbumService} from '../album.service'
 import {NgbModal} from '@ng-bootstrap/ng-bootstrap'
 import {AlbumModalComponent} from '../album-modal/album-modal.component'
+import {forkJoin} from 'rxjs'
 
 export const AlbumPageSize = 12
 
@@ -34,6 +35,19 @@ export class AlbumListComponent implements OnInit {
   ) {
   }
 
+  deleteSelectedAlbums(selectedAlbums: Set<string>): void {
+    if (window.confirm(`Êtes-vous certain(e) de vouloir supprimer ces ${selectedAlbums.size} album(s) ?`)) {
+      forkJoin(Array.from(selectedAlbums.values()).map(id => this.albumService.delete(id)))
+        .subscribe(
+          () => {
+            this.stateService.success.next('Les albums ont été supprimés !')
+            this.fetchPage(this.page.no)
+          },
+          error => handleError(error, this.stateService, this.router)
+        )
+    }
+  }
+
   fetchPage(no: number): void {
     this.loading = true
     this.albumService.getAll(no, AlbumPageSize)
@@ -49,7 +63,7 @@ export class AlbumListComponent implements OnInit {
             }
           })
         },
-        error => handleError(error, this.stateService)
+        error => handleError(error, this.stateService, this.router)
       )
   }
 

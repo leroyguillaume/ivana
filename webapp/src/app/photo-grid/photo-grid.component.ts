@@ -28,6 +28,8 @@ export class PhotoGridComponent implements OnInit {
 
   selectedPhotos: Set<string> = new Set()
 
+  currentAlbum: Album
+
   @Input()
   page: Page<Photo>
 
@@ -37,6 +39,9 @@ export class PhotoGridComponent implements OnInit {
   @Output()
   selectedPhotosDelete: EventEmitter<Set<string>> = new EventEmitter()
 
+  @Output()
+  albumDelete: EventEmitter<Album> = new EventEmitter()
+
   constructor(
     private photoService: PhotoService,
     private albumService: AlbumService,
@@ -44,6 +49,10 @@ export class PhotoGridComponent implements OnInit {
     private modalService: NgbModal,
     private router: Router
   ) {
+  }
+
+  emitAlbumDelete(): void {
+    this.albumDelete.emit(this.currentAlbum)
   }
 
   emitSelectedPhotosDelete(): void {
@@ -55,6 +64,7 @@ export class PhotoGridComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.stateService.currentAlbum.subscribe(album => this.currentAlbum = album)
   }
 
   openAlbumSelectionModal(): void {
@@ -62,7 +72,7 @@ export class PhotoGridComponent implements OnInit {
       this.albumService.update(album.id, album.name, Array.from(this.selectedPhotos))
         .subscribe(
           updatedAlbum => this.stateService.success.next(`Photos ajoutées à l'album ${updatedAlbum.name} !`),
-          error => handleError(error, this.stateService)
+          error => handleError(error, this.stateService, this.router)
         )
     })
   }

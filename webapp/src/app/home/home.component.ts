@@ -43,7 +43,7 @@ export class HomeComponent implements OnInit {
             this.stateService.success.next('Les photos ont été supprimées !')
             this.fetchPage(this.page.no)
           },
-          error => handleError(error, this.stateService)
+          error => handleError(error, this.stateService, this.router)
         )
     }
   }
@@ -64,7 +64,7 @@ export class HomeComponent implements OnInit {
             }
           })
         },
-        error => handleError(error, this.stateService)
+        error => handleError(error, this.stateService, this.router)
       )
   }
 
@@ -72,7 +72,7 @@ export class HomeComponent implements OnInit {
     fetchPageFromQueryParam(this.route, (no: number) => this.fetchPage(no))
     this.stateService.uploadingPhotos.subscribe(uploading => this.uploading = uploading)
     this.stateService.photosUploaded.subscribe(() => this.fetchPage(this.page.no))
-    this.stateService.currentAlbum = null
+    this.stateService.currentAlbum.next(null)
   }
 
   selectFiles(): void {

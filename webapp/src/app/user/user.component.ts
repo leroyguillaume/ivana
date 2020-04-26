@@ -7,6 +7,7 @@ import {UserService} from '../user.service'
 import {finalize} from 'rxjs/operators'
 import {StateService} from '../state.service'
 import {handleError} from '../util'
+import {Router} from '@angular/router'
 
 @Component({
   selector: 'app-user',
@@ -28,7 +29,8 @@ export class UserComponent implements OnInit {
 
   constructor(
     private userService: UserService,
-    private stateService: StateService
+    private stateService: StateService,
+    private router: Router
   ) {
   }
 
@@ -53,7 +55,7 @@ export class UserComponent implements OnInit {
       .pipe(finalize(() => this.loading = false))
       .subscribe(
         () => this.stateService.success.next('Utilisateur créé !'),
-        error => handleError(error, this.stateService)
+        error => handleError(error, this.stateService, this.router)
       )
   }
 }
