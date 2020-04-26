@@ -50,9 +50,9 @@ class PhotoServiceImpl(
         Logger.info("User ${source.id} (${source.ip}) deleted photo $id")
     }
 
-    override fun getCompressedFile(photo: Photo) = compressedFile(photo.id, photo.uploadDate, photo.type)
+    override fun getCompressedFile(photo: Photo) = compressedFile(photo.id, photo.uploadDate, photo.type, photo.version)
 
-    override fun getRawFile(photo: Photo) = rawFile(photo.id, photo.uploadDate, photo.type)
+    override fun getRawFile(photo: Photo) = rawFile(photo.id, photo.uploadDate, photo.type, photo.version)
 
     override fun getLinkedById(id: UUID) = getById(id).let { photo ->
         LinkedPhotos(
@@ -104,20 +104,36 @@ class PhotoServiceImpl(
         }
     }
 
-    private fun compressedFile(id: UUID, uploadDate: OffsetDateTime, type: Photo.Type) = photoFile(
+    private fun compressedFile(id: UUID, uploadDate: OffsetDateTime, type: Photo.Type, version: Int = 1) = photoFile(
         rootDir = props.dataDir.resolve(CompressedDirname),
         id = id,
         uploadDate = uploadDate,
-        type = type
+        type = type,
+        version = version
     )
 
     private fun performRotation(photo: Photo, direction: Transform.Rotation.Direction) {
-        performRotation(rawFile(photo.id, photo.uploadDate, photo.type), photo.type, direction)
-        performRotation(compressedFile(photo.id, photo.uploadDate, photo.type), photo.type, direction)
+        performRotation(
+            srcFile = rawFile(photo.id, photo.uploadDate, photo.type, photo.version),
+            targetFile = rawFile(photo.id, photo.uploadDate, photo.type, photo.version + 1),
+            type = photo.type,
+            direction = direction
+        )
+        performRotation(
+            srcFile = compressedFile(photo.id, photo.uploadDate, photo.type, photo.version),
+            targetFile = compressedFile(photo.id, photo.uploadDate, photo.type, photo.version + 1),
+            type = photo.type,
+            direction = direction
+        )
     }
 
-    private fun performRotation(file: File, type: Photo.Type, direction: Transform.Rotation.Direction) {
-        val image = file.inputStream().use { ImageIO.read(it) }
+    private fun performRotation(
+        srcFile: File,
+        targetFile: File,
+        type: Photo.Type,
+        direction: Transform.Rotation.Direction
+    ) = try {
+        val image = srcFile.inputStream().use { ImageIO.read(it) }
         val angle = Math.toRadians(direction.angle)
         val sin = abs(sin(angle))
         val cos = abs(cos(angle))
@@ -130,23 +146,26 @@ class PhotoServiceImpl(
         transform.translate(-image.width / 2.toDouble(), -image.height / 2.toDouble())
         val transformOp = AffineTransformOp(transform, AffineTransformOp.TYPE_BILINEAR)
         transformOp.filter(image, rotatedImage)
-        file.outputStream().use { ImageIO.write(rotatedImage, type.format(), it) }
+        targetFile.outputStream().use { ImageIO.write(rotatedImage, type.format(), it) }
+    } catch (exception: Exception) {
+        throw TransformException("Unable to perform rotation on photo ${srcFile.absolutePath}", exception)
     }
 
-    private fun photoFile(rootDir: File, id: UUID, uploadDate: OffsetDateTime, type: Photo.Type) =
+    private fun photoFile(rootDir: File, id: UUID, uploadDate: OffsetDateTime, type: Photo.Type, version: Int) =
         uploadDate.let { date ->
             rootDir
                 .resolve(date.year.toString())
                 .resolve(date.monthValue.toString())
                 .resolve(date.dayOfMonth.toString())
-                .resolve("$id.${type.extension()}")
+                .resolve("${id}_$version.${type.extension()}")
         }
 
-    private fun rawFile(id: UUID, uploadDate: OffsetDateTime, type: Photo.Type) = photoFile(
+    private fun rawFile(id: UUID, uploadDate: OffsetDateTime, type: Photo.Type, version: Int = 1) = photoFile(
         rootDir = props.dataDir.resolve(RawDirname),
         id = id,
         uploadDate = uploadDate,
-        type = type
+        type = type,
+        version = version
     )
 
     private fun saveCompressedFile(tmpFile: File, event: PhotoEvent.Upload) =

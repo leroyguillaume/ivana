@@ -21,6 +21,7 @@ CREATE TABLE photo
     type        photo_type               NOT NULL,
     hash        varchar(40)              NOT NULL,
     no          serial                   NOT NULL UNIQUE,
+    version     int                      NOT NULL DEFAULT 1,
     UNIQUE (owner_id, hash)
 );
 

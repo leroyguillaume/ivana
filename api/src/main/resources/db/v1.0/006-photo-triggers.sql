@@ -1,4 +1,14 @@
 -- @formatter:off
+CREATE PROCEDURE increment_photo_version(event record)
+    LANGUAGE plpgsql AS
+$$
+BEGIN
+    UPDATE photo
+    SET version = version + 1
+    WHERE id = event.subject_id;
+END;
+$$;
+
 CREATE PROCEDURE insert_photo(event record)
     LANGUAGE plpgsql AS
 $$
@@ -34,6 +44,7 @@ BEGIN
     CASE
         WHEN new.type = 'upload' THEN CALL insert_photo(new);
         WHEN new.type = 'deletion' THEN DELETE FROM photo WHERE id = new.subject_id;
+        WHEN new.type = 'transform' THEN CALL increment_photo_version(new);
         ELSE
         END CASE;
     RETURN new;

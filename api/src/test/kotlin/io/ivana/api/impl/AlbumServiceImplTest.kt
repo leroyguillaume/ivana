@@ -176,7 +176,8 @@ internal class AlbumServiceImplTest {
                     uploadDate = OffsetDateTime.now(),
                     type = Photo.Type.Jpg,
                     hash = "hash1",
-                    no = 1
+                    no = 1,
+                    version = 1
                 ),
                 Photo(
                     id = UUID.randomUUID(),
@@ -184,7 +185,8 @@ internal class AlbumServiceImplTest {
                     uploadDate = OffsetDateTime.now(),
                     type = Photo.Type.Jpg,
                     hash = "hash2",
-                    no = 2
+                    no = 2,
+                    version = 1
                 )
             ),
             no = pageNo,
