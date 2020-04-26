@@ -4,6 +4,7 @@ import {PhotoService} from './photo.service'
 import {finalize} from 'rxjs/operators'
 import {Photo} from './photo'
 import {Page} from './page'
+import {Album} from './album'
 
 @Injectable({
   providedIn: 'root'
@@ -14,10 +15,10 @@ export class StateService {
 
   uploadingPhotos: BehaviorSubject<boolean> = new BehaviorSubject(false)
   photosUploaded: EventEmitter<void> = new EventEmitter()
-  selectedPhotos: BehaviorSubject<Set<string>> = new BehaviorSubject<Set<string>>(new Set())
   selectedAlbums: BehaviorSubject<Set<string>> = new BehaviorSubject<Set<string>>(new Set())
 
-  currentPhotosPage: Page<Photo> = null
+  currentAlbum: Album
+  currentPhotosPage: Page<Photo>
 
   startPhotoNavIndex: number = -1
   currentPhotoNavOffset: number = 0

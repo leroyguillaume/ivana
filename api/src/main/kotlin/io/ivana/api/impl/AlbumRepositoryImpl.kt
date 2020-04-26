@@ -2,6 +2,7 @@ package io.ivana.api.impl
 
 import io.ivana.core.Album
 import io.ivana.core.AlbumRepository
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Repository
 import java.sql.ResultSet
@@ -19,6 +20,16 @@ class AlbumRepositoryImpl(
     }
 
     override val tableName = TableName
+
+    override fun fetchDuplicateIds(id: UUID, photosIds: Set<UUID>) = jdbc.query(
+        """
+        SELECT ${PhotoRepositoryImpl.PhotoIdColumnName}
+        FROM ${PhotoRepositoryImpl.AlbumPhotoTableName}
+        WHERE ${PhotoRepositoryImpl.AlbumIdColumnName} = :album_id 
+            AND ${PhotoRepositoryImpl.PhotoIdColumnName} IN (:photos_ids)
+        """,
+        MapSqlParameterSource(mapOf("album_id" to id, "photos_ids" to photosIds))
+    ) { rs, _ -> rs.getObject(1, UUID::class.java) }.toSet()
 
     override fun entityFromResultSet(rs: ResultSet) = Album(
         id = rs.getObject(IdColumnName, UUID::class.java),

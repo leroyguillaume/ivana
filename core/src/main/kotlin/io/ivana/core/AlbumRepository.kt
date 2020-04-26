@@ -1,3 +1,7 @@
 package io.ivana.core
 
-interface AlbumRepository : OwnableEntityRepository<Album>
+import java.util.*
+
+interface AlbumRepository : OwnableEntityRepository<Album> {
+    fun fetchDuplicateIds(id: UUID, photosIds: Set<UUID>): Set<UUID>
+}

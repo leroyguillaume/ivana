@@ -19,8 +19,8 @@ export class AlbumService {
   }
 
   create(name: string): Observable<Album> {
-    const album = {name}
-    return this.http.post<Album>(this.baseUrl, album, {withCredentials: true})
+    const dto = {name}
+    return this.http.post<Album>(this.baseUrl, dto, {withCredentials: true})
   }
 
   get(id: string): Observable<Album> {
@@ -53,5 +53,12 @@ export class AlbumService {
     )
   }
 
-
+  update(id: string, name: string, photosIdsToAdd: string[] = [], photosIdsToRemove: string[] = []): Observable<Album> {
+    const dto = {
+      name,
+      photosToAdd: photosIdsToAdd,
+      photosToRemove: photosIdsToRemove
+    }
+    return this.http.put<Album>(`${this.baseUrl}/${id}`, dto, {withCredentials: true})
+  }
 }

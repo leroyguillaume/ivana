@@ -49,6 +49,15 @@ abstract class AbstractEntityRepository<E : Entity> : EntityRepository<E> {
 
     override fun fetchById(id: UUID) = fetchBy(IdColumnName, id)
 
+    override fun fetchExistingIds(ids: Set<UUID>) = jdbc.query(
+        """
+        SELECT $IdColumnName
+        FROM $tableName
+        WHERE $IdColumnName IN (:ids)
+        """,
+        MapSqlParameterSource(mapOf("ids" to ids))
+    ) { rs, _ -> rs.getObject(1, UUID::class.java) }.toSet()
+
     protected fun fetchBy(columnName: String, value: Any) = fetchBy(Column(columnName, value))
 
     protected fun fetchBy(vararg columns: Column) = try {

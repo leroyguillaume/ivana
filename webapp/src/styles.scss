@@ -13,6 +13,14 @@
   cursor: not-allowed;
 }
 
+.modal-header {
+  background-color: $panel-bg;
+}
+
+.modal-body {
+  background-color: $panel-bg;
+}
+
 .selected {
   border-style: solid;
   border-color: map-get($theme-colors, 'secondary');

@@ -3,7 +3,9 @@ package io.ivana.api.web
 import com.fasterxml.jackson.databind.JsonMappingException
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.MissingKotlinParameterException
+import io.ivana.api.impl.AlbumAlreadyContainsPhotosException
 import io.ivana.api.impl.EntityNotFoundException
+import io.ivana.api.impl.PhotosNotFoundException
 import io.ivana.api.impl.UserAlreadyExistsException
 import io.ivana.api.security.BadCredentialsException
 import io.ivana.api.security.BadJwtException
@@ -41,6 +43,13 @@ class ErrorController(
     @ExceptionHandler(AccessDeniedException::class)
     fun handleAccessDenied(exception: AccessDeniedException, req: HttpServletRequest, resp: HttpServletResponse) =
         CustomAccessDeniedHandler(mapper).handle(req, resp, exception)
+
+    @ExceptionHandler(AlbumAlreadyContainsPhotosException::class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    fun handleAlbumAlreadyContainsPhotos(exception: AlbumAlreadyContainsPhotosException): ErrorDto {
+        Logger.debug(exception.message, exception)
+        return ErrorDto.AlbumAlreadyContainsPhotos(exception.photosIds)
+    }
 
     @ExceptionHandler(ConstraintViolationException::class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -107,6 +116,13 @@ class ErrorController(
             is MissingKotlinParameterException -> ErrorDto.MissingParameter(cause.path.toHumanReadablePath())
             else -> handleException(exception)
         }
+    }
+
+    @ExceptionHandler(PhotosNotFoundException::class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    fun handleAlbumPhotosNotFound(exception: PhotosNotFoundException): ErrorDto {
+        Logger.debug(exception.message, exception)
+        return ErrorDto.PhotosNotFound(exception.photosIds)
     }
 
     @ExceptionHandler(value = [BadCredentialsException::class, BadJwtException::class])

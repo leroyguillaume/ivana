@@ -10,4 +10,6 @@ interface EntityRepository<E : Entity> {
     fun fetchAll(offset: Int, limit: Int): List<E>
 
     fun fetchById(id: UUID): E?
+
+    fun fetchExistingIds(ids: Set<UUID>): Set<UUID>
 }

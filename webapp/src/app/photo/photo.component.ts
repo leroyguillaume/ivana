@@ -1,6 +1,6 @@
 import {Component, HostListener, OnInit} from '@angular/core'
 import {NavigablePhoto} from '../navigable-photo'
-import {faArrowLeft, faPencilAlt, faRedo, faSpinner, faTimes, faTrash, faUndo} from '@fortawesome/free-solid-svg-icons'
+import {faArrowLeft, faPencilAlt, faPlus, faRedo, faSpinner, faTimes, faTrash, faUndo} from '@fortawesome/free-solid-svg-icons'
 import {PhotoService} from '../photo.service'
 import {ActivatedRoute, Router} from '@angular/router'
 import {finalize} from 'rxjs/operators'
@@ -10,6 +10,10 @@ import {IconDefinition} from '@fortawesome/fontawesome-common-types'
 import {PhotoPageSize} from '../home/home.component'
 import {handleError} from '../util'
 import {RotationDirection} from '../rotation-direction'
+import {AlbumSelectionModalComponent} from '../album-selection-modal/album-selection-modal.component'
+import {Album} from '../album'
+import {NgbModal} from '@ng-bootstrap/ng-bootstrap'
+import {AlbumService} from '../album.service'
 
 @Component({
   selector: 'app-photo',
@@ -24,6 +28,7 @@ export class PhotoComponent implements OnInit {
   rotateClockwiseIcon: IconDefinition = faRedo
   rotateCounterclockwiseIcon: IconDefinition = faUndo
   trashIcon: IconDefinition = faTrash
+  plusIcon: IconDefinition = faPlus
 
   baseUrl: string = environment.baseUrl
   loading: boolean = true
@@ -36,7 +41,9 @@ export class PhotoComponent implements OnInit {
 
   constructor(
     private photoService: PhotoService,
+    private albumService: AlbumService,
     private stateService: StateService,
+    private modalService: NgbModal,
     private route: ActivatedRoute,
     private router: Router,
   ) {
@@ -46,8 +53,9 @@ export class PhotoComponent implements OnInit {
     const offset = this.stateService.startPhotoNavIndex > -1
       ? Math.floor((this.stateService.startPhotoNavIndex + this.stateService.currentPhotoNavOffset) / PhotoPageSize)
       : 0
+    const route = this.stateService.currentAlbum ? ['album', this.stateService.currentAlbum.id] : ['home']
     // noinspection JSIgnoredPromiseFromCall
-    this.router.navigate(['home'], {
+    this.router.navigate(route, {
       queryParams: {
         page: (this.stateService.currentPhotosPage?.no || 1) + offset
       }
@@ -108,6 +116,16 @@ export class PhotoComponent implements OnInit {
   ngOnInit(): void {
     this.stateService.currentPhotoNavOffset = 0
     this.route.paramMap.subscribe(params => this.fetchPhoto(params.get('id')))
+  }
+
+  openAlbumSelectionModal(): void {
+    this.modalService.open(AlbumSelectionModalComponent).result.then((album: Album) => {
+      this.albumService.update(album.id, album.name, [this.photo.id])
+        .subscribe(
+          updatedAlbum => this.stateService.success.next(`Photo ajoutée à l'album ${updatedAlbum.name} !`),
+          error => handleError(error, this.stateService)
+        )
+    })
   }
 
   previous(): void {

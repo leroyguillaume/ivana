@@ -3,9 +3,11 @@ package io.ivana.api.web.v1
 import io.ivana.api.security.AlbumTargetType
 import io.ivana.api.security.UserPrincipal
 import io.ivana.api.web.source
+import io.ivana.core.AlbumEvent
 import io.ivana.core.AlbumService
 import io.ivana.dto.AlbumCreationDto
 import io.ivana.dto.AlbumDto
+import io.ivana.dto.AlbumUpdateDto
 import io.ivana.dto.PageDto
 import org.springframework.http.HttpStatus
 import org.springframework.security.access.prepost.PreAuthorize
@@ -60,7 +62,27 @@ class AlbumController(
     fun getAllPhotos(
         @PathVariable id: UUID,
         @RequestParam(name = PageParamName, required = false, defaultValue = "1") @Min(1) page: Int,
-        @RequestParam(name = SizeParamName, required = false, defaultValue = "10") @Min(1) size: Int,
-        auth: Authentication
+        @RequestParam(name = SizeParamName, required = false, defaultValue = "10") @Min(1) size: Int
     ) = albumService.getAllPhotos(id, page, size).toDto { it.toSimpleDto() }
+
+    @Transactional
+    @PutMapping("/{id:$UuidRegex}")
+    @PreAuthorize("hasPermission(#id, '$AlbumTargetType', 'update')")
+    @ResponseStatus(HttpStatus.OK)
+    @Suppress("MVCPathVariableInspection", "RegExpUnexpectedAnchor")
+    fun update(
+        @PathVariable id: UUID,
+        @RequestBody @Valid updateDto: AlbumUpdateDto,
+        auth: Authentication,
+        req: HttpServletRequest
+    ): AlbumDto {
+        val principal = auth.principal as UserPrincipal
+        return albumService.update(id, updateDto.toUpdateContent(), req.source(principal)).toDto()
+    }
+
+    private fun AlbumUpdateDto.toUpdateContent() = AlbumEvent.Update.Content(
+        name = name,
+        photosToAdd = photosToAdd.distinct(),
+        photosToRemove = photosToRemove.distinct()
+    )
 }

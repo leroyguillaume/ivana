@@ -4,15 +4,15 @@ package io.ivana.api.web.v1
 
 import com.nhaarman.mockitokotlin2.verify
 import com.nhaarman.mockitokotlin2.whenever
+import io.ivana.api.impl.AlbumAlreadyContainsPhotosException
+import io.ivana.api.impl.PhotosNotFoundException
 import io.ivana.api.security.Permission
 import io.ivana.api.web.AbstractControllerTest
 import io.ivana.core.Album
+import io.ivana.core.AlbumEvent
 import io.ivana.core.Page
 import io.ivana.core.Photo
-import io.ivana.dto.AlbumCreationDto
-import io.ivana.dto.AlbumNameMaxSize
-import io.ivana.dto.AlbumNameMinSize
-import io.ivana.dto.ErrorDto
+import io.ivana.dto.*
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
@@ -61,7 +61,7 @@ internal class AlbumControllerTest : AbstractControllerTest() {
         }
 
         @Test
-        fun `should return 400 if name is too long`() = authenticated {
+        fun `should return 400 if params are too long`() = authenticated {
             callAndExpectDto(
                 method = method,
                 uri = uri,
@@ -305,6 +305,133 @@ internal class AlbumControllerTest : AbstractControllerTest() {
             )
             verify(userAlbumAuthzRepo).fetch(principal.user.id, albumId)
             verify(albumService).getAllPhotos(albumId, pageNo, pageSize)
+        }
+    }
+
+    @Nested
+    inner class update {
+        private val updateDto = AlbumUpdateDto(
+            name = "album",
+            photosToAdd = UUID.randomUUID().let { id -> listOf(id, id) },
+            photosToRemove = UUID.randomUUID().let { id -> listOf(id, id) }
+        )
+        private val duplicateIds = updateDto.photosToAdd.toSet()
+        private val updateContent = AlbumEvent.Update.Content(
+            name = updateDto.name,
+            photosToAdd = updateDto.photosToAdd.distinct(),
+            photosToRemove = updateDto.photosToRemove.distinct()
+        )
+        private val album = Album(
+            id = UUID.randomUUID(),
+            ownerId = userPrincipal.user.id,
+            name = "album",
+            creationDate = OffsetDateTime.now()
+        )
+        private val albumDto = album.toDto()
+        private val method = HttpMethod.PUT
+        private val uri = "$AlbumApiEndpoint/${album.id}"
+
+        @Test
+        fun `should return 401 if user is anonymous`() {
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                status = HttpStatus.UNAUTHORIZED,
+                respDto = ErrorDto.Unauthorized
+            )
+        }
+
+        @Test
+        fun `should return 403 if user does not have permission`() = authenticated {
+            whenever(userAlbumAuthzRepo.fetch(principal.user.id, album.id))
+                .thenReturn(EnumSet.complementOf(EnumSet.of(Permission.Update)))
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                reqCookies = listOf(accessTokenCookie()),
+                reqContent = mapper.writeValueAsString(updateDto),
+                status = HttpStatus.FORBIDDEN,
+                respDto = ErrorDto.Forbidden
+            )
+            verify(userAlbumAuthzRepo).fetch(principal.user.id, album.id)
+        }
+
+        @Test
+        fun `should return 400 if params are too short`() = authenticated {
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                reqCookies = listOf(accessTokenCookie()),
+                reqContent = mapper.writeValueAsString(updateDto.copy("a")),
+                status = HttpStatus.BAD_REQUEST,
+                respDto = ErrorDto.ValidationError(listOf(sizeErrorDto("name", AlbumNameMinSize, AlbumNameMaxSize)))
+            )
+        }
+
+        @Test
+        fun `should return 400 if params are too long`() = authenticated {
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                reqCookies = listOf(accessTokenCookie()),
+                reqContent = mapper.writeValueAsString(
+                    updateDto.copy(name = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+                ),
+                status = HttpStatus.BAD_REQUEST,
+                respDto = ErrorDto.ValidationError(listOf(sizeErrorDto("name", AlbumNameMinSize, AlbumNameMaxSize)))
+            )
+        }
+
+        @Test
+        fun `should return 400 if photos does not exist`() = authenticated {
+            whenever(userAlbumAuthzRepo.fetch(principal.user.id, album.id)).thenReturn(setOf(Permission.Update))
+            whenever(albumService.update(album.id, updateContent, source)).thenAnswer {
+                throw PhotosNotFoundException(duplicateIds)
+            }
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                reqCookies = listOf(accessTokenCookie()),
+                reqContent = mapper.writeValueAsString(updateDto),
+                status = HttpStatus.BAD_REQUEST,
+                respDto = ErrorDto.PhotosNotFound(duplicateIds)
+            )
+            verify(userAlbumAuthzRepo).fetch(principal.user.id, album.id)
+            verify(albumService).update(album.id, updateContent, source)
+        }
+
+        @Test
+        fun `should return 409 if album already contains photos`() = authenticated {
+            whenever(userAlbumAuthzRepo.fetch(principal.user.id, album.id)).thenReturn(setOf(Permission.Update))
+            whenever(albumService.update(album.id, updateContent, source)).thenAnswer {
+                throw AlbumAlreadyContainsPhotosException(duplicateIds)
+            }
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                reqCookies = listOf(accessTokenCookie()),
+                reqContent = mapper.writeValueAsString(updateDto),
+                status = HttpStatus.CONFLICT,
+                respDto = ErrorDto.AlbumAlreadyContainsPhotos(duplicateIds)
+            )
+            verify(userAlbumAuthzRepo).fetch(principal.user.id, album.id)
+            verify(albumService).update(album.id, updateContent, source)
+        }
+
+        @Test
+        fun `should return 200`() = authenticated {
+            whenever(userAlbumAuthzRepo.fetch(principal.user.id, album.id)).thenReturn(setOf(Permission.Update))
+            whenever(albumService.update(album.id, updateContent, source)).thenReturn(album)
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                reqCookies = listOf(accessTokenCookie()),
+                reqContent = mapper.writeValueAsString(updateDto),
+                status = HttpStatus.OK,
+                respDto = albumDto
+            )
+            verify(userAlbumAuthzRepo).fetch(principal.user.id, album.id)
+            verify(albumService).update(album.id, updateContent, source)
         }
     }
 }

@@ -36,4 +36,26 @@ class AlbumServiceImpl(
             totalPages = ceil(itemsNb.toDouble() / pageSize.toDouble()).toInt()
         )
     }
+
+    @Transactional
+    override fun update(id: UUID, content: AlbumEvent.Update.Content, source: EventSource.User): Album {
+        if (!repo.existsById(id)) {
+            throw EntityNotFoundException("$entityName $id does not exist")
+        }
+        val photosToAddIds = content.photosToAdd.toSet()
+        if (photosToAddIds.isNotEmpty()) {
+            val existingIds = photoRepo.fetchExistingIds(photosToAddIds)
+            val notFoundIds = photosToAddIds - existingIds
+            if (notFoundIds.isNotEmpty()) {
+                throw PhotosNotFoundException(notFoundIds)
+            }
+            val duplicateIds = repo.fetchDuplicateIds(id, photosToAddIds)
+            if (duplicateIds.isNotEmpty()) {
+                throw AlbumAlreadyContainsPhotosException(duplicateIds)
+            }
+        }
+        eventRepo.saveUpdateEvent(id, content, source)
+        Logger.info("User ${source.id} (${source.ip}) updated album $id")
+        return getById(id)
+    }
 }

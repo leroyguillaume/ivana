@@ -67,6 +67,55 @@ internal class AlbumEventRepositoryImplTest {
     }
 
     @Nested
+    inner class fetchDuplicateIds {
+        private lateinit var source: EventSource.User
+        private lateinit var photo1: Photo
+        private lateinit var photo2: Photo
+        private lateinit var albumCreationEvent: AlbumEvent.Creation
+
+        @BeforeEach
+        fun beforeEach() {
+            source = EventSource.User(createdUser.id, InetAddress.getByName("127.0.0.1"))
+            photo1 = photoEventRepo.saveUploadEvent(
+                source = source,
+                content = PhotoEvent.Upload.Content(
+                    type = Photo.Type.Jpg,
+                    hash = "hash1"
+                )
+            ).toPhoto(1)
+            photo2 = photoEventRepo.saveUploadEvent(
+                source = source,
+                content = PhotoEvent.Upload.Content(
+                    type = Photo.Type.Jpg,
+                    hash = "hash2"
+                )
+            ).toPhoto(2)
+            albumCreationEvent = repo.saveCreationEvent("album", source)
+            repo.saveUpdateEvent(
+                id = albumCreationEvent.subjectId,
+                source = source,
+                content = AlbumEvent.Update.Content(
+                    name = albumCreationEvent.albumName,
+                    photosToAdd = listOf(photo1.id, photo2.id),
+                    photosToRemove = emptyList()
+                )
+            )
+        }
+
+        @Test
+        fun `should return empty set if album does not exist`() {
+            albumRepo.fetchDuplicateIds(UUID.randomUUID(), setOf(photo1.id, photo2.id)).shouldBeEmpty()
+        }
+
+        @Test
+        fun `should return ids if album contains photos`() {
+            albumRepo.fetchDuplicateIds(albumCreationEvent.subjectId, setOf(photo1.id, photo2.id)).shouldBe(
+                setOf(photo1.id, photo2.id)
+            )
+        }
+    }
+
+    @Nested
     inner class fetch {
         private val subjectId = UUID.randomUUID()
         private val number = 1L

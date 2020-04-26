@@ -22,7 +22,6 @@ export class AlbumComponent implements OnInit {
   album: Album
   page: Page<Photo>
   loading: boolean = true
-  uploading: boolean = false
 
   @ViewChild('files')
   filesInput: ElementRef
@@ -33,10 +32,6 @@ export class AlbumComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router
   ) {
-  }
-
-  deleteSelectedPhotos(selectedPhotos: Set<string>): void {
-
   }
 
   fetchPage(no: number): void {
@@ -64,20 +59,20 @@ export class AlbumComponent implements OnInit {
       .pipe(map(params => params.get('id')), flatMap(id => this.albumService.get(id)))
       .subscribe(album => {
         this.album = album
+        this.stateService.currentAlbum = album
         fetchPageFromQueryParam(this.route, (no: number) => this.fetchPage(no))
       })
-    this.stateService.uploadingPhotos.subscribe(uploading => this.uploading = uploading)
-    this.stateService.photosUploaded.subscribe(() => this.fetchPage(this.page.no))
   }
 
-  selectFiles(): void {
-    this.filesInput.nativeElement.click()
-  }
-
-  upload(): void {
-    const files = this.filesInput.nativeElement.files
-    if (files.length > 0) {
-      this.stateService.uploadPhotos(files)
+  removeSelectedPhotosFromAlbum(selectedPhotos: Set<string>): void {
+    if (window.confirm(`Êtes-vous certain(e) de vouloir supprimer ces ${selectedPhotos.size} photo(s) de cet album ?`)) {
+      this.albumService.update(this.album.id, this.album.name, [], Array.from(selectedPhotos)).subscribe(
+        () => {
+          this.stateService.success.next('Les photos ont été supprimées de cet album !')
+          this.fetchPage(this.page.no)
+        },
+        error => handleError(error, this.stateService)
+      )
     }
   }
 }

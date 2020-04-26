@@ -202,4 +202,103 @@ internal class AlbumServiceImplTest {
             confirmVerified(albumRepo)
         }
     }
+
+    @Nested
+    inner class update {
+        private val event = AlbumEvent.Update(
+            date = OffsetDateTime.now(),
+            subjectId = UUID.randomUUID(),
+            number = 1,
+            source = EventSource.User(UUID.randomUUID(), InetAddress.getByName("127.0.0.1")),
+            content = AlbumEvent.Update.Content(
+                name = "album",
+                photosToAdd = listOf(UUID.randomUUID()),
+                photosToRemove = listOf(UUID.randomUUID())
+            )
+        )
+        private val emptyEvent = event.copy(
+            content = event.content.copy(
+                photosToAdd = emptyList(),
+                photosToRemove = emptyList()
+            )
+        )
+        private val duplicateIds = event.content.photosToAdd.toSet()
+        private val expectedAlbum = Album(
+            id = event.subjectId,
+            ownerId = event.source.id,
+            name = event.content.name,
+            creationDate = OffsetDateTime.now()
+        )
+
+        @Test
+        fun `should throw exception if album does not exist`() {
+            every { albumRepo.existsById(expectedAlbum.id) } returns false
+            val exception = assertThrows<EntityNotFoundException> {
+                service.update(expectedAlbum.id, event.content, event.source)
+            }
+            exception shouldHaveMessage "Album ${expectedAlbum.id} does not exist"
+            verify { albumRepo.existsById(expectedAlbum.id) }
+            confirmVerified(albumRepo)
+        }
+
+        @Test
+        fun `should throw exception if photos does not exist`() {
+            every { albumRepo.existsById(expectedAlbum.id) } returns true
+            every { photoRepo.fetchExistingIds(duplicateIds) } returns emptySet()
+            val exception = assertThrows<PhotosNotFoundException> {
+                service.update(expectedAlbum.id, event.content, event.source)
+            }
+            exception.photosIds shouldBe duplicateIds
+            verify { albumRepo.existsById(expectedAlbum.id) }
+            verify { photoRepo.fetchExistingIds(duplicateIds) }
+            confirmVerified(albumRepo, photoRepo)
+        }
+
+        @Test
+        fun `should throw exception if album already contains photos`() {
+            every { albumRepo.existsById(expectedAlbum.id) } returns true
+            every { photoRepo.fetchExistingIds(duplicateIds) } returns duplicateIds
+            every { albumRepo.fetchDuplicateIds(expectedAlbum.id, duplicateIds) } returns duplicateIds
+            val exception = assertThrows<AlbumAlreadyContainsPhotosException> {
+                service.update(expectedAlbum.id, event.content, event.source)
+            }
+            exception.photosIds shouldBe duplicateIds
+            verify { albumRepo.existsById(expectedAlbum.id) }
+            verify { photoRepo.fetchExistingIds(duplicateIds) }
+            verify { albumRepo.fetchDuplicateIds(expectedAlbum.id, duplicateIds) }
+            confirmVerified(albumRepo, photoRepo)
+        }
+
+        @Test
+        fun `should return updated album`() {
+            every { albumRepo.existsById(expectedAlbum.id) } returns true
+            every { photoRepo.fetchExistingIds(duplicateIds) } returns duplicateIds
+            every { albumRepo.fetchDuplicateIds(expectedAlbum.id, duplicateIds) } returns emptySet()
+            every { albumEventRepo.saveUpdateEvent(expectedAlbum.id, event.content, event.source) } returns event
+            every { albumRepo.fetchById(expectedAlbum.id) } returns expectedAlbum
+            val album = service.update(expectedAlbum.id, event.content, event.source)
+            album shouldBe expectedAlbum
+            verify { albumRepo.existsById(expectedAlbum.id) }
+            verify { photoRepo.fetchExistingIds(duplicateIds) }
+            verify { albumRepo.fetchDuplicateIds(expectedAlbum.id, duplicateIds) }
+            verify { albumEventRepo.saveUpdateEvent(expectedAlbum.id, event.content, event.source) }
+            verify { albumRepo.fetchById(expectedAlbum.id) }
+            confirmVerified(albumRepo, photoRepo, albumEventRepo)
+        }
+
+        @Test
+        fun `should return updated album (empty lists)`() {
+            every { albumRepo.existsById(expectedAlbum.id) } returns true
+            every {
+                albumEventRepo.saveUpdateEvent(expectedAlbum.id, emptyEvent.content, emptyEvent.source)
+            } returns emptyEvent
+            every { albumRepo.fetchById(expectedAlbum.id) } returns expectedAlbum
+            val album = service.update(expectedAlbum.id, emptyEvent.content, emptyEvent.source)
+            album shouldBe expectedAlbum
+            verify { albumRepo.existsById(expectedAlbum.id) }
+            verify { albumEventRepo.saveUpdateEvent(expectedAlbum.id, emptyEvent.content, emptyEvent.source) }
+            verify { albumRepo.fetchById(expectedAlbum.id) }
+            confirmVerified(albumRepo, photoRepo, albumEventRepo)
+        }
+    }
 }

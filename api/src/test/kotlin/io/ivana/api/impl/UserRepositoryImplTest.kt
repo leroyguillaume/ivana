@@ -137,4 +137,20 @@ internal class UserRepositoryImplTest {
             user shouldBe createdUser
         }
     }
+
+    @Nested
+    inner class fetchExistingIds {
+        private lateinit var expectedExistingIds: Set<UUID>
+
+        @BeforeEach
+        fun beforeEach() {
+            expectedExistingIds = createdUsers.map { it.id }.toSet()
+        }
+
+        @Test
+        fun `should return existing ids`() {
+            val existingIds = repo.fetchExistingIds(expectedExistingIds + setOf(UUID.randomUUID()))
+            existingIds shouldBe expectedExistingIds
+        }
+    }
 }

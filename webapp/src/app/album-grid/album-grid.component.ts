@@ -78,7 +78,6 @@ export class AlbumGridComponent implements OnInit {
     } else {
       this.selectedAlbums.add(album.id)
     }
-    this.stateService.selectedPhotos.next(this.selectedAlbums)
   }
 
 }

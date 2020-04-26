@@ -8,19 +8,13 @@
   </div>
 
   <div class="text-center" *ngIf="!loading && page.totalItems === 0">
-    <h1 class="mb-3">Vous n'avez pas encore de photos dans cet album... Ajoutez-en !</h1>
-    <button class="btn btn-primary" (click)="selectFiles()" [disabled]="uploading">
-      <fa-icon [icon]="spinnerIcon" spin="true" *ngIf="uploading"></fa-icon>
-      <span *ngIf="uploading"> Ajout en cours...</span>
-      <span *ngIf="!uploading">C'est parti !</span>
-    </button>
-    <input name="files" type="file" (change)="upload()" multiple hidden #files>
+    <h1>Vous n'avez pas encore de photos dans cet album...</h1>
   </div>
 
   <div *ngIf="!loading && page.totalItems > 0">
     <app-photo-grid [page]="page"
                     (pageChange)="fetchPage($event)"
-                    (selectedPhotosDelete)="deleteSelectedPhotos($event)">
+                    (selectedPhotosDelete)="removeSelectedPhotosFromAlbum($event)">
     </app-photo-grid>
   </div>
 </div>
