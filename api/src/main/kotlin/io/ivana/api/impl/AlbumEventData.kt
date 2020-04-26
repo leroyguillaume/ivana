@@ -12,6 +12,10 @@ internal sealed class AlbumEventData : EventData {
         )
     }
 
+    data class Deletion(
+        override val source: EventSourceData.User
+    ) : AlbumEventData()
+
     data class Update(
         override val source: EventSourceData.User,
         val content: Content

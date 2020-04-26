@@ -137,6 +137,16 @@ internal class AlbumEventRepositoryImplTest {
         }
 
         @Test
+        fun `should return deletion event with subject id and number`() {
+            val expectedEvent = repo.saveDeletionEvent(
+                albumId = UUID.randomUUID(),
+                source = EventSource.User(createdUser.id, InetAddress.getByName("127.0.0.1"))
+            )
+            val event = repo.fetch(expectedEvent.subjectId, expectedEvent.number)
+            event shouldBe expectedEvent
+        }
+
+        @Test
         fun `should return update event with subject id and number`() {
             val expectedEvent = repo.saveUpdateEvent(
                 id = UUID.randomUUID(),
@@ -188,6 +198,35 @@ internal class AlbumEventRepositoryImplTest {
             )
             val permissions = authzRepo.fetch(createdUser.id, event.subjectId)
             permissions shouldContainExactly Permission.values().toSet()
+        }
+    }
+
+    @Nested
+    inner class saveDeletionEvent {
+        private lateinit var expectedEvent: AlbumEvent.Deletion
+
+        @BeforeEach
+        fun beforeEach() {
+            val creationEvent = repo.saveCreationEvent(
+                name = "album",
+                source = EventSource.User(createdUser.id, InetAddress.getByName("127.0.0.1"))
+            )
+            expectedEvent = AlbumEvent.Deletion(
+                date = OffsetDateTime.now(),
+                subjectId = creationEvent.subjectId,
+                number = 2,
+                source = creationEvent.source
+            )
+        }
+
+        @Test
+        fun `should return created event`() {
+            val event = repo.saveDeletionEvent(expectedEvent.subjectId, expectedEvent.source)
+            event shouldBe expectedEvent.copy(
+                date = event.date,
+                subjectId = event.subjectId
+            )
+            albumRepo.fetchById(expectedEvent.subjectId).shouldBeNull()
         }
     }
 

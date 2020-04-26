@@ -21,6 +21,7 @@ import {AlbumModalComponent} from './album-modal/album-modal.component'
 import {AlbumGridComponent} from './album-grid/album-grid.component'
 import {AlbumComponent} from './album/album.component'
 import {AlbumSelectionModalComponent} from './album-selection-modal/album-selection-modal.component'
+import {ForbiddenComponent} from './forbidden/forbidden.component'
 
 @NgModule({
   declarations: [
@@ -38,7 +39,8 @@ import {AlbumSelectionModalComponent} from './album-selection-modal/album-select
     AlbumModalComponent,
     AlbumGridComponent,
     AlbumComponent,
-    AlbumSelectionModalComponent
+    AlbumSelectionModalComponent,
+    ForbiddenComponent
   ],
   imports: [
     BrowserModule,

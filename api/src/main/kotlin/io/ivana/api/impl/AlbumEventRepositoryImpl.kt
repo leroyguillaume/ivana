@@ -32,6 +32,13 @@ class AlbumEventRepositoryImpl(
             )
         )
 
+    override fun saveDeletionEvent(albumId: UUID, source: EventSource.User) =
+        insert<AlbumEvent.Deletion>(
+            subjectId = albumId,
+            type = AlbumEventType.Deletion,
+            data = AlbumEventData.Deletion(source.toData() as EventSourceData.User)
+        )
+
     override fun saveUpdateEvent(id: UUID, content: AlbumEvent.Update.Content, source: EventSource.User) =
         insert<AlbumEvent.Update>(
             subjectId = id,
@@ -48,6 +55,7 @@ class AlbumEventRepositoryImpl(
 
     override fun RawEvent<AlbumEventType>.toEvent() = when (type) {
         AlbumEventType.Creation -> toCreationEvent()
+        AlbumEventType.Deletion -> toDeletionEvent()
         AlbumEventType.Update -> toUpdateEvent()
     }
 
@@ -58,6 +66,16 @@ class AlbumEventRepositoryImpl(
                 subjectId = subjectId,
                 source = data.source.toSource(),
                 albumName = data.content.name
+            )
+        }
+
+    private fun RawEvent<AlbumEventType>.toDeletionEvent() =
+        mapper.readValue<AlbumEventData.Deletion>(jsonData).let { data ->
+            AlbumEvent.Deletion(
+                date = date,
+                subjectId = subjectId,
+                number = number,
+                source = data.source.toSource()
             )
         }
 

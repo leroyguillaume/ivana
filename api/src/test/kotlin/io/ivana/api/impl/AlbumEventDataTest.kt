@@ -21,6 +21,18 @@ internal class AlbumEventDataTest {
     )
 
     @Nested
+    inner class Deletion : JsonTest(
+        filename = "event-data/album/deletion.json",
+        expectedValue = AlbumEventData.Deletion(
+            source = EventSourceData.User(
+                id = UUID.fromString("644465bf-a2d5-43aa-b79d-84b9aa543bad"),
+                ip = InetAddress.getByName("127.0.0.1")
+            )
+        ),
+        deserializeAs = typeOf<AlbumEventData.Deletion>()
+    )
+
+    @Nested
     inner class Update : JsonTest(
         filename = "event-data/album/update.json",
         expectedValue = AlbumEventData.Update(

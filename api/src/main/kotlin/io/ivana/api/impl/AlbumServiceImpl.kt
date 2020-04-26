@@ -38,6 +38,15 @@ class AlbumServiceImpl(
     }
 
     @Transactional
+    override fun delete(id: UUID, source: EventSource.User) {
+        if (!repo.existsById(id)) {
+            throw EntityNotFoundException("$entityName $id does not exist")
+        }
+        eventRepo.saveDeletionEvent(id, source)
+        Logger.info("User ${source.id} (${source.ip}) deleted album $id")
+    }
+
+    @Transactional
     override fun update(id: UUID, content: AlbumEvent.Update.Content, source: EventSource.User): Album {
         if (!repo.existsById(id)) {
             throw EntityNotFoundException("$entityName $id does not exist")

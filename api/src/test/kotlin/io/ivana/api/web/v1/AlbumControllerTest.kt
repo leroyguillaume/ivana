@@ -90,6 +90,50 @@ internal class AlbumControllerTest : AbstractControllerTest() {
     }
 
     @Nested
+    inner class delete {
+        private val albumId = UUID.randomUUID()
+        private val method = HttpMethod.DELETE
+        private val uri = "$AlbumApiEndpoint/$albumId"
+
+        @Test
+        fun `should return 401 if user is anonymous`() {
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                status = HttpStatus.UNAUTHORIZED,
+                respDto = ErrorDto.Unauthorized
+            )
+        }
+
+        @Test
+        fun `should return 403 if user does not have permission`() = authenticated {
+            whenever(userAlbumAuthzRepo.fetch(principal.user.id, albumId))
+                .thenReturn(EnumSet.complementOf(EnumSet.of(Permission.Delete)))
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                reqCookies = listOf(accessTokenCookie()),
+                status = HttpStatus.FORBIDDEN,
+                respDto = ErrorDto.Forbidden
+            )
+            verify(userAlbumAuthzRepo).fetch(principal.user.id, albumId)
+        }
+
+        @Test
+        fun `should return 204`() = authenticated {
+            whenever(userAlbumAuthzRepo.fetch(principal.user.id, albumId)).thenReturn(setOf(Permission.Delete))
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                reqCookies = listOf(accessTokenCookie()),
+                status = HttpStatus.NO_CONTENT
+            )
+            verify(userAlbumAuthzRepo).fetch(principal.user.id, albumId)
+            verify(albumService).delete(albumId, source)
+        }
+    }
+
+    @Nested
     inner class get {
         private val album = Album(
             id = UUID.randomUUID(),

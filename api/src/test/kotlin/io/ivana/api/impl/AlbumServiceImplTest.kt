@@ -62,6 +62,35 @@ internal class AlbumServiceImplTest {
     }
 
     @Nested
+    inner class delete {
+        private val event = AlbumEvent.Deletion(
+            date = OffsetDateTime.now(),
+            subjectId = UUID.randomUUID(),
+            number = 1,
+            source = EventSource.User(UUID.randomUUID(), InetAddress.getByName("127.0.0.1"))
+        )
+
+        @Test
+        fun `should throw exception if album does not exist`() {
+            every { albumRepo.existsById(event.subjectId) } returns false
+            val exception = assertThrows<EntityNotFoundException> { service.delete(event.subjectId, event.source) }
+            exception shouldHaveMessage "Album ${event.subjectId} does not exist"
+            verify { albumRepo.existsById(event.subjectId) }
+            confirmVerified(albumRepo)
+        }
+
+        @Test
+        fun `should delete album`() {
+            every { albumRepo.existsById(event.subjectId) } returns true
+            every { albumEventRepo.saveDeletionEvent(event.subjectId, event.source) } returns event
+            service.delete(event.subjectId, event.source)
+            verify { albumRepo.existsById(event.subjectId) }
+            verify { albumEventRepo.saveDeletionEvent(event.subjectId, event.source) }
+            confirmVerified(albumRepo)
+        }
+    }
+
+    @Nested
     inner class getAll {
         private val pageNo = 1
         private val pageSize = 3

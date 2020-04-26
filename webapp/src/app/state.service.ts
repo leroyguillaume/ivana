@@ -15,9 +15,9 @@ export class StateService {
 
   uploadingPhotos: BehaviorSubject<boolean> = new BehaviorSubject(false)
   photosUploaded: EventEmitter<void> = new EventEmitter()
-  selectedAlbums: BehaviorSubject<Set<string>> = new BehaviorSubject<Set<string>>(new Set())
+  selectedAlbums: BehaviorSubject<Set<string>> = new BehaviorSubject(new Set())
 
-  currentAlbum: Album
+  currentAlbum: BehaviorSubject<Album> = new BehaviorSubject(null)
   currentPhotosPage: Page<Photo>
 
   startPhotoNavIndex: number = -1

@@ -19,6 +19,7 @@
   <div *ngIf="!loading && page.totalItems > 0">
     <app-album-grid [page]="page"
                     (pageChange)="fetchPage($event)"
+                    (selectedAlbumsDelete)="deleteSelectedAlbums($event)"
                     (albumCreate)="openAlbumModal()">
     </app-album-grid>
   </div>
