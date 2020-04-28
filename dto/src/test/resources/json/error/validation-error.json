@@ -2,12 +2,10 @@
   "code": "validation_error",
   "errors": [
     {
-      "code": "invalid_parameter",
       "parameter": "foo",
       "reason": "must not be null"
     },
     {
-      "code": "invalid_parameter",
       "parameter": "bar",
       "reason": "must be greater than 1"
     }

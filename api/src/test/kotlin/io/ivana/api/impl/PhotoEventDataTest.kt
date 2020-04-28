@@ -22,37 +22,17 @@ internal class PhotoEventDataTest {
     @Nested
     inner class Transform {
         @Nested
-        inner class Rotation {
-            @Nested
-            inner class clockwise : JsonTest(
-                filename = "event-data/photo/transform/rotation/clockwise.json",
-                expectedValue = PhotoEventData.Transform(
-                    source = EventSourceData.User(
-                        id = UUID.fromString("644465bf-a2d5-43aa-b79d-84b9aa543bad"),
-                        ip = InetAddress.getByName("127.0.0.1")
-                    ),
-                    content = PhotoEventData.Transform.Content.Rotation(
-                        PhotoEventData.Transform.Content.Rotation.Direction.Clockwise
-                    )
+        inner class Rotation : JsonTest(
+            filename = "event-data/photo/transform/rotation.json",
+            expectedValue = PhotoEventData.Transform(
+                source = EventSourceData.User(
+                    id = UUID.fromString("644465bf-a2d5-43aa-b79d-84b9aa543bad"),
+                    ip = InetAddress.getByName("127.0.0.1")
                 ),
-                deserializeAs = typeOf<PhotoEventData.Transform>()
-            )
-
-            @Nested
-            inner class counterclockwise : JsonTest(
-                filename = "event-data/photo/transform/rotation/counterclockwise.json",
-                expectedValue = PhotoEventData.Transform(
-                    source = EventSourceData.User(
-                        id = UUID.fromString("644465bf-a2d5-43aa-b79d-84b9aa543bad"),
-                        ip = InetAddress.getByName("127.0.0.1")
-                    ),
-                    content = PhotoEventData.Transform.Content.Rotation(
-                        PhotoEventData.Transform.Content.Rotation.Direction.Counterclockwise
-                    )
-                ),
-                deserializeAs = typeOf<PhotoEventData.Transform>()
-            )
-        }
+                content = PhotoEventData.Transform.Content.Rotation(90.0)
+            ),
+            deserializeAs = typeOf<PhotoEventData.Transform>()
+        )
     }
 
     @Nested

@@ -156,8 +156,13 @@ sealed class ErrorDto {
     }
 
     data class ValidationError(
-        val errors: List<InvalidParameter>
+        val errors: List<Error>
     ) : ErrorDto() {
+        data class Error(
+            val parameter: String,
+            val reason: String
+        )
+
         override val code = Code.ValidationError
     }
 

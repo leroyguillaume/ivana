@@ -6,6 +6,6 @@
   },
   "content": {
     "type": "rotation",
-    "direction": "clockwise"
+    "degrees": 90
   }
 }

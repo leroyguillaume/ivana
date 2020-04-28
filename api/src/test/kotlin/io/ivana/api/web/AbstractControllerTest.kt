@@ -184,7 +184,7 @@ abstract class AbstractControllerTest {
         respCookies.forEach { result.andExpect(cookie().`is`(it)) }
     }
 
-    protected fun minErrorDto(parameter: String, min: Int) = ErrorDto.InvalidParameter(
+    protected fun minErrorDto(parameter: String, min: Int) = ErrorDto.ValidationError.Error(
         parameter = parameter,
         reason = "must be greater than or equal to $min"
     )
@@ -211,7 +211,7 @@ abstract class AbstractControllerTest {
     }
 
     protected fun sizeErrorDto(parameter: String, min: Int = 0, max: Int = Int.MAX_VALUE) =
-        ErrorDto.InvalidParameter(
+        ErrorDto.ValidationError.Error(
             parameter = parameter,
             reason = "size must be between $min and $max"
         )

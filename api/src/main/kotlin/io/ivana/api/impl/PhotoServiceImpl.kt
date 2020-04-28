@@ -112,18 +112,18 @@ class PhotoServiceImpl(
         version = version
     )
 
-    private fun performRotation(photo: Photo, direction: Transform.Rotation.Direction) {
+    private fun performRotation(photo: Photo, degrees: Double) {
         performRotation(
             srcFile = rawFile(photo.id, photo.uploadDate, photo.type, photo.version),
             targetFile = rawFile(photo.id, photo.uploadDate, photo.type, photo.version + 1),
             type = photo.type,
-            direction = direction
+            degrees = degrees
         )
         performRotation(
             srcFile = compressedFile(photo.id, photo.uploadDate, photo.type, photo.version),
             targetFile = compressedFile(photo.id, photo.uploadDate, photo.type, photo.version + 1),
             type = photo.type,
-            direction = direction
+            degrees = degrees
         )
     }
 
@@ -131,10 +131,10 @@ class PhotoServiceImpl(
         srcFile: File,
         targetFile: File,
         type: Photo.Type,
-        direction: Transform.Rotation.Direction
+        degrees: Double
     ) = try {
         val image = srcFile.inputStream().use { ImageIO.read(it) }
-        val angle = Math.toRadians(direction.angle)
+        val angle = Math.toRadians(degrees)
         val sin = abs(sin(angle))
         val cos = abs(cos(angle))
         val width = floor(image.width * cos + image.height * sin).toInt()
@@ -222,6 +222,6 @@ class PhotoServiceImpl(
     }
 
     private fun Transform.perform(photo: Photo) = when (this) {
-        is Transform.Rotation -> performRotation(photo, direction)
+        is Transform.Rotation -> performRotation(photo, degrees)
     }
 }

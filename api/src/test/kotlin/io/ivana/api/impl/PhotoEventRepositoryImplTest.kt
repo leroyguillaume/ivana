@@ -84,7 +84,7 @@ internal class PhotoEventRepositoryImplTest {
         fun `should return transform event with subject id and number`() {
             val expectedEvent = repo.saveTransformEvent(
                 photoId = UUID.randomUUID(),
-                transform = Transform.Rotation(Transform.Rotation.Direction.Clockwise),
+                transform = Transform.Rotation(90.0),
                 source = EventSource.User(createdUser.id, InetAddress.getByName("127.0.0.1"))
             )
             val event = repo.fetch(expectedEvent.subjectId, expectedEvent.number)
@@ -156,7 +156,7 @@ internal class PhotoEventRepositoryImplTest {
                 subjectId = expectedPhoto.id,
                 number = 2,
                 source = source,
-                transform = Transform.Rotation(Transform.Rotation.Direction.Clockwise)
+                transform = Transform.Rotation(90.0)
             )
         }
 

@@ -30,18 +30,8 @@ internal sealed class PhotoEventData : EventData {
             }
 
             data class Rotation(
-                val direction: Direction
+                val degrees: Double
             ) : Content() {
-                enum class Direction(
-                    val direction: io.ivana.core.Transform.Rotation.Direction
-                ) {
-                    @JsonProperty("clockwise")
-                    Clockwise(io.ivana.core.Transform.Rotation.Direction.Clockwise),
-
-                    @JsonProperty("counterclockwise")
-                    Counterclockwise(io.ivana.core.Transform.Rotation.Direction.Counterclockwise)
-                }
-
                 override val type = Type.Rotation
             }
 

@@ -87,7 +87,7 @@ class ErrorController(
         Logger.debug(exception.message, exception)
         return ErrorDto.ValidationError(
             errors = exception.bindingResult.fieldErrors
-                .map { ErrorDto.InvalidParameter(it.field, it.defaultMessage!!) }
+                .map { ErrorDto.ValidationError.Error(it.field, it.defaultMessage!!) }
         )
     }
 
@@ -146,7 +146,7 @@ class ErrorController(
         return ErrorDto.DuplicateResource(URI("$UserApiEndpoint/${exception.user.id}"))
     }
 
-    private fun ConstraintViolation<*>.toDto() = ErrorDto.InvalidParameter(
+    private fun ConstraintViolation<*>.toDto() = ErrorDto.ValidationError.Error(
         parameter = propertyPath
             .drop(1)
             .map { it.name }

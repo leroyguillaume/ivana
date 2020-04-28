@@ -337,10 +337,10 @@ internal class PhotoServiceImplTest {
                 subjectId = jpgPhoto.id,
                 number = 1,
                 source = EventSource.User(UUID.randomUUID(), InetAddress.getByName("127.0.0.1")),
-                transform = Transform.Rotation(Transform.Rotation.Direction.Clockwise)
+                transform = Transform.Rotation(90.0)
             )
             private val counterclockwiseRotationEvent = clockwiseRotationEvent.copy(
-                transform = Transform.Rotation(Transform.Rotation.Direction.Counterclockwise)
+                transform = Transform.Rotation(-90.0)
             )
             private val jpgClockwiseRotatedFile = File(javaClass.getResource("/data/photo-clockwise.jpg").file)
             private val jpgCounterclockwiseRotatedFile =

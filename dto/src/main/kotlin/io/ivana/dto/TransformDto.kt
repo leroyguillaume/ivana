@@ -4,6 +4,9 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 
+const val RotationMinDegrees = -180L
+const val RotationMaxDegrees = 180L
+
 private const val RotationTypeValue = "rotation"
 
 @JsonTypeInfo(
@@ -21,16 +24,8 @@ sealed class TransformDto {
     }
 
     data class Rotation(
-        val direction: Direction
+        val degrees: Double
     ) : TransformDto() {
-        enum class Direction {
-            @JsonProperty("clockwise")
-            Clockwise,
-
-            @JsonProperty("counterclockwise")
-            Counterclockwise
-        }
-
         override val type = Type.Rotation
     }
 

@@ -94,10 +94,10 @@ class PhotoEventRepositoryImpl(
         }
 
     private fun PhotoEventData.Transform.toTransform() = when (content) {
-        is PhotoEventData.Transform.Content.Rotation -> Transform.Rotation(content.direction.direction)
+        is PhotoEventData.Transform.Content.Rotation -> Transform.Rotation(content.degrees)
     }
 
     private fun Transform.toEventDataContent() = when (this) {
-        is Transform.Rotation -> PhotoEventData.Transform.Content.Rotation(direction.toDirectionData())
+        is Transform.Rotation -> PhotoEventData.Transform.Content.Rotation(degrees)
     }
 }
