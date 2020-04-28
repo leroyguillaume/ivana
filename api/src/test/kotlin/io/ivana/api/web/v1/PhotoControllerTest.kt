@@ -441,7 +441,7 @@ internal class PhotoControllerTest : AbstractControllerTest() {
 
         @Test
         fun `should return 403 if user does not have permission`() = authenticated {
-            val transformDto = TransformDto.Rotation(TransformDto.Rotation.Direction.Clockwise)
+            val transformDto = TransformDto.Rotation(90.0)
             whenever(userPhotoAuthzRepo.fetch(principal.user.id, id))
                 .thenReturn(EnumSet.complementOf(EnumSet.of(Permission.Update)))
             callAndExpectDto(
@@ -457,8 +457,8 @@ internal class PhotoControllerTest : AbstractControllerTest() {
 
         @Nested
         inner class rotation {
-            private val transformDto = TransformDto.Rotation(TransformDto.Rotation.Direction.Clockwise)
-            private val transform = Transform.Rotation(Transform.Rotation.Direction.Clockwise)
+            private val transformDto = TransformDto.Rotation(90.0)
+            private val transform = Transform.Rotation(transformDto.degrees)
 
             @Test
             fun `should return 204`() = authenticated {

@@ -151,13 +151,6 @@ class PhotoController(
     }
 
     private fun TransformDto.toTransform() = when (this) {
-        is TransformDto.Rotation -> toTransform()
+        is TransformDto.Rotation -> Transform.Rotation(degrees)
     }
-
-    private fun TransformDto.Rotation.Direction.toDirection() = when (this) {
-        TransformDto.Rotation.Direction.Clockwise -> Transform.Rotation.Direction.Clockwise
-        TransformDto.Rotation.Direction.Counterclockwise -> Transform.Rotation.Direction.Counterclockwise
-    }
-
-    private fun TransformDto.Rotation.toTransform() = Transform.Rotation(direction.toDirection())
 }

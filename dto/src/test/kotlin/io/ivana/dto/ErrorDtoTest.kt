@@ -101,8 +101,8 @@ internal class ErrorDtoTest {
         filename = "error/validation-error.json",
         expectedValue = ErrorDto.ValidationError(
             listOf(
-                ErrorDto.InvalidParameter("foo", "must not be null"),
-                ErrorDto.InvalidParameter("bar", "must be greater than 1")
+                ErrorDto.ValidationError.Error("foo", "must not be null"),
+                ErrorDto.ValidationError.Error("bar", "must be greater than 1")
             )
         ),
         deserializeAs = typeOf<ErrorDto>()

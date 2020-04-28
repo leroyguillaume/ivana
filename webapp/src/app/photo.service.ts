@@ -6,7 +6,6 @@ import {Observable} from 'rxjs'
 import {environment} from '../environments/environment'
 import {NavigablePhoto} from './navigable-photo'
 import {PhotoUploadResults} from './photo-upload-results'
-import {RotationDirection} from './rotation-direction'
 
 @Injectable({
   providedIn: 'root'
@@ -48,12 +47,12 @@ export class PhotoService {
     )
   }
 
-  rotate(id: string, dir: RotationDirection): Observable<void> {
-    const body = {
+  rotate(id: string, degrees: number): Observable<void> {
+    const dto = {
       type: 'rotation',
-      direction: dir
+      degrees
     }
-    return this.http.put<void>(`${this.baseUrl}/${id}/transform`, body, {withCredentials: true})
+    return this.http.put<void>(`${this.baseUrl}/${id}/transform`, dto, {withCredentials: true})
   }
 
   upload(files: FileList): Observable<PhotoUploadResults> {

@@ -1,4 +1,4 @@
-import {Component, HostListener, OnInit} from '@angular/core'
+import {Component, HostListener, OnDestroy, OnInit} from '@angular/core'
 import {NavigablePhoto} from '../navigable-photo'
 import {faArrowLeft, faPencilAlt, faPlus, faRedo, faSpinner, faTimes, faTrash, faUndo} from '@fortawesome/free-solid-svg-icons'
 import {PhotoService} from '../photo.service'
@@ -9,7 +9,6 @@ import {StateService} from '../state.service'
 import {IconDefinition} from '@fortawesome/fontawesome-common-types'
 import {PhotoPageSize} from '../home/home.component'
 import {handleError} from '../util'
-import {RotationDirection} from '../rotation-direction'
 import {AlbumSelectionModalComponent} from '../album-selection-modal/album-selection-modal.component'
 import {Album} from '../album'
 import {NgbModal} from '@ng-bootstrap/ng-bootstrap'
@@ -20,7 +19,7 @@ import {AlbumService} from '../album.service'
   templateUrl: './photo.component.html',
   styleUrls: ['./photo.component.scss']
 })
-export class PhotoComponent implements OnInit {
+export class PhotoComponent implements OnDestroy, OnInit {
   spinnerIcon: IconDefinition = faSpinner
   arrowLeftIcon: IconDefinition = faArrowLeft
   settingsIcon: IconDefinition = faPencilAlt
@@ -40,6 +39,8 @@ export class PhotoComponent implements OnInit {
   currentAlbum: Album
 
   rotationDegrees: number = 0
+  rotationDegreesOffset: number = 0
+  rotationTimeoutId: number
 
   constructor(
     private photoService: PhotoService,
@@ -115,6 +116,13 @@ export class PhotoComponent implements OnInit {
     }
   }
 
+  ngOnDestroy(): void {
+    if (this.rotationTimeoutId) {
+      clearTimeout(this.rotationTimeoutId)
+      this.rotate()
+    }
+  }
+
   ngOnInit(): void {
     this.stateService.currentPhotoNavOffset = 0
     this.route.paramMap.subscribe(params => this.fetchPhoto(params.get('id')))
@@ -139,22 +147,33 @@ export class PhotoComponent implements OnInit {
     }
   }
 
-  rotate(direction: RotationDirection): void {
-    this.photoService.rotate(this.photo.id, direction).subscribe(
-      () => {
-      },
+  rotate(): void {
+    this.photoService.rotate(this.photo.id, this.rotationDegreesOffset).subscribe(
+      () => this.rotationDegreesOffset = 0,
       error => console.error(error)
     )
   }
 
+  rotateTimeout(): void {
+    if (this.rotationTimeoutId) {
+      clearTimeout(this.rotationTimeoutId)
+    }
+    this.rotationTimeoutId = setTimeout(() => {
+      this.rotate()
+      this.rotationTimeoutId = null
+    }, 1000)
+  }
+
   rotateClockwise(): void {
-    this.rotate(RotationDirection.Clockwise)
     this.rotationDegrees += 90.
+    this.rotationDegreesOffset += 90.
+    this.rotateTimeout()
   }
 
   rotateCounterclockwise(): void {
-    this.rotate(RotationDirection.Counterclockwise)
     this.rotationDegrees -= 90.
+    this.rotationDegreesOffset -= 90.
+    this.rotateTimeout()
   }
 
 }

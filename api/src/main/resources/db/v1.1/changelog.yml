@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - logicalFilePath: v1.1/changelog.yml
+  - changeSet:
+      id: v1.1
+      author: Guillaume 'Francis' Leroy
+      changes:
+        - sqlFile:
+            path: 001-migrate-transform-event.sql
+            splitStatements: false
+            relativeToChangelogFile: true
