@@ -48,7 +48,7 @@
   </div>
 
   <ng-template #photoBlock>
-    <div class="text-center">
+    <div class="text-center" (swipeleft)="next()" (swiperight)="previous()">
       <img src="{{baseUrl}}{{photo.rawUri}}" style="transform: rotate({{rotationDegrees}}deg);">
     </div>
   </ng-template>

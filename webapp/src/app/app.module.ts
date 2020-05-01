@@ -1,4 +1,4 @@
-import {BrowserModule} from '@angular/platform-browser'
+import {BrowserModule, HammerModule} from '@angular/platform-browser'
 import {NgModule} from '@angular/core'
 
 import {AppRoutingModule} from './app-routing.module'
@@ -48,7 +48,8 @@ import {ForbiddenComponent} from './forbidden/forbidden.component'
     ReactiveFormsModule,
     HttpClientModule,
     FontAwesomeModule,
-    NgbModule
+    NgbModule,
+    HammerModule
   ],
   providers: [],
   bootstrap: [AppComponent]

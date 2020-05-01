@@ -175,4 +175,8 @@ export class PhotoComponent implements OnDestroy, OnInit {
     this.rotateTimeout()
   }
 
+  swipe(event: any): void {
+    console.log(event)
+  }
+
 }
