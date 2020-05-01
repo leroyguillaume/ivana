@@ -5,6 +5,7 @@ package io.ivana.api.impl
 import io.ivana.api.config.IvanaProperties
 import io.ivana.core.*
 import io.kotlintest.matchers.file.shouldExist
+import io.kotlintest.matchers.file.shouldNotExist
 import io.kotlintest.matchers.throwable.shouldHaveMessage
 import io.kotlintest.shouldBe
 import io.mockk.confirmVerified
@@ -46,28 +47,48 @@ internal class PhotoServiceImplTest {
 
     @Nested
     inner class delete {
+        private val photo = Photo(
+            id = UUID.randomUUID(),
+            ownerId = UUID.randomUUID(),
+            uploadDate = OffsetDateTime.now(),
+            type = Photo.Type.Jpg,
+            hash = "hash",
+            no = 1,
+            version = 2
+        )
         private val event = PhotoEvent.Deletion(
             date = OffsetDateTime.now(),
-            subjectId = UUID.randomUUID(),
+            subjectId = photo.id,
             number = 1,
             source = EventSource.User(UUID.randomUUID(), InetAddress.getByName("127.0.0.1"))
         )
+        private val file = File(javaClass.getResource("/data/photo.jpg").file)
+
+        @BeforeEach
+        fun beforeEach() {
+            copyPhoto(photo, file, 2)
+            copyPhoto(photo, file, 3)
+        }
 
         @Test
         fun `should throw exception if photo does not exist`() {
-            every { photoRepo.existsById(event.subjectId) } returns false
+            every { photoRepo.fetchById(event.subjectId) } returns null
             val exception = assertThrows<EntityNotFoundException> { service.delete(event.subjectId, event.source) }
             exception shouldHaveMessage "Photo ${event.subjectId} does not exist"
-            verify { photoRepo.existsById(event.subjectId) }
+            verify { photoRepo.fetchById(event.subjectId) }
             confirmVerified(photoRepo)
         }
 
         @Test
         fun `should delete photo`() {
-            every { photoRepo.existsById(event.subjectId) } returns true
+            every { photoRepo.fetchById(event.subjectId) } returns photo
             every { photoEventRepo.saveDeletionEvent(event.subjectId, event.source) } returns event
             service.delete(event.subjectId, event.source)
-            verify { photoRepo.existsById(event.subjectId) }
+            rawFile(photo.id, photo.uploadDate, photo.type.extension(), 2).shouldNotExist()
+            rawFile(photo.id, photo.uploadDate, photo.type.extension(), 3).shouldNotExist()
+            compressedFile(photo.id, photo.uploadDate, photo.type.extension(), 2).shouldNotExist()
+            compressedFile(photo.id, photo.uploadDate, photo.type.extension(), 3).shouldNotExist()
+            verify { photoRepo.fetchById(event.subjectId) }
             verify { photoEventRepo.saveDeletionEvent(event.subjectId, event.source) }
             confirmVerified(photoRepo)
         }
@@ -476,16 +497,6 @@ internal class PhotoServiceImplTest {
                 confirmVerified(photoRepo, photoEventRepo)
             }
         }
-
-        private fun copyPhoto(photo: Photo, file: File) {
-            copyFile(file, rawFile(photo.id, photo.uploadDate, photo.type.extension()))
-            copyFile(file, compressedFile(photo.id, photo.uploadDate, photo.type.extension()))
-        }
-
-        private fun copyFile(srcFile: File, destFile: File) {
-            destFile.parentFile.mkdirs()
-            srcFile.copyTo(destFile)
-        }
     }
 
     @Nested
@@ -580,6 +591,16 @@ internal class PhotoServiceImplTest {
         extension = extension,
         version = version
     )
+
+    private fun copyFile(srcFile: File, destFile: File) {
+        destFile.parentFile.mkdirs()
+        srcFile.copyTo(destFile)
+    }
+
+    private fun copyPhoto(photo: Photo, file: File, version: Int = 1) {
+        copyFile(file, rawFile(photo.id, photo.uploadDate, photo.type.extension(), version))
+        copyFile(file, compressedFile(photo.id, photo.uploadDate, photo.type.extension(), version))
+    }
 
     private fun photoFile(rootDir: File, id: UUID, uploadDate: OffsetDateTime, extension: String, version: Int) =
         uploadDate.let { date ->
