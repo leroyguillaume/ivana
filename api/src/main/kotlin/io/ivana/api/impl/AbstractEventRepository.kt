@@ -14,7 +14,7 @@ abstract class AbstractEventRepository<E : Event, T : EventType> constructor(
     protected val jdbc: NamedParameterJdbcTemplate,
     protected val mapper: ObjectMapper
 ) : EventRepository<E> {
-    protected companion object {
+    internal companion object {
         const val DateColumnName = "date"
         const val SubjectIdColumnName = "subject_id"
         const val NumberColumnName = "number"
@@ -25,19 +25,19 @@ abstract class AbstractEventRepository<E : Event, T : EventType> constructor(
     protected abstract val tableName: String
     protected abstract val eventTypes: Array<T>
 
-    override fun fetch(subjectId: UUID, number: Long): E? = jdbc.query(
+    override fun fetch(number: Long): E? = jdbc.query(
         """
         SELECT *
         FROM $tableName
-        WHERE $SubjectIdColumnName = :$SubjectIdColumnName AND $NumberColumnName = :$NumberColumnName
+        WHERE $NumberColumnName = :number
         """,
-        MapSqlParameterSource(mapOf(SubjectIdColumnName to subjectId, NumberColumnName to number)),
+        MapSqlParameterSource(mapOf("number" to number)),
         ResultSetExtractor { rs ->
             if (rs.next()) {
                 val rawEvent = RawEvent(
                     type = eventTypeFromSqlType(rs.getString(TypeColumnName)),
                     date = rs.getObject(DateColumnName, OffsetDateTime::class.java),
-                    subjectId = subjectId,
+                    subjectId = rs.getObject(SubjectIdColumnName, UUID::class.java),
                     number = rs.getLong(NumberColumnName),
                     jsonData = rs.getString(DataColumnName)
                 )
@@ -55,21 +55,20 @@ abstract class AbstractEventRepository<E : Event, T : EventType> constructor(
             { connection ->
                 connection.prepareStatement(
                     """
-                    INSERT INTO $tableName ($SubjectIdColumnName, $NumberColumnName, $TypeColumnName, $DataColumnName)
-                    VALUES (?, next_${tableName}_number(?), ?::${type.sqlType}, ?::jsonb)
+                    INSERT INTO $tableName ($SubjectIdColumnName, $TypeColumnName, $DataColumnName)
+                    VALUES (?, ?::${type.sqlType}, ?::jsonb)
                     """,
                     arrayOf(NumberColumnName)
                 ).apply {
                     setObject(1, subjectId)
-                    setObject(2, subjectId)
-                    setString(3, type.sqlValue)
-                    setString(4, mapper.writeValueAsString(data))
+                    setString(2, type.sqlValue)
+                    setString(3, mapper.writeValueAsString(data))
                 }
             },
             keyHolder
         )
         val keys = keyHolder.keys!!
-        return fetch(subjectId, keys[NumberColumnName] as Long) as EE
+        return fetch(keys[NumberColumnName] as Long) as EE
     }
 
     protected fun eventTypeFromSqlType(sqlEventType: String) = eventTypes

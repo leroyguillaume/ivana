@@ -9,17 +9,24 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 
 @Suppress("SqlWithoutWhere")
 internal fun cleanDb(jdbc: NamedParameterJdbcTemplate) {
-    jdbc.apply {
-        update("DELETE FROM ${UserEventRepositoryImpl.TableName}", MapSqlParameterSource())
-        update("DELETE FROM ${UserRepositoryImpl.TableName}", MapSqlParameterSource())
-        update(
-            "ALTER SEQUENCE ${PhotoRepositoryImpl.TableName}_${PhotoRepositoryImpl.NoColumnName}_seq RESTART",
-            MapSqlParameterSource()
-        )
-    }
+    jdbc.deleteAllOfTables(
+        UserEventRepositoryImpl.TableName,
+        PhotoEventRepositoryImpl.TableName,
+        AlbumEventRepositoryImpl.TableName,
+        UserRepositoryImpl.TableName
+    )
+    jdbc.resetEventNumberSequence(
+        UserEventRepositoryImpl.TableName,
+        PhotoEventRepositoryImpl.TableName,
+        AlbumEventRepositoryImpl.TableName
+    )
+    jdbc.update(
+        "ALTER SEQUENCE ${PhotoRepositoryImpl.TableName}_${PhotoRepositoryImpl.NoColumnName}_seq RESTART",
+        MapSqlParameterSource()
+    )
 }
 
-fun PhotoEvent.Upload.toPhoto(no: Int, version: Int = 1) = Photo(
+internal fun PhotoEvent.Upload.toPhoto(no: Int, version: Int = 1) = Photo(
     id = subjectId,
     ownerId = source.id,
     uploadDate = date,
@@ -29,10 +36,25 @@ fun PhotoEvent.Upload.toPhoto(no: Int, version: Int = 1) = Photo(
     version = version
 )
 
-fun UserEvent.Creation.toUser() = User(
+internal fun UserEvent.Creation.toUser() = User(
     id = subjectId,
     name = content.name,
     hashedPwd = content.hashedPwd,
     role = content.role,
     creationDate = date
 )
+
+@Suppress("SqlWithoutWhere")
+private fun NamedParameterJdbcTemplate.deleteAllOfTables(vararg tableNames: String) {
+    tableNames.forEach { update("DELETE FROM $it", MapSqlParameterSource()) }
+}
+
+@Suppress("SqlResolve")
+private fun NamedParameterJdbcTemplate.resetEventNumberSequence(vararg tableNames: String) {
+    tableNames.forEach { tableName ->
+        update(
+            "ALTER SEQUENCE ${tableName}_${AbstractEventRepository.NumberColumnName}_seq RESTART",
+            MapSqlParameterSource()
+        )
+    }
+}

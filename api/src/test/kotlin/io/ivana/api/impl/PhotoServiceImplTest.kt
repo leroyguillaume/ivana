@@ -310,7 +310,7 @@ internal class PhotoServiceImplTest {
             type = Photo.Type.Jpg,
             hash = "hash",
             no = 1,
-            version = 1
+            version = 2
         )
         private val pngPhoto = Photo(
             id = UUID.randomUUID(),
@@ -319,7 +319,7 @@ internal class PhotoServiceImplTest {
             type = Photo.Type.Png,
             hash = "hash",
             no = 1,
-            version = 1
+            version = 2
         )
         private val jpgFile = File(javaClass.getResource("/data/photo.jpg").file)
         private val pngFile = File(javaClass.getResource("/data/photo.png").file)
@@ -351,17 +351,18 @@ internal class PhotoServiceImplTest {
 
             @Test
             fun `should throw exception if photo does not exist`() {
-                every { photoRepo.fetchById(jpgPhoto.id) } returns null
+                every { photoRepo.existsById(jpgPhoto.id) } returns false
                 val exception = assertThrows<EntityNotFoundException> {
                     service.transform(jpgPhoto.id, clockwiseRotationEvent.transform, clockwiseRotationEvent.source)
                 }
                 exception shouldHaveMessage "Photo ${jpgPhoto.id} does not exist"
-                verify { photoRepo.fetchById(jpgPhoto.id) }
+                verify { photoRepo.existsById(jpgPhoto.id) }
                 confirmVerified(photoRepo)
             }
 
             @Test
             fun `should rotate photo clockwise (jpg)`() {
+                every { photoRepo.existsById(jpgPhoto.id) } returns true
                 every { photoRepo.fetchById(jpgPhoto.id) } returns jpgPhoto
                 every {
                     photoEventRepo.saveTransformEvent(
@@ -374,6 +375,7 @@ internal class PhotoServiceImplTest {
                 rawFile(jpgPhoto.id, jpgPhoto.uploadDate, jpgPhoto.type.extension(), 2).readBytes().shouldBe(
                     jpgClockwiseRotatedFile.readBytes()
                 )
+                verify { photoRepo.existsById(jpgPhoto.id) }
                 verify { photoRepo.fetchById(jpgPhoto.id) }
                 verify {
                     photoEventRepo.saveTransformEvent(
@@ -382,11 +384,12 @@ internal class PhotoServiceImplTest {
                         source = clockwiseRotationEvent.source
                     )
                 }
-                confirmVerified(photoRepo)
+                confirmVerified(photoRepo, photoEventRepo)
             }
 
             @Test
             fun `should rotate photo counterclockwise (jpg)`() {
+                every { photoRepo.existsById(jpgPhoto.id) } returns true
                 every { photoRepo.fetchById(jpgPhoto.id) } returns jpgPhoto
                 every {
                     photoEventRepo.saveTransformEvent(
@@ -403,6 +406,7 @@ internal class PhotoServiceImplTest {
                 rawFile(jpgPhoto.id, jpgPhoto.uploadDate, jpgPhoto.type.extension(), 2).readBytes().shouldBe(
                     jpgCounterclockwiseRotatedFile.readBytes()
                 )
+                verify { photoRepo.existsById(jpgPhoto.id) }
                 verify { photoRepo.fetchById(jpgPhoto.id) }
                 verify {
                     photoEventRepo.saveTransformEvent(
@@ -411,11 +415,12 @@ internal class PhotoServiceImplTest {
                         source = counterclockwiseRotationEvent.source
                     )
                 }
-                confirmVerified(photoRepo)
+                confirmVerified(photoRepo, photoEventRepo)
             }
 
             @Test
             fun `should rotate photo clockwise (png)`() {
+                every { photoRepo.existsById(pngPhoto.id) } returns true
                 every { photoRepo.fetchById(pngPhoto.id) } returns pngPhoto
                 every {
                     photoEventRepo.saveTransformEvent(
@@ -428,6 +433,7 @@ internal class PhotoServiceImplTest {
                 rawFile(pngPhoto.id, pngPhoto.uploadDate, pngPhoto.type.extension(), 2).readBytes().shouldBe(
                     pngClockwiseRotatedFile.readBytes()
                 )
+                verify { photoRepo.existsById(pngPhoto.id) }
                 verify { photoRepo.fetchById(pngPhoto.id) }
                 verify {
                     photoEventRepo.saveTransformEvent(
@@ -436,11 +442,12 @@ internal class PhotoServiceImplTest {
                         source = clockwiseRotationEvent.source
                     )
                 }
-                confirmVerified(photoRepo)
+                confirmVerified(photoRepo, photoEventRepo)
             }
 
             @Test
             fun `should rotate photo counterclockwise (png)`() {
+                every { photoRepo.existsById(pngPhoto.id) } returns true
                 every { photoRepo.fetchById(pngPhoto.id) } returns pngPhoto
                 every {
                     photoEventRepo.saveTransformEvent(
@@ -457,6 +464,7 @@ internal class PhotoServiceImplTest {
                 rawFile(pngPhoto.id, pngPhoto.uploadDate, pngPhoto.type.extension(), 2).readBytes().shouldBe(
                     pngCounterclockwiseRotatedFile.readBytes()
                 )
+                verify { photoRepo.existsById(pngPhoto.id) }
                 verify { photoRepo.fetchById(pngPhoto.id) }
                 verify {
                     photoEventRepo.saveTransformEvent(
@@ -465,7 +473,7 @@ internal class PhotoServiceImplTest {
                         source = counterclockwiseRotationEvent.source
                     )
                 }
-                confirmVerified(photoRepo)
+                confirmVerified(photoRepo, photoEventRepo)
             }
         }
 
@@ -487,6 +495,7 @@ internal class PhotoServiceImplTest {
         private val jpgEvent = PhotoEvent.Upload(
             date = OffsetDateTime.now(),
             subjectId = UUID.randomUUID(),
+            number = 1,
             source = EventSource.User(UUID.randomUUID(), InetAddress.getByName("127.0.0.1")),
             content = PhotoEvent.Upload.Content(
                 type = Photo.Type.Jpg,
@@ -496,6 +505,7 @@ internal class PhotoServiceImplTest {
         private val pngEvent = PhotoEvent.Upload(
             date = OffsetDateTime.now(),
             subjectId = UUID.randomUUID(),
+            number = 1,
             source = EventSource.User(UUID.randomUUID(), InetAddress.getByName("127.0.0.1")),
             content = PhotoEvent.Upload.Content(
                 type = Photo.Type.Png,

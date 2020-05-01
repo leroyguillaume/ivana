@@ -8,3 +8,7 @@ databaseChangeLog:
             path: 001-migrate-transform-event.sql
             splitStatements: false
             relativeToChangelogFile: true
+        - sqlFile:
+            path: 002-event-number-as-serial.sql
+            splitStatements: false
+            relativeToChangelogFile: true

@@ -122,7 +122,7 @@ internal class AlbumEventRepositoryImplTest {
 
         @Test
         fun `should return null if event does not exist`() {
-            val event = repo.fetch(subjectId, number)
+            val event = repo.fetch(number)
             event.shouldBeNull()
         }
 
@@ -132,7 +132,7 @@ internal class AlbumEventRepositoryImplTest {
                 name = "album",
                 source = EventSource.User(createdUser.id, InetAddress.getByName("127.0.0.1"))
             )
-            val event = repo.fetch(expectedEvent.subjectId, expectedEvent.number)
+            val event = repo.fetch(expectedEvent.number)
             event shouldBe expectedEvent
         }
 
@@ -142,7 +142,7 @@ internal class AlbumEventRepositoryImplTest {
                 albumId = UUID.randomUUID(),
                 source = EventSource.User(createdUser.id, InetAddress.getByName("127.0.0.1"))
             )
-            val event = repo.fetch(expectedEvent.subjectId, expectedEvent.number)
+            val event = repo.fetch(expectedEvent.number)
             event shouldBe expectedEvent
         }
 
@@ -157,7 +157,7 @@ internal class AlbumEventRepositoryImplTest {
                     photosToRemove = emptyList()
                 )
             )
-            val event = repo.fetch(expectedEvent.subjectId, expectedEvent.number)
+            val event = repo.fetch(expectedEvent.number)
             event shouldBe expectedEvent
         }
     }
@@ -173,6 +173,7 @@ internal class AlbumEventRepositoryImplTest {
                 AlbumEvent.Creation(
                     date = OffsetDateTime.now(),
                     subjectId = id,
+                    number = 1,
                     source = EventSource.User(createdUser.id, InetAddress.getByName("127.0.0.1")),
                     albumName = "album"
                 )

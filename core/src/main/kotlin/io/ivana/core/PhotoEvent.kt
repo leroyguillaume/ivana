@@ -22,6 +22,7 @@ sealed class PhotoEvent : Event {
     data class Upload(
         override val date: OffsetDateTime,
         override val subjectId: UUID,
+        override val number: Long,
         override val source: EventSource.User,
         val content: Content
     ) : PhotoEvent() {
@@ -29,7 +30,5 @@ sealed class PhotoEvent : Event {
             val type: Photo.Type,
             val hash: String
         )
-
-        override val number = 1L
     }
 }

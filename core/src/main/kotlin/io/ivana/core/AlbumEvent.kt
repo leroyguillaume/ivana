@@ -7,11 +7,10 @@ sealed class AlbumEvent : Event {
     data class Creation(
         override val date: OffsetDateTime,
         override val subjectId: UUID,
+        override val number: Long,
         override val source: EventSource.User,
         val albumName: String
-    ) : AlbumEvent() {
-        override val number = 1L
-    }
+    ) : AlbumEvent()
 
     data class Deletion(
         override val date: OffsetDateTime,

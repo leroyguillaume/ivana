@@ -64,6 +64,7 @@ class AlbumEventRepositoryImpl(
             AlbumEvent.Creation(
                 date = date,
                 subjectId = subjectId,
+                number = number,
                 source = data.source.toSource(),
                 albumName = data.content.name
             )

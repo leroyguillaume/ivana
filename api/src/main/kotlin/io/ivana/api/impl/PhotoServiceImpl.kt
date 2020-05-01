@@ -43,9 +43,7 @@ class PhotoServiceImpl(
 
     @Transactional
     override fun delete(id: UUID, source: EventSource.User) {
-        if (!repo.existsById(id)) {
-            throw EntityNotFoundException("$entityName $id does not exist")
-        }
+        checkPhotoExists(id)
         eventRepo.saveDeletionEvent(id, source)
         Logger.info("User ${source.id} (${source.ip}) deleted photo $id")
     }
@@ -64,8 +62,13 @@ class PhotoServiceImpl(
 
     @Transactional
     override fun transform(id: UUID, transform: Transform, source: EventSource.User) {
-        transform.perform(getById(id))
-        eventRepo.saveTransformEvent(id, transform, source)
+        checkPhotoExists(id)
+        eventRepo.saveTransformEvent(
+            id,
+            transform,
+            source
+        ) // Trick here is to save event before to fetch it to get the correct version number
+        transform.perform(repo.fetchById(id)!!)
         Logger.info("User ${source.id} (${source.ip}) transformed photo $id")
     }
 
@@ -104,6 +107,12 @@ class PhotoServiceImpl(
         }
     }
 
+    private fun checkPhotoExists(id: UUID) {
+        if (!repo.existsById(id)) {
+            throw EntityNotFoundException("$entityName $id does not exist")
+        }
+    }
+
     private fun compressedFile(id: UUID, uploadDate: OffsetDateTime, type: Photo.Type, version: Int = 1) = photoFile(
         rootDir = props.dataDir.resolve(CompressedDirname),
         id = id,
@@ -113,15 +122,16 @@ class PhotoServiceImpl(
     )
 
     private fun performRotation(photo: Photo, degrees: Double) {
+        // Photo has new version here
         performRotation(
-            srcFile = rawFile(photo.id, photo.uploadDate, photo.type, photo.version),
-            targetFile = rawFile(photo.id, photo.uploadDate, photo.type, photo.version + 1),
+            srcFile = rawFile(photo.id, photo.uploadDate, photo.type, photo.version - 1),
+            targetFile = rawFile(photo.id, photo.uploadDate, photo.type, photo.version),
             type = photo.type,
             degrees = degrees
         )
         performRotation(
-            srcFile = compressedFile(photo.id, photo.uploadDate, photo.type, photo.version),
-            targetFile = compressedFile(photo.id, photo.uploadDate, photo.type, photo.version + 1),
+            srcFile = compressedFile(photo.id, photo.uploadDate, photo.type, photo.version - 1),
+            targetFile = compressedFile(photo.id, photo.uploadDate, photo.type, photo.version),
             type = photo.type,
             degrees = degrees
         )

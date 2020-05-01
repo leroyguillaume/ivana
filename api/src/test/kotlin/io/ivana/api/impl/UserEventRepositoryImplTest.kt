@@ -44,7 +44,7 @@ internal class UserEventRepositoryImplTest {
 
         @Test
         fun `should return null if event does not exist`() {
-            val event = repo.fetch(subjectId, number)
+            val event = repo.fetch(number)
             event.shouldBeNull()
         }
 
@@ -58,28 +58,28 @@ internal class UserEventRepositoryImplTest {
                 ),
                 source = EventSource.System
             )
-            val event = repo.fetch(expectedEvent.subjectId, expectedEvent.number)
+            val event = repo.fetch(expectedEvent.number)
             event shouldBe expectedEvent
         }
 
         @Test
         fun `should return deletion event with subject id and number`() {
             val expectedEvent = repo.saveDeletionEvent(UUID.randomUUID(), EventSource.System)
-            val event = repo.fetch(expectedEvent.subjectId, expectedEvent.number)
+            val event = repo.fetch(expectedEvent.number)
             event shouldBe expectedEvent
         }
 
         @Test
         fun `should return login event with subject id and number`() {
             val expectedEvent = repo.saveLoginEvent(EventSource.User(subjectId, InetAddress.getByName("127.0.0.1")))
-            val event = repo.fetch(expectedEvent.subjectId, expectedEvent.number)
+            val event = repo.fetch(expectedEvent.number)
             event shouldBe expectedEvent
         }
 
         @Test
         fun `should return password update event with subject id and number`() {
             val expectedEvent = repo.savePasswordUpdateEvent(UUID.randomUUID(), "newHashedPwd", EventSource.System)
-            val event = repo.fetch(expectedEvent.subjectId, expectedEvent.number)
+            val event = repo.fetch(expectedEvent.number)
             event shouldBe expectedEvent
         }
     }
@@ -90,6 +90,7 @@ internal class UserEventRepositoryImplTest {
             UserEvent.Creation(
                 date = OffsetDateTime.now(),
                 subjectId = id,
+                number = 1,
                 source = EventSource.System,
                 content = UserEvent.Creation.Content(
                     name = "admin",

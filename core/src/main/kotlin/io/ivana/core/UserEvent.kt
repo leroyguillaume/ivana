@@ -7,6 +7,7 @@ sealed class UserEvent : Event {
     data class Creation(
         override val date: OffsetDateTime,
         override val subjectId: UUID,
+        override val number: Long,
         override val source: EventSource,
         val content: Content
     ) : UserEvent() {
@@ -15,8 +16,6 @@ sealed class UserEvent : Event {
             val hashedPwd: String,
             val role: Role
         )
-
-        override val number = 1L
     }
 
     data class Deletion(
