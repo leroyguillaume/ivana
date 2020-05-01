@@ -43,8 +43,12 @@ class PhotoServiceImpl(
 
     @Transactional
     override fun delete(id: UUID, source: EventSource.User) {
-        checkPhotoExists(id)
+        val photo = getById(id)
         eventRepo.saveDeletionEvent(id, source)
+        (1..photo.version + 1).forEach { version ->
+            deletePhotoFile(rawFile(photo.id, photo.uploadDate, photo.type, version))
+            deletePhotoFile(compressedFile(photo.id, photo.uploadDate, photo.type, version))
+        }
         Logger.info("User ${source.id} (${source.ip}) deleted photo $id")
     }
 
@@ -120,6 +124,13 @@ class PhotoServiceImpl(
         type = type,
         version = version
     )
+
+    private fun deletePhotoFile(file: File) {
+        if (!file.delete()) {
+            Logger.warn("Unable to delete file ${file.absolutePath}")
+        }
+        Logger.debug("File ${file.absolutePath} deleted")
+    }
 
     private fun performRotation(photo: Photo, degrees: Double) {
         // Photo has new version here
