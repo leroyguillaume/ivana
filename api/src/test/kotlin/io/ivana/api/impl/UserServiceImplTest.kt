@@ -35,6 +35,7 @@ internal class UserServiceImplTest {
         private val creationEvent = UserEvent.Creation(
             date = OffsetDateTime.now(),
             subjectId = UUID.randomUUID(),
+            number = 1,
             source = EventSource.System,
             content = UserEvent.Creation.Content(
                 name = "admin",

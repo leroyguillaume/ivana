@@ -61,12 +61,11 @@ internal class PhotoEventRepositoryImplTest {
 
     @Nested
     inner class fetch {
-        private val subjectId = UUID.randomUUID()
         private val number = 1L
 
         @Test
         fun `should return null if event does not exist`() {
-            val event = repo.fetch(subjectId, number)
+            val event = repo.fetch(number)
             event.shouldBeNull()
         }
 
@@ -76,7 +75,7 @@ internal class PhotoEventRepositoryImplTest {
                 photoId = UUID.randomUUID(),
                 source = EventSource.User(createdUser.id, InetAddress.getByName("127.0.0.1"))
             )
-            val event = repo.fetch(expectedEvent.subjectId, expectedEvent.number)
+            val event = repo.fetch(expectedEvent.number)
             event shouldBe expectedEvent
         }
 
@@ -87,7 +86,7 @@ internal class PhotoEventRepositoryImplTest {
                 transform = Transform.Rotation(90.0),
                 source = EventSource.User(createdUser.id, InetAddress.getByName("127.0.0.1"))
             )
-            val event = repo.fetch(expectedEvent.subjectId, expectedEvent.number)
+            val event = repo.fetch(expectedEvent.number)
             event shouldBe expectedEvent
         }
 
@@ -100,7 +99,7 @@ internal class PhotoEventRepositoryImplTest {
                 ),
                 source = EventSource.User(createdUser.id, InetAddress.getByName("127.0.0.1"))
             )
-            val event = repo.fetch(expectedEvent.subjectId, expectedEvent.number)
+            val event = repo.fetch(expectedEvent.number)
             event shouldBe expectedEvent
         }
     }
@@ -182,6 +181,7 @@ internal class PhotoEventRepositoryImplTest {
                 PhotoEvent.Upload(
                     date = OffsetDateTime.now(),
                     subjectId = id,
+                    number = 1,
                     source = EventSource.User(createdUser.id, InetAddress.getByName("127.0.0.1")),
                     content = PhotoEvent.Upload.Content(
                         type = Photo.Type.Jpg,

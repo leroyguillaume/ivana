@@ -85,6 +85,7 @@ class PhotoEventRepositoryImpl(
             PhotoEvent.Upload(
                 date = date,
                 subjectId = subjectId,
+                number = number,
                 source = data.source.toSource(),
                 content = PhotoEvent.Upload.Content(
                     type = data.content.type.type,

@@ -68,6 +68,7 @@ class UserEventRepositoryImpl(
             UserEvent.Creation(
                 date = date,
                 subjectId = subjectId,
+                number = number,
                 source = data.source.toSource(),
                 content = UserEvent.Creation.Content(
                     name = data.content.name,

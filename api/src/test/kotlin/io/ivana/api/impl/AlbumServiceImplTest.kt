@@ -37,6 +37,7 @@ internal class AlbumServiceImplTest {
         private val creationEvent = AlbumEvent.Creation(
             date = OffsetDateTime.now(),
             subjectId = UUID.randomUUID(),
+            number = 1,
             source = EventSource.User(UUID.randomUUID(), InetAddress.getByName("127.0.0.1")),
             albumName = "album"
         )
