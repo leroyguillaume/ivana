@@ -3,7 +3,7 @@
     <button class="btn btn-primary mr-2" ngbDropdownToggle [disabled]="selectedPhotos.size === 0">Actions</button>
     <button *ngIf="currentAlbum" class="btn btn-danger mr-2" (click)="emitAlbumDelete()">
       <fa-icon [icon]="trashIcon"></fa-icon>
-      Supprimer
+      Supprimer l'album
     </button>
     <div ngbDropdownMenu>
       <button class="btn" (click)="openAlbumSelectionModal()" ngbDropdownItem>
