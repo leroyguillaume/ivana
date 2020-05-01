@@ -40,7 +40,7 @@ export class AlbumListComponent implements OnInit {
       forkJoin(Array.from(selectedAlbums.values()).map(id => this.albumService.delete(id)))
         .subscribe(
           () => {
-            this.stateService.success.next('Les albums ont été supprimés !')
+            this.stateService.sendSuccessEvent('Les albums ont été supprimés !')
             this.fetchPage(this.page.no)
           },
           error => handleError(error, this.stateService, this.router)

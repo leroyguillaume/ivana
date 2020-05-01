@@ -52,7 +52,7 @@ export class AdminComponent implements OnInit {
         .subscribe(
           () => {
             this.fetchPage(this.page.no)
-            this.stateService.success.next(`L'utilisateur '${user.name}' a été supprimé !`)
+            this.stateService.sendSuccessEvent(`L'utilisateur '${user.name}' a été supprimé !`)
           },
           error => handleError(error, this.stateService, this.router)
         )

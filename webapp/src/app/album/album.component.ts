@@ -38,7 +38,7 @@ export class AlbumComponent implements OnInit {
     if (window.confirm(`Êtes-vous certain(e) de vouloir supprimer cet album ?`)) {
       this.albumService.delete(this.album.id).subscribe(
         () => {
-          this.stateService.success.next('L\'album a été supprimé !')
+          this.stateService.sendSuccessEvent('L\'album a été supprimé !')
           // noinspection JSIgnoredPromiseFromCall
           this.router.navigate(['/album'])
         },
@@ -81,7 +81,7 @@ export class AlbumComponent implements OnInit {
     if (window.confirm(`Êtes-vous certain(e) de vouloir supprimer ces ${selectedPhotos.size} photo(s) de cet album ?`)) {
       this.albumService.update(this.album.id, this.album.name, [], Array.from(selectedPhotos)).subscribe(
         () => {
-          this.stateService.success.next('Les photos ont été supprimées de cet album !')
+          this.stateService.sendSuccessEvent('Les photos ont été supprimées de cet album !')
           this.fetchPage(this.page.no)
         },
         error => handleError(error, this.stateService, this.router)

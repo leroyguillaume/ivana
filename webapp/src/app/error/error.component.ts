@@ -16,16 +16,18 @@ export class ErrorComponent implements OnInit {
   }
 
   closeError(): void {
-    this.stateService.error.next(null)
+    this.stateService.clearError()
   }
 
   closeSuccess(): void {
-    this.stateService.success.next(null)
+    this.stateService.clearSuccess()
   }
 
   ngOnInit(): void {
-    this.stateService.error.subscribe(error => this.error = error)
-    this.stateService.success.subscribe(success => this.success = success)
+    this.stateService.subscribeMessageEvent(
+      success => this.success = success,
+      error => this.error = error
+    )
   }
 
 }

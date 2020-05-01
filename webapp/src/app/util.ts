@@ -22,14 +22,14 @@ export function handleError(error: HttpErrorResponse, stateService: StateService
   const dto: ApiError = error.error
   switch (dto.code) {
     case 'album_already_contains_photos':
-      stateService.error.next('L\'album sélectionné contient déjà une ou plusieurs de ces photos.')
+      stateService.sendErrorEvent('L\'album sélectionné contient déjà une ou plusieurs de ces photos.')
       break
     case 'forbidden':
       // noinspection JSIgnoredPromiseFromCall
       router.navigate(['/forbidden'])
       break
     default:
-      stateService.error.next('Une erreur inattendue s\'est produite. Veuillez réessayer ultérieurement.')
+      stateService.sendErrorEvent('Une erreur inattendue s\'est produite. Veuillez réessayer ultérieurement.')
       break
   }
 }

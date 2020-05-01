@@ -71,7 +71,7 @@ export class PhotoGridComponent implements OnInit {
     this.modalService.open(AlbumSelectionModalComponent).result.then((album: Album) => {
       this.albumService.update(album.id, album.name, Array.from(this.selectedPhotos))
         .subscribe(
-          updatedAlbum => this.stateService.success.next(`Photos ajoutées à l'album ${updatedAlbum.name} !`),
+          updatedAlbum => this.stateService.sendSuccessEvent(`Photos ajoutées à l'album ${updatedAlbum.name} !`),
           error => handleError(error, this.stateService, this.router)
         )
     })
