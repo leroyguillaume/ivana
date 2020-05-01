@@ -50,7 +50,7 @@ export class ChangePasswordComponent implements OnInit {
     this.userService.updatePassword(this.pwd.value)
       .pipe(finalize(() => this.loading = false))
       .subscribe(
-        () => this.stateService.success.next('Mot de passe mis à jour !'),
+        () => this.stateService.sendSuccessEvent('Mot de passe mis à jour !'),
         error => handleError(error, this.stateService, this.router)
       )
   }

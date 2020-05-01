@@ -40,7 +40,7 @@ export class HomeComponent implements OnInit {
       forkJoin(Array.from(selectedPhotos.values()).map(id => this.photoService.delete(id)))
         .subscribe(
           () => {
-            this.stateService.success.next('Les photos ont été supprimées !')
+            this.stateService.sendSuccessEvent('Les photos ont été supprimées !')
             this.fetchPage(this.page.no)
           },
           error => handleError(error, this.stateService, this.router)

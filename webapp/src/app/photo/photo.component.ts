@@ -31,7 +31,6 @@ export class PhotoComponent implements OnDestroy, OnInit {
 
   baseUrl: string = environment.baseUrl
   loading: boolean = true
-  error: string = null
 
   settingsPanelOpened: boolean = false
 
@@ -133,7 +132,7 @@ export class PhotoComponent implements OnDestroy, OnInit {
     this.modalService.open(AlbumSelectionModalComponent).result.then((album: Album) => {
       this.albumService.update(album.id, album.name, [this.photo.id])
         .subscribe(
-          updatedAlbum => this.stateService.success.next(`Photo ajoutée à l'album ${updatedAlbum.name} !`),
+          updatedAlbum => this.stateService.sendSuccessEvent(`Photo ajoutée à l'album ${updatedAlbum.name} !`),
           error => handleError(error, this.stateService, this.router)
         )
     })

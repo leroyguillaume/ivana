@@ -54,7 +54,7 @@ export class UserComponent implements OnInit {
     this.userService.create(this.name.value, this.pwd.value, this.role.value)
       .pipe(finalize(() => this.loading = false))
       .subscribe(
-        () => this.stateService.success.next('Utilisateur créé !'),
+        () => this.stateService.sendSuccessEvent('Utilisateur créé !'),
         error => handleError(error, this.stateService, this.router)
       )
   }

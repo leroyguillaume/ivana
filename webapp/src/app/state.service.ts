@@ -10,9 +10,6 @@ import {Album} from './album'
   providedIn: 'root'
 })
 export class StateService {
-  success: BehaviorSubject<string> = new BehaviorSubject(null)
-  error: BehaviorSubject<string> = new BehaviorSubject(null)
-
   uploadingPhotos: BehaviorSubject<boolean> = new BehaviorSubject(false)
   photosUploaded: EventEmitter<void> = new EventEmitter()
   selectedAlbums: BehaviorSubject<Set<string>> = new BehaviorSubject(new Set())
@@ -23,9 +20,40 @@ export class StateService {
   startPhotoNavIndex: number = -1
   currentPhotoNavOffset: number = 0
 
+  private success: BehaviorSubject<string> = new BehaviorSubject(null)
+  private error: BehaviorSubject<string> = new BehaviorSubject(null)
+  private successTimeoutId: number
+  private errorTimeoutId: number
+
   constructor(
     private photoService: PhotoService
   ) {
+  }
+
+  clearError(): void {
+    clearTimeout(this.errorTimeoutId)
+    this.error.next(null)
+  }
+
+  clearSuccess(): void {
+    clearTimeout(this.errorTimeoutId)
+    this.success.next(null)
+  }
+
+  sendErrorEvent(error: string): void {
+    this.errorTimeoutId = this.displayMessage(error, this.error, this.errorTimeoutId)
+  }
+
+  sendSuccessEvent(success: string): void {
+    this.successTimeoutId = this.displayMessage(success, this.success, this.successTimeoutId)
+  }
+
+  subscribeMessageEvent(
+    successHandler: (error: string) => void,
+    errorHandler: (error: string) => void
+  ): void {
+    this.error.subscribe(errorHandler)
+    this.success.subscribe(successHandler)
   }
 
   uploadPhotos(files: FileList): void {
@@ -57,5 +85,13 @@ export class StateService {
           this.error.next('Une erreur inattendue s\'est produite. Veuillez réessayer ultérieurement.')
         }
       )
+  }
+
+  private displayMessage(msg: string, subject: BehaviorSubject<string>, timeoutId: number): number {
+    if (timeoutId) {
+      clearTimeout(timeoutId)
+    }
+    subject.next(msg)
+    return setTimeout(() => subject.next(null), 3000)
   }
 }

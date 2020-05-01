@@ -47,7 +47,7 @@ export class AlbumModalComponent implements OnInit {
         this.activeModal.dismiss()
       }))
       .subscribe(
-        () => this.stateService.success.next('Album créé !'),
+        () => this.stateService.sendSuccessEvent('Album créé !'),
         error => handleError(error, this.stateService, this.router)
       )
   }
