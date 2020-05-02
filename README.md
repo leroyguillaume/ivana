@@ -39,7 +39,7 @@ You can find default `application.yml` [here](https://github.com/leroyguillaume/
 #### Backend
 ```bash
 docker-compose -f api/docker-compose.yml up -d
-./gradlew bootRun
+./gradlew :ivana-api:update bootRun
 ```
 
 #### Frontend

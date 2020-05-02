@@ -24,12 +24,12 @@ class UserRepositoryImpl(
 
     override fun fetchByName(username: String) = fetchBy(NameColumnName, username)
 
-    override fun entityFromResultSet(rs: ResultSet) = User(
-        id = rs.getObject(IdColumnName, UUID::class.java),
-        name = rs.getString(NameColumnName),
-        hashedPwd = rs.getString(PasswordColumnName),
-        role = rs.getRole(),
-        creationDate = rs.getObject(CreationDateColumnName, OffsetDateTime::class.java)
+    override fun ResultSet.toEntity() = User(
+        id = getObject(IdColumnName, UUID::class.java),
+        name = getString(NameColumnName),
+        hashedPwd = getString(PasswordColumnName),
+        role = getRole(),
+        creationDate = getObject(CreationDateColumnName, OffsetDateTime::class.java)
     )
 
     private fun ResultSet.getRole() = getString(RoleColumnName).let { type ->

@@ -10,6 +10,7 @@ import kotlin.math.ceil
 @Service
 class AlbumServiceImpl(
     override val repo: AlbumRepository,
+    override val authzRepo: UserAlbumAuthorizationRepository,
     private val eventRepo: AlbumEventRepository,
     private val photoRepo: PhotoRepository
 ) : AlbumService, AbstractOwnableEntityService<Album>() {
@@ -56,7 +57,7 @@ class AlbumServiceImpl(
             val existingIds = photoRepo.fetchExistingIds(photosToAddIds)
             val notFoundIds = photosToAddIds - existingIds
             if (notFoundIds.isNotEmpty()) {
-                throw PhotosNotFoundException(notFoundIds)
+                throw ResourcesNotFoundException.Photo(notFoundIds)
             }
             val duplicateIds = repo.fetchDuplicateIds(id, photosToAddIds)
             if (duplicateIds.isNotEmpty()) {
@@ -66,5 +67,9 @@ class AlbumServiceImpl(
         eventRepo.saveUpdateEvent(id, content, source)
         Logger.info("User ${source.id} (${source.ip}) updated album $id")
         return getById(id)
+    }
+
+    override fun throwResourcesNotFoundException(ids: Set<UUID>) {
+        throw ResourcesNotFoundException.Album(ids)
     }
 }

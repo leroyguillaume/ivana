@@ -3,10 +3,11 @@ package io.ivana.api.web
 import com.nhaarman.mockitokotlin2.verify
 import com.nhaarman.mockitokotlin2.whenever
 import io.ivana.api.impl.EntityNotFoundException
+import io.ivana.api.impl.ResourcesNotFoundException
 import io.ivana.api.security.BadJwtException
 import io.ivana.api.web.v1.*
-import io.ivana.dto.ErrorDto
-import io.ivana.dto.PasswordUpdateDto
+import io.ivana.core.Permission
+import io.ivana.dto.*
 import org.junit.jupiter.api.Test
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
@@ -125,5 +126,31 @@ internal class ErrorControllerTest : AbstractControllerTest() {
             status = HttpStatus.NOT_FOUND,
             respDto = ErrorDto.NotFound
         )
+    }
+
+    @Test
+    fun `should return 400 if user does not exist`() = authenticated {
+        val photoId = UUID.randomUUID()
+        val dto = PhotoUpdatePermissionsDto(
+            permissionsToAdd = setOf(
+                SubjectPermissionsUpdateDto(
+                    subjectId = UUID.randomUUID(),
+                    permissions = setOf(PermissionDto.Read)
+                )
+            )
+        )
+        val usersIds = (dto.permissionsToAdd + dto.permissionsToRemove).map { it.subjectId }.toSet()
+        whenever(userPhotoAuthzRepo.fetch(principal.user.id, photoId)).thenReturn(setOf(Permission.Update))
+        whenever(userService.getAllByIds(usersIds)).thenAnswer { throw ResourcesNotFoundException.User(usersIds) }
+        callAndExpectDto(
+            method = HttpMethod.PUT,
+            uri = "$PhotoApiEndpoint/$photoId$PermissionsEndpoint",
+            reqCookies = listOf(accessTokenCookie()),
+            reqContent = mapper.writeValueAsString(dto),
+            status = HttpStatus.BAD_REQUEST,
+            respDto = ErrorDto.ResourcesNotFound(ErrorDto.ResourcesNotFound.Type.User, usersIds)
+        )
+        verify(userPhotoAuthzRepo).fetch(principal.user.id, photoId)
+        verify(userService).getAllByIds(usersIds)
     }
 }

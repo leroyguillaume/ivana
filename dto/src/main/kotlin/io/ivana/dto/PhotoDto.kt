@@ -6,12 +6,14 @@ import java.util.*
 sealed class PhotoDto : EntityDto {
     data class Simple(
         override val id: UUID,
+        override val ownerId: UUID,
         override val rawUri: URI,
         override val compressedUri: URI
     ) : PhotoDto()
 
     data class Navigable(
         override val id: UUID,
+        override val ownerId: UUID,
         override val rawUri: URI,
         override val compressedUri: URI,
         val previous: Simple? = null,
@@ -19,6 +21,7 @@ sealed class PhotoDto : EntityDto {
     ) : PhotoDto()
 
     abstract val id: UUID
+    abstract val ownerId: UUID
     abstract val rawUri: URI
     abstract val compressedUri: URI
 }

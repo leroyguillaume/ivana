@@ -1,7 +1,6 @@
 package io.ivana.api.security
 
-import io.ivana.core.Role
-import io.ivana.core.UserRepository
+import io.ivana.core.*
 import org.springframework.security.access.PermissionEvaluator
 import org.springframework.security.core.Authentication
 import java.io.Serializable
@@ -29,7 +28,7 @@ class CustomPermissionEvaluator(
         if (targetId !is UUID) {
             throw IllegalArgumentException("$targetId is not an UUID")
         }
-        val permission = Permission.values().find { it.label == permissionLabel }
+        val permission = Permission.values().find { it.label() == permissionLabel }
             ?: throw IllegalArgumentException("Unknown permission '$permissionLabel'")
         val principal = authentication.principal as UserPrincipal
         return when (targetType) {
@@ -50,5 +49,12 @@ class CustomPermissionEvaluator(
         Permission.Delete -> principal.user.id != targetId && (principal.user.role == Role.SuperAdmin ||
                 userRepo.fetchById(targetId).let { it != null && principal.user.role > it.role })
         else -> TODO()
+    }
+
+    private fun Permission.label() = when (this) {
+        Permission.Read -> "read"
+        Permission.Update -> "update"
+        Permission.Delete -> "delete"
+        Permission.UpdatePermissions -> "update_permissions"
     }
 }

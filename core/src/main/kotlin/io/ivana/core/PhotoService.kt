@@ -15,5 +15,12 @@ interface PhotoService : OwnableEntityService<Photo> {
 
     fun transform(id: UUID, transform: Transform, source: EventSource.User)
 
-    fun uploadPhoto(input: InputStream, type: Photo.Type, source: EventSource.User): Photo
+    fun updatePermissions(
+        id: UUID,
+        permissionsToAdd: Set<UserPermissions>,
+        permissionsToRemove: Set<UserPermissions>,
+        source: EventSource.User
+    )
+
+    fun upload(input: InputStream, type: Photo.Type, source: EventSource.User): Photo
 }

@@ -4,6 +4,7 @@
       "type": "success",
       "photo": {
         "id": "61f11547-a340-441c-bce7-551234d5d361",
+        "ownerId": "b98c9b79-3cfb-49b7-873f-3b6a971c6bc8",
         "rawUri": "/v1/photo/61f11547-a340-441c-bce7-551234d5d361/raw",
         "compressedUri": "/v1/photo/61f11547-a340-441c-bce7-551234d5d361/compressed"
       }

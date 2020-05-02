@@ -19,6 +19,19 @@ sealed class PhotoEvent : Event {
         val transform: io.ivana.core.Transform
     ) : PhotoEvent()
 
+    data class UpdatePermissions(
+        override val date: OffsetDateTime,
+        override val subjectId: UUID,
+        override val number: Long,
+        override val source: EventSource.User,
+        val content: Content
+    ) : PhotoEvent() {
+        data class Content(
+            val permissionsToAdd: Set<SubjectPermissions>,
+            val permissionsToRemove: Set<SubjectPermissions>
+        )
+    }
+
     data class Upload(
         override val date: OffsetDateTime,
         override val subjectId: UUID,

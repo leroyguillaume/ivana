@@ -34,15 +34,19 @@ internal class PhotoServiceImplTest {
     }
 
     private lateinit var photoEventRepo: PhotoEventRepository
+    private lateinit var authzRepo: UserPhotoAuthorizationRepository
     private lateinit var photoRepo: PhotoRepository
+    private lateinit var userRepo: UserRepository
     private lateinit var service: PhotoServiceImpl
 
     @BeforeEach
     fun beforeEach() {
         photoEventRepo = mockk()
+        authzRepo = mockk()
         photoRepo = mockk()
+        userRepo = mockk()
 
-        service = PhotoServiceImpl(photoRepo, photoEventRepo, Props)
+        service = PhotoServiceImpl(photoRepo, authzRepo, photoEventRepo, userRepo, Props)
     }
 
     @Nested
@@ -175,6 +179,49 @@ internal class PhotoServiceImplTest {
             page shouldBe expectedPage
             verify { photoRepo.fetchAll(ownerId, pageNo - 1, pageSize) }
             verify { photoRepo.count(ownerId) }
+            confirmVerified(photoRepo)
+        }
+    }
+
+    @Nested
+    inner class getAllByIds {
+        private val expectedPhotos = setOf(
+            Photo(
+                id = UUID.randomUUID(),
+                ownerId = UUID.randomUUID(),
+                uploadDate = OffsetDateTime.now(),
+                type = Photo.Type.Jpg,
+                hash = "hash1",
+                no = 1,
+                version = 1
+            ),
+            Photo(
+                id = UUID.randomUUID(),
+                ownerId = UUID.randomUUID(),
+                uploadDate = OffsetDateTime.now(),
+                type = Photo.Type.Jpg,
+                hash = "hash2",
+                no = 2,
+                version = 1
+            )
+        )
+        private val ids = expectedPhotos.map { it.id }.toSet()
+
+        @Test
+        fun `should throw exception if entities not found`() {
+            every { photoRepo.fetchAllByIds(ids) } returns emptySet()
+            val exception = assertThrows<ResourcesNotFoundException> { service.getAllByIds(ids) }
+            exception.ids shouldBe ids
+            verify { photoRepo.fetchAllByIds(ids) }
+            confirmVerified(photoRepo)
+        }
+
+        @Test
+        fun `should return all photos`() {
+            every { photoRepo.fetchAllByIds(ids) } returns expectedPhotos
+            val photos = service.getAllByIds(ids)
+            photos shouldBe expectedPhotos
+            verify { photoRepo.fetchAllByIds(ids) }
             confirmVerified(photoRepo)
         }
     }
@@ -319,6 +366,39 @@ internal class PhotoServiceImplTest {
             verify { photoRepo.fetchPreviousOf(completeLinkedPhotos.current) }
             verify { photoRepo.fetchNextOf(defaultLinkedPhotos.current) }
             confirmVerified(photoRepo)
+        }
+    }
+
+    @Nested
+    inner class getPermissions {
+        private val photoId = UUID.randomUUID()
+        private val pageNo = 1
+        private val pageSize = 3
+        private val expectedPage = Page(
+            content = listOf(
+                SubjectPermissions(
+                    subjectId = UUID.randomUUID(),
+                    permissions = setOf(Permission.Read)
+                ),
+                SubjectPermissions(
+                    subjectId = UUID.randomUUID(),
+                    permissions = setOf(Permission.Update)
+                )
+            ),
+            no = pageNo,
+            totalItems = 2,
+            totalPages = 1
+        )
+
+        @Test
+        fun `should return page`() {
+            every { authzRepo.fetchAll(photoId, pageNo - 1, pageSize) } returns expectedPage.content
+            every { authzRepo.count(photoId) } returns expectedPage.totalItems
+            val page = service.getPermissions(photoId, pageNo, pageSize)
+            page shouldBe expectedPage
+            verify { authzRepo.fetchAll(photoId, pageNo - 1, pageSize) }
+            verify { authzRepo.count(photoId) }
+            confirmVerified(authzRepo)
         }
     }
 
@@ -500,7 +580,107 @@ internal class PhotoServiceImplTest {
     }
 
     @Nested
-    inner class uploadPhoto {
+    inner class updatePermissions {
+        private val owner = User(
+            id = UUID.randomUUID(),
+            name = "owner",
+            hashedPwd = "hashedPwd",
+            role = Role.User,
+            creationDate = OffsetDateTime.now()
+        )
+        private val user = User(
+            id = UUID.randomUUID(),
+            name = "user",
+            hashedPwd = "hashedPwd",
+            role = Role.User,
+            creationDate = OffsetDateTime.now()
+        )
+        private val photo = Photo(
+            id = UUID.randomUUID(),
+            ownerId = owner.id,
+            uploadDate = OffsetDateTime.now(),
+            type = Photo.Type.Jpg,
+            hash = "hash",
+            no = 1,
+            version = 1
+        )
+        private val permissionsToAdd = setOf(
+            UserPermissions(
+                user = user,
+                permissions = setOf(Permission.Read, Permission.Delete)
+            )
+        )
+        private val permissionsToRemove = setOf(
+            UserPermissions(
+                user = user,
+                permissions = setOf(Permission.Delete)
+            )
+        )
+        private val event = PhotoEvent.UpdatePermissions(
+            date = OffsetDateTime.now(),
+            subjectId = photo.id,
+            number = 2,
+            source = EventSource.User(UUID.randomUUID(), InetAddress.getByName("127.0.0.1")),
+            content = PhotoEvent.UpdatePermissions.Content(
+                permissionsToAdd = setOf(
+                    SubjectPermissions(
+                        subjectId = user.id,
+                        permissions = setOf(Permission.Read, Permission.Delete)
+                    )
+                ),
+                permissionsToRemove = setOf(
+                    SubjectPermissions(
+                        subjectId = user.id,
+                        permissions = setOf(Permission.Delete)
+                    )
+                )
+            )
+        )
+
+        @Test
+        fun `should throw exception if photo does not exist`() {
+            every { photoRepo.fetchById(photo.id) } returns null
+            val exception = assertThrows<EntityNotFoundException> {
+                service.updatePermissions(photo.id, permissionsToAdd, permissionsToRemove, event.source)
+            }
+            exception shouldHaveMessage "Photo ${photo.id} does not exist"
+            verify { photoRepo.fetchById(photo.id) }
+            confirmVerified(photoRepo)
+        }
+
+        @Test
+        fun `should throw exception if owner permission is deleted`() {
+            every { photoRepo.fetchById(photo.id) } returns photo
+            assertThrows<PhotoOwnerPermissionsUpdateException> {
+                service.updatePermissions(
+                    id = photo.id,
+                    permissionsToAdd = permissionsToAdd,
+                    permissionsToRemove = setOf(
+                        UserPermissions(
+                            user = owner,
+                            permissions = setOf(Permission.Delete)
+                        )
+                    ),
+                    source = event.source
+                )
+            }
+            verify { photoRepo.fetchById(photo.id) }
+            confirmVerified(photoRepo)
+        }
+
+        @Test
+        fun `should update permissions of photo`() {
+            every { photoRepo.fetchById(photo.id) } returns photo
+            every { photoEventRepo.saveUpdatePermissionsEvent(photo.id, event.content, event.source) } returns event
+            service.updatePermissions(photo.id, permissionsToAdd, permissionsToRemove, event.source)
+            verify { photoRepo.fetchById(photo.id) }
+            verify { photoEventRepo.saveUpdatePermissionsEvent(photo.id, event.content, event.source) }
+            confirmVerified(photoRepo, photoEventRepo)
+        }
+    }
+
+    @Nested
+    inner class upload {
         private val jpgFile = File(javaClass.getResource("/data/photo.jpg").file)
         private val pngFile = File(javaClass.getResource("/data/photo.png").file)
         private val jpgEvent = PhotoEvent.Upload(
@@ -546,7 +726,7 @@ internal class PhotoServiceImplTest {
         fun `should throw exception if hash already exists`() {
             every { photoRepo.fetchByHash(jpgEvent.source.id, jpgEvent.content.hash) } returns jpgPhoto
             val exception = assertThrows<PhotoAlreadyUploadedException> {
-                service.uploadPhoto(jpgFile.inputStream(), Photo.Type.Jpg, jpgEvent.source)
+                service.upload(jpgFile.inputStream(), Photo.Type.Jpg, jpgEvent.source)
             }
             exception.photo shouldBe jpgPhoto
             verify { photoRepo.fetchByHash(jpgEvent.source.id, jpgEvent.content.hash) }
@@ -558,7 +738,7 @@ internal class PhotoServiceImplTest {
             every { photoRepo.fetchByHash(jpgEvent.source.id, jpgEvent.content.hash) } returns null
             every { photoEventRepo.saveUploadEvent(jpgEvent.content, jpgEvent.source) } returns jpgEvent
             every { photoRepo.fetchById(jpgEvent.subjectId) } returns jpgPhoto
-            val photo = service.uploadPhoto(jpgFile.inputStream(), Photo.Type.Jpg, jpgEvent.source)
+            val photo = service.upload(jpgFile.inputStream(), Photo.Type.Jpg, jpgEvent.source)
             photo shouldBe jpgPhoto
             rawFile(jpgEvent.subjectId, jpgEvent.date, "jpg").readBytes() shouldBe jpgFile.readBytes()
             compressedFile(jpgEvent.subjectId, jpgEvent.date, "jpg").shouldExist()
@@ -573,7 +753,7 @@ internal class PhotoServiceImplTest {
             every { photoRepo.fetchByHash(pngEvent.source.id, pngEvent.content.hash) } returns null
             every { photoEventRepo.saveUploadEvent(pngEvent.content, pngEvent.source) } returns pngEvent
             every { photoRepo.fetchById(pngEvent.subjectId) } returns pngPhoto
-            val photo = service.uploadPhoto(pngFile.inputStream(), Photo.Type.Png, pngEvent.source)
+            val photo = service.upload(pngFile.inputStream(), Photo.Type.Png, pngEvent.source)
             photo shouldBe pngPhoto
             rawFile(pngEvent.subjectId, pngEvent.date, "png").readBytes() shouldBe pngFile.readBytes()
             compressedFile(pngEvent.subjectId, pngEvent.date, "png").shouldExist()

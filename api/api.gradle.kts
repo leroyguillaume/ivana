@@ -143,8 +143,6 @@ tasks {
     }
 
     test {
-        dependsOn("update")
-
         val dbProps = dbTestProperties()
         systemProperty("database.url", dbProps.jdbcUrl)
         systemProperty("database.username", dbProps.username)

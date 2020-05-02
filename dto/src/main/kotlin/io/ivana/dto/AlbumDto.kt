@@ -6,5 +6,6 @@ import java.util.*
 data class AlbumDto(
     val id: UUID,
     val name: String,
+    val ownerId: UUID,
     val creationDate: OffsetDateTime
 ) : EntityDto

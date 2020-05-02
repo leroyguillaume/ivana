@@ -5,6 +5,8 @@ package io.ivana.api.impl
 import io.ivana.core.*
 import io.kotlintest.matchers.boolean.shouldBeFalse
 import io.kotlintest.matchers.boolean.shouldBeTrue
+import io.kotlintest.matchers.collections.shouldBeEmpty
+import io.kotlintest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotlintest.matchers.types.shouldBeNull
 import io.kotlintest.shouldBe
 import org.junit.jupiter.api.BeforeEach
@@ -188,6 +190,21 @@ internal class PhotoRepositoryImplTest {
         fun `should return all photos in interval`() {
             val photos = repo.fetchAll(ownerId, 1, 10)
             photos shouldBe uploadedPhotos.subList(1, 3)
+        }
+    }
+
+    @Nested
+    inner class fetchAllByIds {
+        @Test
+        fun `should return empty set if ids is empty`() {
+            val photos = repo.fetchAllByIds(emptySet())
+            photos.shouldBeEmpty()
+        }
+
+        @Test
+        fun `should return all photos`() {
+            val photos = repo.fetchAllByIds(uploadedPhotos.map { it.id }.toSet())
+            photos shouldContainExactlyInAnyOrder uploadedPhotos
         }
     }
 

@@ -40,6 +40,22 @@ class PhotoEventRepositoryImpl(
             )
         )
 
+    override fun saveUpdatePermissionsEvent(
+        photoId: UUID,
+        content: PhotoEvent.UpdatePermissions.Content,
+        source: EventSource.User
+    ) = insert<PhotoEvent.UpdatePermissions>(
+        subjectId = photoId,
+        type = PhotoEventType.UpdatePermissions,
+        data = PhotoEventData.UpdatePermissions(
+            source = source.toData() as EventSourceData.User,
+            content = PhotoEventData.UpdatePermissions.Content(
+                permissionsToAdd = content.permissionsToAdd.map { it.toData() }.toSet(),
+                permissionsToRemove = content.permissionsToRemove.map { it.toData() }.toSet()
+            )
+        )
+    )
+
     override fun saveUploadEvent(content: PhotoEvent.Upload.Content, source: EventSource.User) =
         insert<PhotoEvent.Upload>(
             subjectId = UUID.randomUUID(),
@@ -56,7 +72,12 @@ class PhotoEventRepositoryImpl(
     override fun RawEvent<PhotoEventType>.toEvent() = when (type) {
         PhotoEventType.Deletion -> toDeletionEvent()
         PhotoEventType.Transform -> toTransformEvent()
+        PhotoEventType.UpdatePermissions -> toUpdatePermissionsEvent()
         PhotoEventType.Upload -> toUploadEvent()
+    }
+
+    private fun PhotoEventData.Transform.toTransform() = when (content) {
+        is PhotoEventData.Transform.Content.Rotation -> Transform.Rotation(content.degrees)
     }
 
     private fun RawEvent<PhotoEventType>.toDeletionEvent() =
@@ -80,6 +101,20 @@ class PhotoEventRepositoryImpl(
             )
         }
 
+    private fun RawEvent<PhotoEventType>.toUpdatePermissionsEvent() =
+        mapper.readValue<PhotoEventData.UpdatePermissions>(jsonData).let { data ->
+            PhotoEvent.UpdatePermissions(
+                date = date,
+                subjectId = subjectId,
+                number = number,
+                source = data.source.toSource(),
+                content = PhotoEvent.UpdatePermissions.Content(
+                    permissionsToAdd = data.content.permissionsToAdd.map { it.toSubjectPermissions() }.toSet(),
+                    permissionsToRemove = data.content.permissionsToRemove.map { it.toSubjectPermissions() }.toSet()
+                )
+            )
+        }
+
     private fun RawEvent<PhotoEventType>.toUploadEvent() =
         mapper.readValue<PhotoEventData.Upload>(jsonData).let { data ->
             PhotoEvent.Upload(
@@ -93,10 +128,6 @@ class PhotoEventRepositoryImpl(
                 )
             )
         }
-
-    private fun PhotoEventData.Transform.toTransform() = when (content) {
-        is PhotoEventData.Transform.Content.Rotation -> Transform.Rotation(content.degrees)
-    }
 
     private fun Transform.toEventDataContent() = when (this) {
         is Transform.Rotation -> PhotoEventData.Transform.Content.Rotation(degrees)

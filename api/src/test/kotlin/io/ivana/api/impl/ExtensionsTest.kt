@@ -2,9 +2,7 @@
 
 package io.ivana.api.impl
 
-import io.ivana.core.EventSource
-import io.ivana.core.Photo
-import io.ivana.core.Role
+import io.ivana.core.*
 import io.kotlintest.shouldBe
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -28,6 +26,29 @@ internal class ExtensionsTest {
     }
 
     @Nested
+    inner class permissionToData {
+        @Test
+        fun read() {
+            Permission.Read.toData() shouldBe PermissionData.Read
+        }
+
+        @Test
+        fun update() {
+            Permission.Read.toData() shouldBe PermissionData.Read
+        }
+
+        @Test
+        fun delete() {
+            Permission.Delete.toData() shouldBe PermissionData.Delete
+        }
+
+        @Test
+        fun updatePermissions() {
+            Permission.UpdatePermissions.toData() shouldBe PermissionData.UpdatePermissions
+        }
+    }
+
+    @Nested
     inner class photoTypeToPhotoTypeDataTest {
         @Test
         fun jpg() {
@@ -41,7 +62,7 @@ internal class ExtensionsTest {
     }
 
     @Nested
-    inner class roletoRoleDataTest {
+    inner class roleToRoleDataTest {
         @Test
         fun user() {
             Role.User.toRoleData() shouldBe RoleData.User
@@ -56,5 +77,31 @@ internal class ExtensionsTest {
         fun super_admin() {
             Role.SuperAdmin.toRoleData() shouldBe RoleData.SuperAdmin
         }
+    }
+
+    @Test
+    fun subjectPermissionsToData() {
+        val subjPerms = SubjectPermissions(
+            subjectId = UUID.randomUUID(),
+            permissions = setOf(Permission.Read)
+        )
+        val subjPermsData = SubjectPermissionsData(
+            subjectId = subjPerms.subjectId,
+            permissions = setOf(PermissionData.Read)
+        )
+        subjPerms.toData() shouldBe subjPermsData
+    }
+
+    @Test
+    fun subjectPermissionsDataToSubjectPermissions() {
+        val subjPermsData = SubjectPermissionsData(
+            subjectId = UUID.randomUUID(),
+            permissions = setOf(PermissionData.Read)
+        )
+        val subjPerms = SubjectPermissions(
+            subjectId = subjPermsData.subjectId,
+            permissions = setOf(Permission.Read)
+        )
+        subjPermsData.toSubjectPermissions() shouldBe subjPerms
     }
 }

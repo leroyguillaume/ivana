@@ -27,7 +27,9 @@ import kotlin.math.sin
 @Service
 class PhotoServiceImpl(
     override val repo: PhotoRepository,
+    override val authzRepo: UserPhotoAuthorizationRepository,
     private val eventRepo: PhotoEventRepository,
+    private val userRepo: UserRepository,
     private val props: IvanaProperties
 ) : PhotoService, AbstractOwnableEntityService<Photo>() {
     internal companion object {
@@ -72,12 +74,31 @@ class PhotoServiceImpl(
             transform,
             source
         ) // Trick here is to save event before to fetch it to get the correct version number
-        transform.perform(repo.fetchById(id)!!)
+        transform.perform(getById(id))
         Logger.info("User ${source.id} (${source.ip}) transformed photo $id")
     }
 
     @Transactional
-    override fun uploadPhoto(input: InputStream, type: Photo.Type, source: EventSource.User): Photo {
+    override fun updatePermissions(
+        id: UUID,
+        permissionsToAdd: Set<UserPermissions>,
+        permissionsToRemove: Set<UserPermissions>,
+        source: EventSource.User
+    ) {
+        val photo = getById(id)
+        if (permissionsToRemove.find { it.user.id == photo.ownerId } != null) {
+            throw PhotoOwnerPermissionsUpdateException()
+        }
+        val content = PhotoEvent.UpdatePermissions.Content(
+            permissionsToAdd = permissionsToAdd.toSubjectPermissionsSet(),
+            permissionsToRemove = permissionsToRemove.toSubjectPermissionsSet()
+        )
+        eventRepo.saveUpdatePermissionsEvent(id, content, source)
+        Logger.info("User ${source.id} (${source.ip}) updated permissions of photo $id")
+    }
+
+    @Transactional
+    override fun upload(input: InputStream, type: Photo.Type, source: EventSource.User): Photo {
         val tmpFile = File.createTempFile(UUID.randomUUID().toString(), ".${type.extension()}")
         tmpFile.deleteOnExit()
         try {
@@ -109,6 +130,10 @@ class PhotoServiceImpl(
         } finally {
             tmpFile.deleteAndLog()
         }
+    }
+
+    override fun throwResourcesNotFoundException(ids: Set<UUID>) {
+        throw ResourcesNotFoundException.Photo(ids)
     }
 
     private fun checkPhotoExists(id: UUID) {
@@ -241,6 +266,14 @@ class PhotoServiceImpl(
         Photo.Type.Jpg -> "jpg"
         Photo.Type.Png -> "png"
     }
+
+    private fun Set<UserPermissions>.toSubjectPermissionsSet() =
+        map { userPerms ->
+            SubjectPermissions(
+                subjectId = userPerms.user.id,
+                permissions = userPerms.permissions
+            )
+        }.toSet()
 
     private fun Transform.perform(photo: Photo) = when (this) {
         is Transform.Rotation -> performRotation(photo, degrees)

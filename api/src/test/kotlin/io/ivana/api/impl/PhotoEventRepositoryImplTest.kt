@@ -2,10 +2,7 @@
 
 package io.ivana.api.impl
 
-import io.ivana.api.security.Permission
-import io.ivana.api.security.UserPhotoAuthorizationRepository
 import io.ivana.core.*
-import io.kotlintest.matchers.collections.shouldContainExactly
 import io.kotlintest.matchers.types.shouldBeNull
 import io.kotlintest.shouldBe
 import org.junit.jupiter.api.BeforeEach
@@ -22,10 +19,15 @@ import java.util.*
 @SpringBootTest
 internal class PhotoEventRepositoryImplTest {
     private val pwdEncoder = BCryptPasswordEncoder()
-    private val userCreationEventContent = UserEvent.Creation.Content(
+    private val ownerCreationEventContent = UserEvent.Creation.Content(
         name = "admin",
         hashedPwd = pwdEncoder.encode("changeit"),
         role = Role.SuperAdmin
+    )
+    private val user1CreationEventContent = UserEvent.Creation.Content(
+        name = "user1",
+        hashedPwd = pwdEncoder.encode("changeit"),
+        role = Role.User
     )
 
     @Autowired
@@ -41,22 +43,16 @@ internal class PhotoEventRepositoryImplTest {
     private lateinit var photoRepo: PhotoRepositoryImpl
 
     @Autowired
-    private lateinit var authzRepo: UserPhotoAuthorizationRepository
+    private lateinit var authzRepo: UserPhotoAuthorizationRepositoryImpl
 
-    private lateinit var creationEvent: UserEvent.Creation
-    private lateinit var createdUser: User
+    private lateinit var owner: User
+    private lateinit var user: User
 
     @BeforeEach
     fun beforeEach() {
         cleanDb(jdbc)
-        creationEvent = userEventRepo.saveCreationEvent(userCreationEventContent, EventSource.System)
-        createdUser = User(
-            id = creationEvent.subjectId,
-            name = creationEvent.content.name,
-            hashedPwd = creationEvent.content.hashedPwd,
-            role = creationEvent.content.role,
-            creationDate = creationEvent.date
-        )
+        owner = userEventRepo.saveCreationEvent(ownerCreationEventContent, EventSource.System).toUser()
+        user = userEventRepo.saveCreationEvent(user1CreationEventContent, EventSource.System).toUser()
     }
 
     @Nested
@@ -70,34 +66,65 @@ internal class PhotoEventRepositoryImplTest {
         }
 
         @Test
-        fun `should return deletion event with subject id and number`() {
+        fun `should return deletion event with number`() {
             val expectedEvent = repo.saveDeletionEvent(
                 photoId = UUID.randomUUID(),
-                source = EventSource.User(createdUser.id, InetAddress.getByName("127.0.0.1"))
+                source = EventSource.User(owner.id, InetAddress.getByName("127.0.0.1"))
             )
             val event = repo.fetch(expectedEvent.number)
             event shouldBe expectedEvent
         }
 
         @Test
-        fun `should return transform event with subject id and number`() {
+        fun `should return transform event with number`() {
             val expectedEvent = repo.saveTransformEvent(
                 photoId = UUID.randomUUID(),
                 transform = Transform.Rotation(90.0),
-                source = EventSource.User(createdUser.id, InetAddress.getByName("127.0.0.1"))
+                source = EventSource.User(owner.id, InetAddress.getByName("127.0.0.1"))
             )
             val event = repo.fetch(expectedEvent.number)
             event shouldBe expectedEvent
         }
 
         @Test
-        fun `should return upload event with subject id and number`() {
+        fun `should return update event with number`() {
+            val uploadEvent = repo.saveUploadEvent(
+                content = PhotoEvent.Upload.Content(
+                    type = Photo.Type.Jpg,
+                    hash = "hash"
+                ),
+                source = EventSource.User(owner.id, InetAddress.getByName("127.0.0.1"))
+            )
+            val expectedEvent = repo.saveUpdatePermissionsEvent(
+                photoId = uploadEvent.subjectId,
+                content = PhotoEvent.UpdatePermissions.Content(
+                    permissionsToAdd = setOf(
+                        SubjectPermissions(
+                            subjectId = user.id,
+                            permissions = setOf(Permission.Read)
+                        )
+                    ),
+                    permissionsToRemove = setOf(
+                        SubjectPermissions(
+                            subjectId = user.id,
+                            permissions = setOf(Permission.Delete)
+                        )
+                    )
+                ),
+                source = EventSource.User(owner.id, InetAddress.getByName("127.0.0.1"))
+            )
+            val event = repo.fetch(expectedEvent.number)
+            event shouldBe expectedEvent
+        }
+
+        @Test
+        fun `should return upload event with number`() {
             val expectedEvent = repo.saveUploadEvent(
                 content = PhotoEvent.Upload.Content(
                     type = Photo.Type.Jpg,
                     hash = "hash"
                 ),
-                source = EventSource.User(createdUser.id, InetAddress.getByName("127.0.0.1"))
+                source = EventSource.User(owner.id, InetAddress.getByName("127.0.0.1"))
             )
             val event = repo.fetch(expectedEvent.number)
             event shouldBe expectedEvent
@@ -115,7 +142,7 @@ internal class PhotoEventRepositoryImplTest {
                     type = Photo.Type.Jpg,
                     hash = "hash"
                 ),
-                source = EventSource.User(createdUser.id, InetAddress.getByName("127.0.0.1"))
+                source = EventSource.User(owner.id, InetAddress.getByName("127.0.0.1"))
             )
             expectedEvent = PhotoEvent.Deletion(
                 date = OffsetDateTime.now(),
@@ -148,7 +175,7 @@ internal class PhotoEventRepositoryImplTest {
 
         @BeforeEach
         fun beforeEach() {
-            val source = EventSource.User(createdUser.id, InetAddress.getByName("127.0.0.1"))
+            val source = EventSource.User(owner.id, InetAddress.getByName("127.0.0.1"))
             expectedPhoto = repo.saveUploadEvent(uploadContent, source).toPhoto(1, 2)
             expectedEvent = PhotoEvent.Transform(
                 date = OffsetDateTime.now(),
@@ -171,6 +198,56 @@ internal class PhotoEventRepositoryImplTest {
     }
 
     @Nested
+    inner class saveUpdatePermissionsEvent {
+        private lateinit var expectedEvent: PhotoEvent.UpdatePermissions
+
+        @BeforeEach
+        fun beforeEach() {
+            val uploadEvent = repo.saveUploadEvent(
+                content = PhotoEvent.Upload.Content(
+                    type = Photo.Type.Jpg,
+                    hash = "hash"
+                ),
+                source = EventSource.User(owner.id, InetAddress.getByName("127.0.0.1"))
+            )
+            expectedEvent = PhotoEvent.UpdatePermissions(
+                date = OffsetDateTime.now(),
+                subjectId = uploadEvent.subjectId,
+                number = 2,
+                source = EventSource.User(owner.id, InetAddress.getByName("127.0.0.1")),
+                content = PhotoEvent.UpdatePermissions.Content(
+                    permissionsToAdd = setOf(
+                        SubjectPermissions(
+                            subjectId = user.id,
+                            permissions = EnumSet.allOf(Permission::class.java)
+                        )
+                    ),
+                    permissionsToRemove = setOf(
+                        SubjectPermissions(
+                            subjectId = owner.id,
+                            permissions = EnumSet.allOf(Permission::class.java)
+                        )
+                    )
+                )
+            )
+        }
+
+        @Test
+        fun `should return created event`() {
+            val event =
+                repo.saveUpdatePermissionsEvent(expectedEvent.subjectId, expectedEvent.content, expectedEvent.source)
+            event shouldBe expectedEvent.copy(
+                date = event.date,
+                subjectId = event.subjectId
+            )
+            val ownerPermissions = authzRepo.fetch(owner.id, event.subjectId)
+            ownerPermissions shouldBe emptySet()
+            val userPermissions = authzRepo.fetch(user.id, event.subjectId)
+            userPermissions shouldBe EnumSet.allOf(Permission::class.java)
+        }
+    }
+
+    @Nested
     inner class saveUploadEvent {
         private lateinit var expectedEvent: PhotoEvent.Upload
         private lateinit var expectedPhoto: Photo
@@ -182,7 +259,7 @@ internal class PhotoEventRepositoryImplTest {
                     date = OffsetDateTime.now(),
                     subjectId = id,
                     number = 1,
-                    source = EventSource.User(createdUser.id, InetAddress.getByName("127.0.0.1")),
+                    source = EventSource.User(owner.id, InetAddress.getByName("127.0.0.1")),
                     content = PhotoEvent.Upload.Content(
                         type = Photo.Type.Jpg,
                         hash = "hash"
@@ -191,7 +268,7 @@ internal class PhotoEventRepositoryImplTest {
             }
             expectedPhoto = Photo(
                 id = expectedEvent.subjectId,
-                ownerId = createdUser.id,
+                ownerId = owner.id,
                 uploadDate = expectedEvent.date,
                 type = expectedEvent.content.type,
                 hash = expectedEvent.content.hash,
@@ -211,8 +288,8 @@ internal class PhotoEventRepositoryImplTest {
                 id = event.subjectId,
                 uploadDate = event.date
             )
-            val permissions = authzRepo.fetch(createdUser.id, event.subjectId)
-            permissions shouldContainExactly Permission.values().toSet()
+            val permissions = authzRepo.fetch(owner.id, event.subjectId)
+            permissions shouldBe Permission.values().toSet()
         }
     }
 }

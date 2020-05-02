@@ -3,10 +3,7 @@ package io.ivana.api.web
 import com.fasterxml.jackson.databind.JsonMappingException
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.MissingKotlinParameterException
-import io.ivana.api.impl.AlbumAlreadyContainsPhotosException
-import io.ivana.api.impl.EntityNotFoundException
-import io.ivana.api.impl.PhotosNotFoundException
-import io.ivana.api.impl.UserAlreadyExistsException
+import io.ivana.api.impl.*
 import io.ivana.api.security.BadCredentialsException
 import io.ivana.api.security.BadJwtException
 import io.ivana.api.security.CustomAccessDeniedHandler
@@ -118,11 +115,23 @@ class ErrorController(
         }
     }
 
-    @ExceptionHandler(PhotosNotFoundException::class)
+    @ExceptionHandler(PhotoOwnerPermissionsUpdateException::class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    fun handleAlbumPhotosNotFound(exception: PhotosNotFoundException): ErrorDto {
+    fun handlePhotoOwnerPermissionsUpdate(exception: PhotoOwnerPermissionsUpdateException): ErrorDto {
         Logger.debug(exception.message, exception)
-        return ErrorDto.PhotosNotFound(exception.photosIds)
+        return ErrorDto.PhotoOwnerPermissionsUpdate
+    }
+
+    @ExceptionHandler(ResourcesNotFoundException::class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    fun handlePhotosNotFound(exception: ResourcesNotFoundException): ErrorDto {
+        Logger.debug(exception.message, exception)
+        val type = when (exception) {
+            is ResourcesNotFoundException.Album -> ErrorDto.ResourcesNotFound.Type.Album
+            is ResourcesNotFoundException.Photo -> ErrorDto.ResourcesNotFound.Type.Photo
+            is ResourcesNotFoundException.User -> ErrorDto.ResourcesNotFound.Type.User
+        }
+        return ErrorDto.ResourcesNotFound(type, exception.ids)
     }
 
     @ExceptionHandler(value = [BadCredentialsException::class, BadJwtException::class])

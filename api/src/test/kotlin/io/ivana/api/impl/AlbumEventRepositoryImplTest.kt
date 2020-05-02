@@ -2,8 +2,6 @@
 
 package io.ivana.api.impl
 
-import io.ivana.api.security.Permission
-import io.ivana.api.security.UserAlbumAuthorizationRepository
 import io.ivana.core.*
 import io.kotlintest.matchers.collections.shouldBeEmpty
 import io.kotlintest.matchers.collections.shouldContainExactly
@@ -42,7 +40,7 @@ internal class AlbumEventRepositoryImplTest {
     private lateinit var albumRepo: AlbumRepositoryImpl
 
     @Autowired
-    private lateinit var authzRepo: UserAlbumAuthorizationRepository
+    private lateinit var authzRepo: UserAlbumAuthorizationRepositoryImpl
 
     @Autowired
     private lateinit var photoEventRepo: PhotoEventRepository

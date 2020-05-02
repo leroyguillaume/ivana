@@ -1,12 +1,13 @@
-package io.ivana.api.security
+package io.ivana.api.impl
 
+import io.ivana.core.UserAlbumAuthorizationRepository
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Repository
 
 @Repository
-class UserAlbumAuthorizationRepository(
+class UserAlbumAuthorizationRepositoryImpl(
     jdbc: NamedParameterJdbcTemplate
-) : AbstractAuthorizationRepository(jdbc) {
+) : UserAlbumAuthorizationRepository, AbstractAuthorizationRepository(jdbc) {
     internal companion object {
         const val TableName = "user_album_authorization"
 

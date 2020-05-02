@@ -1,7 +1,8 @@
 @file:Suppress("ClassName")
 
-package io.ivana.api.security
+package io.ivana.api.impl
 
+import io.ivana.core.Permission
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
@@ -20,19 +21,30 @@ internal abstract class AbstractAuthorizationRepositoryTest {
         val canRead = permissions.contains(Permission.Read)
         val canUpdate = permissions.contains(Permission.Update)
         val canDelete = permissions.contains(Permission.Delete)
+        val canUpdatePermissions = permissions.contains(Permission.UpdatePermissions)
         jdbc.update(
             """
-            UPDATE $tableName
+            INSERT INTO $tableName
+            VALUES (
+                :subject_id,
+                :resource_id,
+                :can_read,
+                :can_update,
+                :can_delete,
+                :can_update_permissions
+            )
+            ON CONFLICT ($subjectIdColumnName, $resourceIdColumnName) DO UPDATE
             SET ${AbstractAuthorizationRepository.CanReadColumnName} = :can_read,
                 ${AbstractAuthorizationRepository.CanUpdateColumnName} = :can_update,
-                ${AbstractAuthorizationRepository.CanDeleteColumnName} = :can_delete
-            WHERE $subjectIdColumnName = :subject_id AND $resourceIdColumnName = :resource_id
+                ${AbstractAuthorizationRepository.CanDeleteColumnName} = :can_delete,
+                ${AbstractAuthorizationRepository.CanUpdatePermissionsColumnName} = :can_update_permissions
             """,
             MapSqlParameterSource(
                 mapOf(
                     "can_read" to canRead,
                     "can_update" to canUpdate,
                     "can_delete" to canDelete,
+                    "can_update_permissions" to canUpdatePermissions,
                     "subject_id" to subjectId,
                     "resource_id" to resourceId
                 )
