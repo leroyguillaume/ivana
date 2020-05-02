@@ -29,5 +29,5 @@ abstract class AbstractOwnableEntityRepository<E : OwnableEntity>
         LIMIT :limit
         """,
         MapSqlParameterSource(mapOf("owner_id" to ownerId, "offset" to offset, "limit" to limit))
-    ) { rs, _ -> entityFromResultSet(rs) }
+    ) { rs, _ -> rs.toEntity() }
 }

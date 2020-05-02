@@ -5,13 +5,9 @@ package io.ivana.api.web.v1
 import com.nhaarman.mockitokotlin2.verify
 import com.nhaarman.mockitokotlin2.whenever
 import io.ivana.api.impl.AlbumAlreadyContainsPhotosException
-import io.ivana.api.impl.PhotosNotFoundException
-import io.ivana.api.security.Permission
+import io.ivana.api.impl.ResourcesNotFoundException
 import io.ivana.api.web.AbstractControllerTest
-import io.ivana.core.Album
-import io.ivana.core.AlbumEvent
-import io.ivana.core.Page
-import io.ivana.core.Photo
+import io.ivana.core.*
 import io.ivana.dto.*
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -432,7 +428,7 @@ internal class AlbumControllerTest : AbstractControllerTest() {
         fun `should return 400 if photos does not exist`() = authenticated {
             whenever(userAlbumAuthzRepo.fetch(principal.user.id, album.id)).thenReturn(setOf(Permission.Update))
             whenever(albumService.update(album.id, updateContent, source)).thenAnswer {
-                throw PhotosNotFoundException(duplicateIds)
+                throw ResourcesNotFoundException.Photo(duplicateIds)
             }
             callAndExpectDto(
                 method = method,
@@ -440,7 +436,7 @@ internal class AlbumControllerTest : AbstractControllerTest() {
                 reqCookies = listOf(accessTokenCookie()),
                 reqContent = mapper.writeValueAsString(updateDto),
                 status = HttpStatus.BAD_REQUEST,
-                respDto = ErrorDto.PhotosNotFound(duplicateIds)
+                respDto = ErrorDto.ResourcesNotFound(ErrorDto.ResourcesNotFound.Type.Photo, duplicateIds)
             )
             verify(userAlbumAuthzRepo).fetch(principal.user.id, album.id)
             verify(albumService).update(album.id, updateContent, source)

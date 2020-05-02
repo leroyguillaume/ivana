@@ -5,10 +5,7 @@ import io.ivana.api.security.CustomAuthentication
 import io.ivana.api.security.PhotoTargetType
 import io.ivana.api.security.UserPrincipal
 import io.ivana.api.web.source
-import io.ivana.core.EventSource
-import io.ivana.core.Photo
-import io.ivana.core.PhotoService
-import io.ivana.core.Transform
+import io.ivana.core.*
 import io.ivana.dto.*
 import org.slf4j.LoggerFactory
 import org.springframework.core.io.FileSystemResource
@@ -32,7 +29,8 @@ import javax.validation.constraints.Min
 @RequestMapping(PhotoApiEndpoint)
 @Validated
 class PhotoController(
-    private val photoService: PhotoService
+    private val photoService: PhotoService,
+    private val userService: UserService
 ) {
     internal companion object {
         val MediaTypeToPhotoType = mapOf(
@@ -85,6 +83,21 @@ class PhotoController(
         photoFileResponseEntity(file, photo.type)
     }
 
+    @GetMapping("/{id:$UuidRegex}$PermissionsEndpoint")
+    @PreAuthorize("hasPermission(#id, '$PhotoTargetType', 'update_permissions')")
+    @ResponseStatus(HttpStatus.OK)
+    @Suppress("MVCPathVariableInspection", "RegExpUnexpectedAnchor")
+    fun getPermissions(
+        @PathVariable id: UUID,
+        @RequestParam(name = PageParamName, required = false, defaultValue = "1") @Min(1) page: Int,
+        @RequestParam(name = SizeParamName, required = false, defaultValue = "10") @Min(1) size: Int
+    ): PageDto<SubjectPermissionsDto> {
+        val subjPerms = photoService.getPermissions(id, page, size)
+        val usersIds = subjPerms.content.map { it.subjectId }.toSet()
+        val users = userService.getAllByIds(usersIds).map { it.id to it }.toMap()
+        return subjPerms.toDto { it.toDto(users.getValue(it.subjectId).name) }
+    }
+
     @GetMapping("/{id:$UuidRegex}$RawPhotoEndpoint")
     @PreAuthorize("hasPermission(#id, '$PhotoTargetType', 'read')")
     @ResponseStatus(HttpStatus.OK)
@@ -92,6 +105,28 @@ class PhotoController(
     fun getRawFile(@PathVariable id: UUID) = photoService.getById(id).let { photo ->
         val file = photoService.getRawFile(photo)
         photoFileResponseEntity(file, photo.type)
+    }
+
+    @Transactional
+    @PutMapping("/{id:$UuidRegex}$PermissionsEndpoint")
+    @PreAuthorize("hasPermission(#id, '$PhotoTargetType', 'update')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Suppress("MVCPathVariableInspection", "RegExpUnexpectedAnchor")
+    fun updatePermissions(
+        @PathVariable id: UUID,
+        @RequestBody @Valid dto: PhotoUpdatePermissionsDto,
+        auth: Authentication,
+        req: HttpServletRequest
+    ) {
+        val principal = auth.principal as UserPrincipal
+        val usersIds = (dto.permissionsToAdd + dto.permissionsToRemove).map { it.subjectId }.toSet()
+        val users = userService.getAllByIds(usersIds).map { it.id to it }.toMap()
+        photoService.updatePermissions(
+            id = id,
+            permissionsToAdd = dto.permissionsToAdd.toUserPermissionsSet(users),
+            permissionsToRemove = dto.permissionsToRemove.toUserPermissionsSet(users),
+            source = req.source(principal)
+        )
     }
 
     @Transactional
@@ -135,9 +170,7 @@ class PhotoController(
             )
         } else {
             try {
-                val photo = photoService.uploadPhoto(
-                    file.inputStream, MediaTypeToPhotoType.getValue(contentType), source
-                )
+                val photo = photoService.upload(file.inputStream, MediaTypeToPhotoType.getValue(contentType), source)
                 PhotoUploadResultsDto.Result.Success(photo.toSimpleDto())
             } catch (exception: PhotoAlreadyUploadedException) {
                 PhotoUploadResultsDto.Result.Failure(
@@ -149,6 +182,21 @@ class PhotoController(
             }
         }
     }
+
+    private fun PermissionDto.toPermission() = when (this) {
+        PermissionDto.Read -> Permission.Read
+        PermissionDto.Update -> Permission.Update
+        PermissionDto.Delete -> Permission.Delete
+        PermissionDto.UpdatePermissions -> Permission.UpdatePermissions
+    }
+
+    private fun Set<SubjectPermissionsUpdateDto>.toUserPermissionsSet(users: Map<UUID, User>) =
+        map { dto ->
+            UserPermissions(
+                user = users.getValue(dto.subjectId),
+                permissions = dto.permissions.map { it.toPermission() }.toSet()
+            )
+        }.toSet()
 
     private fun TransformDto.toTransform() = when (this) {
         is TransformDto.Rotation -> Transform.Rotation(degrees)

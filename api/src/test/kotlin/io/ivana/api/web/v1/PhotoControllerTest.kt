@@ -4,15 +4,10 @@ package io.ivana.api.web.v1
 
 import com.nhaarman.mockitokotlin2.*
 import io.ivana.api.impl.PhotoAlreadyUploadedException
-import io.ivana.api.security.Permission
+import io.ivana.api.impl.PhotoOwnerPermissionsUpdateException
 import io.ivana.api.web.AbstractControllerTest
-import io.ivana.core.LinkedPhotos
-import io.ivana.core.Page
-import io.ivana.core.Photo
-import io.ivana.core.Transform
-import io.ivana.dto.ErrorDto
-import io.ivana.dto.PhotoUploadResultsDto
-import io.ivana.dto.TransformDto
+import io.ivana.core.*
+import io.ivana.dto.*
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
@@ -337,6 +332,119 @@ internal class PhotoControllerTest : AbstractControllerTest() {
     }
 
     @Nested
+    inner class getPermissions {
+        private val photoId = UUID.randomUUID()
+        private val pageNo = 2
+        private val pageSize = 3
+        private val page = Page(
+            content = listOf(
+                SubjectPermissions(
+                    subjectId = userPrincipal.user.id,
+                    permissions = setOf(Permission.Read)
+                ),
+                SubjectPermissions(
+                    subjectId = adminPrincipal.user.id,
+                    permissions = setOf(Permission.Delete)
+                )
+            ),
+            no = pageNo,
+            totalItems = 2,
+            totalPages = 1
+        )
+        private val users = setOf(userPrincipal.user, adminPrincipal.user)
+        private val usersIds = users.map { it.id }.toSet()
+        private val pageDto = PageDto(
+            content = listOf(
+                SubjectPermissionsDto(
+                    subjectId = userPrincipal.user.id,
+                    subjectName = userPrincipal.user.name,
+                    permissions = setOf(PermissionDto.Read)
+                ),
+                SubjectPermissionsDto(
+                    subjectId = adminPrincipal.user.id,
+                    subjectName = adminPrincipal.user.name,
+                    permissions = setOf(PermissionDto.Delete)
+                )
+            ),
+            no = page.no,
+            totalItems = page.totalItems,
+            totalPages = page.totalPages
+        )
+        private val method = HttpMethod.GET
+        private val uri = "$PhotoApiEndpoint/$photoId$PermissionsEndpoint"
+
+        @Test
+        fun `should return 401 if user is anonymous`() {
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                status = HttpStatus.UNAUTHORIZED,
+                respDto = ErrorDto.Unauthorized
+            )
+        }
+
+        @Test
+        fun `should return 400 if parameters are lower than 1`() = authenticated {
+            whenever(userPhotoAuthzRepo.fetch(principal.user.id, photoId))
+                .thenReturn(setOf(Permission.UpdatePermissions))
+            callAndExpectDto(
+                method = method,
+                params = mapOf(
+                    PageParamName to listOf("-1"),
+                    SizeParamName to listOf("-1")
+                ),
+                uri = uri,
+                reqCookies = listOf(accessTokenCookie()),
+                status = HttpStatus.BAD_REQUEST,
+                respDto = ErrorDto.ValidationError(
+                    errors = listOf(minErrorDto(PageParamName, 1), minErrorDto(SizeParamName, 1))
+                )
+            )
+            verify(userPhotoAuthzRepo).fetch(principal.user.id, photoId)
+        }
+
+        @Test
+        fun `should return 403 if user does not have permission`() = authenticated {
+            whenever(userPhotoAuthzRepo.fetch(principal.user.id, photoId))
+                .thenReturn(EnumSet.complementOf(EnumSet.of(Permission.UpdatePermissions)))
+            callAndExpectDto(
+                method = method,
+                params = mapOf(
+                    PageParamName to listOf(pageNo.toString()),
+                    SizeParamName to listOf(pageSize.toString())
+                ),
+                uri = uri,
+                reqCookies = listOf(accessTokenCookie()),
+                status = HttpStatus.FORBIDDEN,
+                respDto = ErrorDto.Forbidden
+            )
+            verify(userPhotoAuthzRepo).fetch(principal.user.id, photoId)
+        }
+
+        @Test
+        fun `should return 200`() = authenticated {
+            whenever(userPhotoAuthzRepo.fetch(principal.user.id, photoId))
+                .thenReturn(setOf(Permission.UpdatePermissions))
+            whenever(photoService.getPermissions(photoId, pageNo, pageSize)).thenReturn(page)
+            whenever(userService.getAllByIds(usersIds)).thenReturn(users)
+            callAndExpectDto(
+                method = method,
+                params = mapOf(
+                    PageParamName to listOf(pageNo.toString()),
+                    SizeParamName to listOf(pageSize.toString())
+                ),
+                uri = uri,
+                reqCookies = listOf(accessTokenCookie()),
+                status = HttpStatus.OK,
+                respDto = pageDto
+            )
+            verify(userPhotoAuthzRepo).fetch(principal.user.id, photoId)
+            verify(photoService).getPermissions(photoId, pageNo, pageSize)
+            verify(userService).getAllByIds(usersIds)
+        }
+    }
+
+    @Nested
     inner class getRawFile {
         private val jpgPhoto = Photo(
             id = UUID.randomUUID(),
@@ -477,6 +585,107 @@ internal class PhotoControllerTest : AbstractControllerTest() {
     }
 
     @Nested
+    inner class updatePermissions {
+        private val permissionToAdd = SubjectPermissionsUpdateDto(
+            subjectId = userPrincipal.user.id,
+            permissions = setOf(PermissionDto.Read)
+        )
+        private val permissionToRemove = SubjectPermissionsUpdateDto(
+            subjectId = adminPrincipal.user.id,
+            permissions = setOf(PermissionDto.Delete)
+        )
+        private val users = setOf(userPrincipal.user, adminPrincipal.user)
+        private val usersIds = users.map { it.id }.toSet()
+        private val dto = PhotoUpdatePermissionsDto(
+            permissionsToAdd = setOf(permissionToAdd),
+            permissionsToRemove = setOf(permissionToRemove)
+        )
+        private val permissionsToAdd = setOf(
+            UserPermissions(
+                user = userPrincipal.user,
+                permissions = setOf(Permission.Read)
+            )
+        )
+        private val permissionsToRemove = setOf(
+            UserPermissions(
+                user = adminPrincipal.user,
+                permissions = setOf(Permission.Delete)
+            )
+        )
+        private val photo = Photo(
+            id = UUID.randomUUID(),
+            ownerId = userPrincipal.user.id,
+            uploadDate = OffsetDateTime.now(),
+            type = Photo.Type.Jpg,
+            hash = "hash",
+            no = 1,
+            version = 1
+        )
+        private val method = HttpMethod.PUT
+        private val uri = "$PhotoApiEndpoint/${photo.id}$PermissionsEndpoint"
+
+        @Test
+        fun `should return 401 if user is anonymous`() {
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                status = HttpStatus.UNAUTHORIZED,
+                respDto = ErrorDto.Unauthorized
+            )
+        }
+
+        @Test
+        fun `should return 403 if user does not have permission`() = authenticated {
+            whenever(userPhotoAuthzRepo.fetch(principal.user.id, photo.id))
+                .thenReturn(EnumSet.complementOf(EnumSet.of(Permission.Update)))
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                reqCookies = listOf(accessTokenCookie()),
+                reqContent = mapper.writeValueAsString(dto),
+                status = HttpStatus.FORBIDDEN,
+                respDto = ErrorDto.Forbidden
+            )
+            verify(userPhotoAuthzRepo).fetch(principal.user.id, photo.id)
+        }
+
+        @Test
+        fun `should return 400 if owner permissions are update`() = authenticated {
+            whenever(userPhotoAuthzRepo.fetch(principal.user.id, photo.id)).thenReturn(setOf(Permission.Update))
+            whenever(userService.getAllByIds(usersIds)).thenReturn(users)
+            whenever(photoService.updatePermissions(photo.id, permissionsToAdd, permissionsToRemove, source))
+                .thenAnswer { throw PhotoOwnerPermissionsUpdateException() }
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                reqCookies = listOf(accessTokenCookie()),
+                reqContent = mapper.writeValueAsString(dto),
+                status = HttpStatus.BAD_REQUEST,
+                respDto = ErrorDto.PhotoOwnerPermissionsUpdate
+            )
+            verify(userPhotoAuthzRepo).fetch(principal.user.id, photo.id)
+            verify(userService).getAllByIds(usersIds)
+            verify(photoService).updatePermissions(photo.id, permissionsToAdd, permissionsToRemove, source)
+        }
+
+        @Test
+        fun `should return 204`() = authenticated {
+            whenever(userPhotoAuthzRepo.fetch(principal.user.id, photo.id)).thenReturn(setOf(Permission.Update))
+            whenever(userService.getAllByIds(usersIds)).thenReturn(users)
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                reqCookies = listOf(accessTokenCookie()),
+                reqContent = mapper.writeValueAsString(dto),
+                status = HttpStatus.NO_CONTENT
+            )
+            verify(userPhotoAuthzRepo).fetch(principal.user.id, photo.id)
+            verify(userService).getAllByIds(usersIds)
+            verify(photoService).updatePermissions(photo.id, permissionsToAdd, permissionsToRemove, source)
+        }
+    }
+
+    @Nested
     inner class upload {
         private val jpgFile = File(javaClass.getResource("/data/photo.jpg").file)
         private val pngFile = File(javaClass.getResource("/data/photo.png").file)
@@ -504,7 +713,7 @@ internal class PhotoControllerTest : AbstractControllerTest() {
         @Test
         fun `should return 201`() = authenticated {
             var callNb = 0
-            whenever(photoService.uploadPhoto(any(), any(), eq(source))).then {
+            whenever(photoService.upload(any(), any(), eq(source))).then {
                 when (++callNb) {
                     1 -> jpgPhoto
                     2 -> pngPhoto
@@ -548,7 +757,7 @@ internal class PhotoControllerTest : AbstractControllerTest() {
                     )
                 )
             )
-            verify(photoService, times(4)).uploadPhoto(any(), any(), eq(source))
+            verify(photoService, times(4)).upload(any(), any(), eq(source))
         }
     }
 }

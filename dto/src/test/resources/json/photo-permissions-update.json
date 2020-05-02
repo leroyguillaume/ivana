@@ -1,0 +1,18 @@
+{
+  "permissionsToAdd": [
+    {
+      "subjectId": "a526a3f3-98dc-4cca-8d5b-43a20fe02963",
+      "permissions": [
+        "read"
+      ]
+    }
+  ],
+  "permissionsToRemove": [
+    {
+      "subjectId": "faf7a32c-8211-4536-9a18-417a34aedf21",
+      "permissions": [
+        "delete"
+      ]
+    }
+  ]
+}

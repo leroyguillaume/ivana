@@ -19,6 +19,7 @@ import java.util.*
 
 internal class AlbumServiceImplTest {
     private lateinit var albumRepo: AlbumRepository
+    private lateinit var authzRepo: UserAlbumAuthorizationRepository
     private lateinit var albumEventRepo: AlbumEventRepository
     private lateinit var photoRepo: PhotoRepository
     private lateinit var service: AlbumServiceImpl
@@ -26,10 +27,11 @@ internal class AlbumServiceImplTest {
     @BeforeEach
     fun beforeEach() {
         albumRepo = mockk()
+        authzRepo = mockk()
         albumEventRepo = mockk()
         photoRepo = mockk()
 
-        service = AlbumServiceImpl(albumRepo, albumEventRepo, photoRepo)
+        service = AlbumServiceImpl(albumRepo, authzRepo, albumEventRepo, photoRepo)
     }
 
     @Nested
@@ -165,6 +167,76 @@ internal class AlbumServiceImplTest {
     }
 
     @Nested
+    inner class getAllByIds {
+        private val expectedAlbums = setOf(
+            Album(
+                id = UUID.randomUUID(),
+                ownerId = UUID.randomUUID(),
+                name = "album1",
+                creationDate = OffsetDateTime.now()
+            ),
+            Album(
+                id = UUID.randomUUID(),
+                ownerId = UUID.randomUUID(),
+                name = "album2",
+                creationDate = OffsetDateTime.now()
+            )
+        )
+        private val ids = expectedAlbums.map { it.id }.toSet()
+
+        @Test
+        fun `should throw exception if entities not found`() {
+            every { albumRepo.fetchAllByIds(ids) } returns emptySet()
+            val exception = assertThrows<ResourcesNotFoundException> { service.getAllByIds(ids) }
+            exception.ids shouldBe ids
+            verify { albumRepo.fetchAllByIds(ids) }
+            confirmVerified(albumRepo)
+        }
+
+        @Test
+        fun `should return all albums`() {
+            every { albumRepo.fetchAllByIds(ids) } returns expectedAlbums
+            val albums = service.getAllByIds(ids)
+            albums shouldBe expectedAlbums
+            verify { albumRepo.fetchAllByIds(ids) }
+            confirmVerified(albumRepo)
+        }
+    }
+
+    @Nested
+    inner class getPermissions {
+        private val albumId = UUID.randomUUID()
+        private val pageNo = 1
+        private val pageSize = 3
+        private val expectedPage = Page(
+            content = listOf(
+                SubjectPermissions(
+                    subjectId = UUID.randomUUID(),
+                    permissions = setOf(Permission.Read)
+                ),
+                SubjectPermissions(
+                    subjectId = UUID.randomUUID(),
+                    permissions = setOf(Permission.Update)
+                )
+            ),
+            no = pageNo,
+            totalItems = 2,
+            totalPages = 1
+        )
+
+        @Test
+        fun `should return page`() {
+            every { authzRepo.fetchAll(albumId, pageNo - 1, pageSize) } returns expectedPage.content
+            every { authzRepo.count(albumId) } returns expectedPage.totalItems
+            val page = service.getPermissions(albumId, pageNo, pageSize)
+            page shouldBe expectedPage
+            verify { authzRepo.fetchAll(albumId, pageNo - 1, pageSize) }
+            verify { authzRepo.count(albumId) }
+            confirmVerified(authzRepo)
+        }
+    }
+
+    @Nested
     inner class getAllPhotos {
         private val albumId = UUID.randomUUID()
         private val pageNo = 1
@@ -277,10 +349,10 @@ internal class AlbumServiceImplTest {
         fun `should throw exception if photos does not exist`() {
             every { albumRepo.existsById(expectedAlbum.id) } returns true
             every { photoRepo.fetchExistingIds(duplicateIds) } returns emptySet()
-            val exception = assertThrows<PhotosNotFoundException> {
+            val exception = assertThrows<ResourcesNotFoundException.Photo> {
                 service.update(expectedAlbum.id, event.content, event.source)
             }
-            exception.photosIds shouldBe duplicateIds
+            exception.ids shouldBe duplicateIds
             verify { albumRepo.existsById(expectedAlbum.id) }
             verify { photoRepo.fetchExistingIds(duplicateIds) }
             confirmVerified(albumRepo, photoRepo)

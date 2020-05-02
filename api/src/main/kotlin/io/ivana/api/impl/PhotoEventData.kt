@@ -39,6 +39,16 @@ internal sealed class PhotoEventData : EventData {
         }
     }
 
+    data class UpdatePermissions(
+        override val source: EventSourceData.User,
+        val content: Content
+    ) : PhotoEventData() {
+        data class Content(
+            val permissionsToAdd: Set<SubjectPermissionsData>,
+            val permissionsToRemove: Set<SubjectPermissionsData>
+        )
+    }
+
     data class Upload(
         override val source: EventSourceData.User,
         val content: Content

@@ -59,4 +59,8 @@ class UserServiceImpl(
             is EventSource.User -> Logger.info("User ${source.id} (${source.ip}) changed password of user $id")
         }
     }
+
+    override fun throwResourcesNotFoundException(ids: Set<UUID>) {
+        throw ResourcesNotFoundException.User(ids)
+    }
 }

@@ -19,6 +19,7 @@ const val CompressedPhotoEndpoint = "/compressed"
 const val TransformPhotoEndpoint = "/transform"
 const val AlbumApiEndpoint = "$RootEndpoint/album"
 const val ContentEndpoint = "/content"
+const val PermissionsEndpoint = "/permissions"
 
 const val FilesParamName = "files"
 const val NavigableParamName = "navigable"
@@ -30,28 +31,38 @@ const val UuidRegex = "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB
 fun Album.toDto() = AlbumDto(
     id = id,
     name = name,
+    ownerId = ownerId,
     creationDate = creationDate
 )
 
-fun <E : Entity, D : EntityDto> Page<E>.toDto(mapper: (E) -> D) = PageDto(
+fun LinkedPhotos.toNavigableDto() = PhotoDto.Navigable(
+    id = current.id,
+    ownerId = current.ownerId,
+    rawUri = rawUri(current.id),
+    compressedUri = compressedUri(current.id),
+    previous = previous?.toSimpleDto(),
+    next = next?.toSimpleDto()
+)
+
+fun <E, D> Page<E>.toDto(mapper: (E) -> D) = PageDto(
     content = content.map(mapper),
     no = no,
     totalItems = totalItems,
     totalPages = totalPages
 )
 
+fun Permission.toDto() = when (this) {
+    Permission.Read -> PermissionDto.Read
+    Permission.Update -> PermissionDto.Update
+    Permission.Delete -> PermissionDto.Delete
+    Permission.UpdatePermissions -> PermissionDto.UpdatePermissions
+}
+
 fun Photo.toSimpleDto() = PhotoDto.Simple(
     id = id,
+    ownerId = ownerId,
     rawUri = rawUri(id),
     compressedUri = compressedUri(id)
-)
-
-fun LinkedPhotos.toNavigableDto() = PhotoDto.Navigable(
-    id = current.id,
-    rawUri = rawUri(current.id),
-    compressedUri = compressedUri(current.id),
-    previous = previous?.toSimpleDto(),
-    next = next?.toSimpleDto()
 )
 
 fun Role.toDto() = when (this) {
@@ -59,6 +70,12 @@ fun Role.toDto() = when (this) {
     Role.Admin -> RoleDto.Admin
     Role.SuperAdmin -> RoleDto.SuperAdmin
 }
+
+fun SubjectPermissions.toDto(name: String) = SubjectPermissionsDto(
+    subjectId = subjectId,
+    subjectName = name,
+    permissions = permissions.map { it.toDto() }.toSet()
+)
 
 fun User.toDto() = UserDto(
     id = id,

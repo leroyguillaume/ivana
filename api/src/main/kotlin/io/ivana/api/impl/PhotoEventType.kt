@@ -1,10 +1,12 @@
 package io.ivana.api.impl
 
-enum class PhotoEventType : EventType {
-    Deletion,
-    Transform,
-    Upload;
+enum class PhotoEventType(
+    override val sqlValue: String
+) : EventType {
+    Deletion("deletion"),
+    Transform("transform"),
+    UpdatePermissions("update_permissions"),
+    Upload("upload");
 
-    override val sqlValue = name.toLowerCase()
     override val sqlType = "photo_event_type"
 }

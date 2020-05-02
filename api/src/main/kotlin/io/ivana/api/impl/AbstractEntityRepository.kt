@@ -45,7 +45,20 @@ abstract class AbstractEntityRepository<E : Entity> : EntityRepository<E> {
         LIMIT :limit
         """,
         MapSqlParameterSource(mapOf("offset" to offset, "limit" to limit))
-    ) { rs, _ -> entityFromResultSet(rs) }
+    ) { rs, _ -> rs.toEntity() }
+
+    override fun fetchAllByIds(ids: Set<UUID>) = if (ids.isEmpty()) {
+        emptySet()
+    } else {
+        jdbc.query(
+            """
+            SELECT *
+            FROM $tableName
+            WHERE $IdColumnName IN (:ids)
+            """,
+            MapSqlParameterSource(mapOf("ids" to ids))
+        ) { rs, _ -> rs.toEntity() }.toSet()
+    }
 
     override fun fetchById(id: UUID) = fetchBy(IdColumnName, id)
 
@@ -72,12 +85,12 @@ abstract class AbstractEntityRepository<E : Entity> : EntityRepository<E> {
             WHERE $whereSql
             """,
             params
-        ) { rs, _ -> entityFromResultSet(rs) }
+        ) { rs, _ -> rs.toEntity() }
     } catch (exception: EmptyResultDataAccessException) {
         null
     }
 
-    protected abstract fun entityFromResultSet(rs: ResultSet): E
+    protected abstract fun ResultSet.toEntity(): E
 
     protected data class Column(
         val name: String,

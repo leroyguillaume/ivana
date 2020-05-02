@@ -31,10 +31,10 @@ class AlbumRepositoryImpl(
         MapSqlParameterSource(mapOf("album_id" to id, "photos_ids" to photosIds))
     ) { rs, _ -> rs.getObject(1, UUID::class.java) }.toSet()
 
-    override fun entityFromResultSet(rs: ResultSet) = Album(
-        id = rs.getObject(IdColumnName, UUID::class.java),
-        ownerId = rs.getObject(OwnerIdColumnName, UUID::class.java),
-        name = rs.getString(NameColumnName),
-        creationDate = rs.getObject(CreationDateColumnName, OffsetDateTime::class.java)
+    override fun ResultSet.toEntity() = Album(
+        id = getObject(IdColumnName, UUID::class.java),
+        ownerId = getObject(OwnerIdColumnName, UUID::class.java),
+        name = getString(NameColumnName),
+        creationDate = getObject(CreationDateColumnName, OffsetDateTime::class.java)
     )
 }

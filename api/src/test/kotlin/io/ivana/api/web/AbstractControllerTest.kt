@@ -4,9 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.nhaarman.mockitokotlin2.reset
 import com.nhaarman.mockitokotlin2.verify
 import com.nhaarman.mockitokotlin2.whenever
+import io.ivana.api.impl.UserAlbumAuthorizationRepositoryImpl
+import io.ivana.api.impl.UserPhotoAuthorizationRepositoryImpl
 import io.ivana.api.security.AuthenticationService
-import io.ivana.api.security.UserAlbumAuthorizationRepository
-import io.ivana.api.security.UserPhotoAuthorizationRepository
 import io.ivana.api.security.UserPrincipal
 import io.ivana.core.*
 import io.ivana.dto.ErrorDto
@@ -81,10 +81,10 @@ abstract class AbstractControllerTest {
     protected lateinit var mvc: MockMvc
 
     @MockBean
-    protected lateinit var userPhotoAuthzRepo: UserPhotoAuthorizationRepository
+    protected lateinit var userPhotoAuthzRepo: UserPhotoAuthorizationRepositoryImpl
 
     @MockBean
-    protected lateinit var userAlbumAuthzRepo: UserAlbumAuthorizationRepository
+    protected lateinit var userAlbumAuthzRepo: UserAlbumAuthorizationRepositoryImpl
 
     @MockBean
     protected lateinit var userRepo: UserRepository

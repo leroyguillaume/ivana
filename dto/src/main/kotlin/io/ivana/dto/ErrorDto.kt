@@ -15,7 +15,8 @@ private const val MalformedRequestCodeValue = "malformed_request"
 private const val MethodNotAllowedCodeValue = "method_not_allowed"
 private const val MissingParameterCodeValue = "missing_parameter"
 private const val NotFoundCodeValue = "not_found"
-private const val PhotosNotFoundCodeValue = "photos_not_found"
+private const val PhotoOwnerPermissionsUpdateCodeValue = "photo_owner_permissions_update"
+private const val ResourcesNotFoundCodeValue = "resources_not_found"
 private const val UnauthorizedCodeValue = "unauthorized"
 private const val UnsupportedMediaTypeCodeValue = "unsupported_media_type"
 private const val ValidationErrorCodeValue = "validation_error"
@@ -35,7 +36,8 @@ private const val ValidationErrorCodeValue = "validation_error"
     JsonSubTypes.Type(value = ErrorDto.MethodNotAllowed::class, name = MethodNotAllowedCodeValue),
     JsonSubTypes.Type(value = ErrorDto.MissingParameter::class, name = MissingParameterCodeValue),
     JsonSubTypes.Type(value = ErrorDto.NotFound::class, name = NotFoundCodeValue),
-    JsonSubTypes.Type(value = ErrorDto.PhotosNotFound::class, name = PhotosNotFoundCodeValue),
+    JsonSubTypes.Type(value = ErrorDto.PhotoOwnerPermissionsUpdate::class, name = PhotoOwnerPermissionsUpdateCodeValue),
+    JsonSubTypes.Type(value = ErrorDto.ResourcesNotFound::class, name = ResourcesNotFoundCodeValue),
     JsonSubTypes.Type(value = ErrorDto.Unauthorized::class, name = UnauthorizedCodeValue),
     JsonSubTypes.Type(value = ErrorDto.UnsupportedMediaType::class, name = UnsupportedMediaTypeCodeValue),
     JsonSubTypes.Type(value = ErrorDto.ValidationError::class, name = ValidationErrorCodeValue)
@@ -69,8 +71,11 @@ sealed class ErrorDto {
         @JsonProperty(NotFoundCodeValue)
         NotFound,
 
-        @JsonProperty(PhotosNotFoundCodeValue)
-        PhotosNotFound,
+        @JsonProperty(PhotoOwnerPermissionsUpdateCodeValue)
+        PhotoOwnerPermissionsUpdate,
+
+        @JsonProperty(ResourcesNotFoundCodeValue)
+        ResourcesNotFound,
 
         @JsonProperty(UnauthorizedCodeValue)
         Unauthorized,
@@ -137,10 +142,28 @@ sealed class ErrorDto {
         override fun equals(other: Any?) = other is NotFound
     }
 
-    data class PhotosNotFound(
-        val photosIds: Set<UUID>
+    object PhotoOwnerPermissionsUpdate : ErrorDto() {
+        override val code = Code.PhotoOwnerPermissionsUpdate
+
+        override fun equals(other: Any?) = other is PhotoOwnerPermissionsUpdate
+    }
+
+    data class ResourcesNotFound(
+        val type: Type,
+        val ids: Set<UUID>
     ) : ErrorDto() {
-        override val code = Code.PhotosNotFound
+        enum class Type {
+            @JsonProperty("album")
+            Album,
+
+            @JsonProperty("photo")
+            Photo,
+
+            @JsonProperty("user")
+            User
+        }
+
+        override val code = Code.ResourcesNotFound
     }
 
     object Unauthorized : ErrorDto() {

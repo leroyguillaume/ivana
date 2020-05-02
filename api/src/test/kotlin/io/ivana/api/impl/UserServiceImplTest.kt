@@ -144,6 +144,45 @@ internal class UserServiceImplTest {
     }
 
     @Nested
+    inner class getAllByIds {
+        private val expectedUsers = setOf(
+            User(
+                id = UUID.randomUUID(),
+                name = "user1",
+                hashedPwd = "hashedPwd",
+                role = Role.User,
+                creationDate = OffsetDateTime.now()
+            ),
+            User(
+                id = UUID.randomUUID(),
+                name = "user2",
+                hashedPwd = "hashedPwd",
+                role = Role.User,
+                creationDate = OffsetDateTime.now()
+            )
+        )
+        private val ids = expectedUsers.map { it.id }.toSet()
+
+        @Test
+        fun `should throw exception if entities not found`() {
+            every { userRepo.fetchAllByIds(ids) } returns emptySet()
+            val exception = assertThrows<ResourcesNotFoundException> { service.getAllByIds(ids) }
+            exception.ids shouldBe ids
+            verify { userRepo.fetchAllByIds(ids) }
+            confirmVerified(userRepo)
+        }
+
+        @Test
+        fun `should return all users`() {
+            every { userRepo.fetchAllByIds(ids) } returns expectedUsers
+            val users = service.getAllByIds(ids)
+            users shouldBe expectedUsers
+            verify { userRepo.fetchAllByIds(ids) }
+            confirmVerified(userRepo)
+        }
+    }
+
+    @Nested
     inner class getByName {
         private val expectedUser = User(
             id = UUID.randomUUID(),

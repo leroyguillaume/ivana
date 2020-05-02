@@ -74,13 +74,44 @@ internal class ErrorDtoTest {
     )
 
     @Nested
-    inner class PhotosNotFound : JsonTest(
-        filename = "error/photos-not-found.json",
-        expectedValue = ErrorDto.PhotosNotFound(
-            photosIds = setOf(UUID.fromString("61f11547-a340-441c-bce7-551234d5d361"))
-        ),
+    inner class PhotoOwnerPermissionsUpdate : JsonTest(
+        filename = "error/photo-owner-permissions-update.json",
+        expectedValue = ErrorDto.PhotoOwnerPermissionsUpdate,
         deserializeAs = typeOf<ErrorDto>()
     )
+
+    @Nested
+    inner class ResourcesNotFound {
+        @Nested
+        inner class Album : JsonTest(
+            filename = "error/resources-not-found/album.json",
+            expectedValue = ErrorDto.ResourcesNotFound(
+                type = ErrorDto.ResourcesNotFound.Type.Album,
+                ids = setOf(UUID.fromString("61f11547-a340-441c-bce7-551234d5d361"))
+            ),
+            deserializeAs = typeOf<ErrorDto>()
+        )
+
+        @Nested
+        inner class Photo : JsonTest(
+            filename = "error/resources-not-found/photo.json",
+            expectedValue = ErrorDto.ResourcesNotFound(
+                type = ErrorDto.ResourcesNotFound.Type.Photo,
+                ids = setOf(UUID.fromString("61f11547-a340-441c-bce7-551234d5d361"))
+            ),
+            deserializeAs = typeOf<ErrorDto>()
+        )
+
+        @Nested
+        inner class User : JsonTest(
+            filename = "error/resources-not-found/user.json",
+            expectedValue = ErrorDto.ResourcesNotFound(
+                type = ErrorDto.ResourcesNotFound.Type.User,
+                ids = setOf(UUID.fromString("61f11547-a340-441c-bce7-551234d5d361"))
+            ),
+            deserializeAs = typeOf<ErrorDto>()
+        )
+    }
 
     @Nested
     inner class Unauthorized : JsonTest(

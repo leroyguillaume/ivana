@@ -23,6 +23,7 @@ internal class ExtensionsTest {
         val dto = AlbumDto(
             id = album.id,
             name = album.name,
+            ownerId = album.ownerId,
             creationDate = album.creationDate
         )
         album.toDto() shouldBe dto
@@ -77,6 +78,7 @@ internal class ExtensionsTest {
         )
         val dto = PhotoDto.Simple(
             id = photo.id,
+            ownerId = photo.ownerId,
             rawUri = rawUri(photo.id),
             compressedUri = compressedUri(photo.id)
         )
@@ -116,20 +118,46 @@ internal class ExtensionsTest {
         )
         val dto = PhotoDto.Navigable(
             id = linkedPhotos.current.id,
+            ownerId = linkedPhotos.current.ownerId,
             rawUri = rawUri(linkedPhotos.current.id),
             compressedUri = compressedUri(linkedPhotos.current.id),
             previous = PhotoDto.Simple(
                 id = linkedPhotos.previous!!.id,
+                ownerId = linkedPhotos.previous!!.ownerId,
                 rawUri = rawUri(linkedPhotos.previous!!.id),
                 compressedUri = compressedUri(linkedPhotos.previous!!.id)
             ),
             next = PhotoDto.Simple(
                 id = linkedPhotos.next!!.id,
+                ownerId = linkedPhotos.next!!.ownerId,
                 rawUri = rawUri(linkedPhotos.next!!.id),
                 compressedUri = compressedUri(linkedPhotos.next!!.id)
             )
         )
         linkedPhotos.toNavigableDto() shouldBe dto
+    }
+
+    @Nested
+    inner class permissionToPermissionDto {
+        @Test
+        fun read() {
+            Permission.Read.toDto() shouldBe PermissionDto.Read
+        }
+
+        @Test
+        fun update() {
+            Permission.Update.toDto() shouldBe PermissionDto.Update
+        }
+
+        @Test
+        fun delete() {
+            Permission.Delete.toDto() shouldBe PermissionDto.Delete
+        }
+
+        @Test
+        fun updatePermissions() {
+            Permission.UpdatePermissions.toDto() shouldBe PermissionDto.UpdatePermissions
+        }
     }
 
     @Nested
@@ -148,6 +176,20 @@ internal class ExtensionsTest {
         fun super_admin() {
             Role.SuperAdmin.toDto() shouldBe RoleDto.SuperAdmin
         }
+    }
+
+    @Test
+    fun subjectPermissionsToDto() {
+        val subjPerms = SubjectPermissions(
+            subjectId = UUID.randomUUID(),
+            permissions = setOf(Permission.Read)
+        )
+        val dto = SubjectPermissionsDto(
+            subjectId = subjPerms.subjectId,
+            subjectName = "user",
+            permissions = setOf(PermissionDto.Read)
+        )
+        subjPerms.toDto(dto.subjectName) shouldBe dto
     }
 
     @Test

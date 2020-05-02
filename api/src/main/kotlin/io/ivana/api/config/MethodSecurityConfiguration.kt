@@ -1,8 +1,8 @@
 package io.ivana.api.config
 
 import io.ivana.api.security.CustomPermissionEvaluator
-import io.ivana.api.security.UserAlbumAuthorizationRepository
-import io.ivana.api.security.UserPhotoAuthorizationRepository
+import io.ivana.core.UserAlbumAuthorizationRepository
+import io.ivana.core.UserPhotoAuthorizationRepository
 import io.ivana.core.UserRepository
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler

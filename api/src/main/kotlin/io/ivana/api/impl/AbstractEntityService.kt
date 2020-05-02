@@ -22,6 +22,17 @@ abstract class AbstractEntityService<E : Entity> : EntityService<E> {
         )
     }
 
+    override fun getAllByIds(ids: Set<UUID>): Set<E> {
+        val entities = repo.fetchAllByIds(ids)
+        if (entities.size != ids.size) {
+            val idsNotFound = ids - entities.map { it.id }
+            throwResourcesNotFoundException(idsNotFound)
+        }
+        return entities
+    }
+
     override fun getById(id: UUID) = repo.fetchById(id)
         ?: throw EntityNotFoundException("$entityName $id does not exist")
+
+    protected abstract fun throwResourcesNotFoundException(ids: Set<UUID>)
 }

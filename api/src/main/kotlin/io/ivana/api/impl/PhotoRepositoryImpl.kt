@@ -50,7 +50,7 @@ class PhotoRepositoryImpl(
         LIMIT :limit
         """,
         MapSqlParameterSource(mapOf("owner_id" to ownerId, "offset" to offset, "limit" to limit))
-    ) { rs, _ -> entityFromResultSet(rs) }
+    ) { rs, _ -> rs.toEntity() }
 
     override fun fetchAllOfAlbum(albumId: UUID, offset: Int, limit: Int) = jdbc.query(
         """
@@ -64,7 +64,7 @@ class PhotoRepositoryImpl(
         LIMIT :limit
         """,
         MapSqlParameterSource(mapOf("album_id" to albumId, "offset" to offset, "limit" to limit))
-    ) { rs, _ -> entityFromResultSet(rs) }
+    ) { rs, _ -> rs.toEntity() }
 
     override fun fetchByHash(ownerId: UUID, hash: String) = fetchBy(
         Column(OwnerIdColumnName, ownerId),
@@ -87,7 +87,7 @@ class PhotoRepositoryImpl(
                     "owner_id" to photo.ownerId
                 )
             )
-        ) { rs, _ -> entityFromResultSet(rs) }
+        ) { rs, _ -> rs.toEntity() }
     } catch (exception: EmptyResultDataAccessException) {
         null
     }
@@ -108,19 +108,19 @@ class PhotoRepositoryImpl(
                     "owner_id" to photo.ownerId
                 )
             )
-        ) { rs, _ -> entityFromResultSet(rs) }
+        ) { rs, _ -> rs.toEntity() }
     } catch (exception: EmptyResultDataAccessException) {
         null
     }
 
-    override fun entityFromResultSet(rs: ResultSet) = Photo(
-        id = rs.getObject(IdColumnName, UUID::class.java),
-        ownerId = rs.getObject(OwnerIdColumnName, UUID::class.java),
-        uploadDate = rs.getObject(UploadedDateColumnName, OffsetDateTime::class.java),
-        type = rs.getPhotoType(),
-        hash = rs.getString(HashColumnName),
-        no = rs.getInt(NoColumnName),
-        version = rs.getInt(VersionColumnName)
+    override fun ResultSet.toEntity() = Photo(
+        id = getObject(IdColumnName, UUID::class.java),
+        ownerId = getObject(OwnerIdColumnName, UUID::class.java),
+        uploadDate = getObject(UploadedDateColumnName, OffsetDateTime::class.java),
+        type = getPhotoType(),
+        hash = getString(HashColumnName),
+        no = getInt(NoColumnName),
+        version = getInt(VersionColumnName)
     )
 
     private fun ResultSet.getPhotoType() = getString(TypeColumnName).let { type ->
