@@ -2,35 +2,35 @@ import {Component, OnInit} from '@angular/core'
 import {IconDefinition} from '@fortawesome/fontawesome-common-types'
 import {faArrowLeft, faSpinner} from '@fortawesome/free-solid-svg-icons'
 import {ActivatedRoute, Router} from '@angular/router'
-import {Photo} from '../photo'
+import {Album} from '../album'
 import {finalize} from 'rxjs/operators'
 import {handleError} from '../util'
-import {PhotoService} from '../photo.service'
+import {AlbumService} from '../album.service'
 import {StateService} from '../state.service'
 import {SubjectPermissions} from '../subject-permissions'
 import {Page} from '../page'
 import {SubjectPermissionsUpdateEvent} from '../subject-permissions-update-event'
 import {Permission} from '../permission'
 
-export const PhotoPermissionsPageSize = 10
+export const AlbumPermissionsPageSize = 10
 
 @Component({
-  selector: 'app-photo-edition',
-  templateUrl: './photo-update.component.html',
-  styleUrls: ['./photo-update.component.scss']
+  selector: 'app-album-edition',
+  templateUrl: './album-update.component.html',
+  styleUrls: ['./album-update.component.scss']
 })
-export class PhotoUpdateComponent implements OnInit {
+export class AlbumUpdateComponent implements OnInit {
   arrowLeftIcon: IconDefinition = faArrowLeft
   spinnerIcon: IconDefinition = faSpinner
 
   loading: boolean = true
   updating: boolean = false
 
-  photo: Photo
+  album: Album
   permsPage: Page<SubjectPermissions>
 
   constructor(
-    private photoService: PhotoService,
+    private albumService: AlbumService,
     private stateService: StateService,
     private route: ActivatedRoute,
     private router: Router
@@ -38,17 +38,17 @@ export class PhotoUpdateComponent implements OnInit {
   }
 
   get updatePermissionsAllowed(): boolean {
-    return this.photo.permissions.indexOf(Permission.UpdatePermissions) > -1
+    return this.album.permissions.indexOf(Permission.UpdatePermissions) > -1
   }
 
   back(): void {
     // noinspection JSIgnoredPromiseFromCall
-    this.router.navigate(['/photo', this.photo.id])
+    this.router.navigate(['/album', this.album.id])
   }
 
   fetchPermissionsPage(no: number): void {
     this.loading = true
-    this.photoService.getPermissions(this.photo.id, no, PhotoPermissionsPageSize)
+    this.albumService.getPermissions(this.album.id, no, AlbumPermissionsPageSize)
       .pipe(finalize(() => this.loading = false))
       .subscribe(
         page => {
@@ -65,13 +65,13 @@ export class PhotoUpdateComponent implements OnInit {
       )
   }
 
-  fetchPhoto(id: string): void {
+  fetchAlbum(id: string): void {
     this.loading = true
-    this.photoService.get(id)
+    this.albumService.get(id)
       .pipe(finalize(() => this.loading = false))
       .subscribe(
-        photo => {
-          this.photo = photo
+        album => {
+          this.album = album
           this.fetchPermissionsPage(1)
         },
         error => handleError(error, this.stateService, this.router)
@@ -79,12 +79,12 @@ export class PhotoUpdateComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.route.paramMap.subscribe(params => this.fetchPhoto(params.get('id')))
+    this.route.paramMap.subscribe(params => this.fetchAlbum(params.get('id')))
   }
 
   updatePermissions(event: SubjectPermissionsUpdateEvent): void {
     this.updating = true
-    this.photoService.updatePermissions(this.photo.id, event.subjsPermsToAdd, event.subjsPermsToRemove)
+    this.albumService.updatePermissions(this.album.id, event.subjsPermsToAdd, event.subjsPermsToRemove)
       .pipe(finalize(() => this.updating = false))
       .subscribe(
         () => {

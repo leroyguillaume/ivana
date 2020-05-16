@@ -2,13 +2,16 @@
   <div ngbDropdown>
     <button class="btn btn-success mr-2" (click)="emitAlbumCreate()">
       <fa-icon [icon]="plusIcon"></fa-icon>
-      Créer
+      <span class="d-none d-md-inline"> Créer</span>
     </button>
-    <button class="btn btn-primary mr-2" ngbDropdownToggle [disabled]="selectedAlbums.size === 0">Actions</button>
+    <button class="btn btn-primary mr-2" ngbDropdownToggle [disabled]="selectedAlbums.size === 0">
+      <fa-icon [icon]="cogIcon"></fa-icon>
+      <span class="d-none d-md-inline"> Actions</span>
+    </button>
     <div ngbDropdownMenu>
       <button class="btn btn-danger" (click)="deleteSelectedAlbums()" ngbDropdownItem>
         <fa-icon [icon]="trashIcon"></fa-icon>
-        Supprimer
+        <span> Supprimer</span>
       </button>
     </div>
     <div class="btn-group">

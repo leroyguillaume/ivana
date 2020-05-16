@@ -5,6 +5,8 @@ import {Page} from './page'
 import {environment} from '../environments/environment'
 import {Album} from './album'
 import {Photo} from './photo'
+import {SubjectPermissions} from './subject-permissions'
+import {SubjectPermissionsUpdate} from './subject-permissions-update'
 
 @Injectable({
   providedIn: 'root'
@@ -43,6 +45,19 @@ export class AlbumService {
     )
   }
 
+  getPermissions(id: string, page: number, size: number): Observable<Page<SubjectPermissions>> {
+    return this.http.get<Page<SubjectPermissions>>(
+      `${this.baseUrl}/${id}/permissions`,
+      {
+        withCredentials: true,
+        params: {
+          page: page.toString(),
+          size: size.toString()
+        }
+      }
+    )
+  }
+
   getAllPhotos(albumId: string, page: number, size: number): Observable<Page<Photo>> {
     return this.http.get<Page<Photo>>(
       `${this.baseUrl}/${albumId}/content`,
@@ -63,5 +78,17 @@ export class AlbumService {
       photosToRemove: photosIdsToRemove
     }
     return this.http.put<Album>(`${this.baseUrl}/${id}`, dto, {withCredentials: true})
+  }
+
+  updatePermissions(
+    id: string,
+    permissionsToAdd: SubjectPermissionsUpdate[],
+    permissionsToRemove: SubjectPermissionsUpdate[]
+  ): Observable<void> {
+    const dto = {
+      permissionsToAdd,
+      permissionsToRemove
+    }
+    return this.http.put<void>(`${this.baseUrl}/${id}/permissions`, dto, {withCredentials: true})
   }
 }

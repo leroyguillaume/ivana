@@ -21,6 +21,21 @@
   background-color: $panel-bg;
 }
 
+.nav-tabs {
+  .nav-link {
+    color: $navbar-dark-color;
+
+    @include hover-focus() {
+      color: $navbar-dark-hover-color;
+    }
+  }
+
+  .nav-link.active {
+    color: $navbar-dark-active-color;
+  }
+}
+
+
 .selected {
   border-style: solid;
   border-color: map-get($theme-colors, 'secondary');

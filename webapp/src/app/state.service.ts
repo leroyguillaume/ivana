@@ -71,18 +71,18 @@ export class StateService {
           const totalSuccess = uploadResults.results.filter(result => result.type === 'success').length
           const totalFailure = failures.length
           if (totalFailure === 0) {
-            this.success.next('Toutes les photos ont été importées !')
+            this.sendSuccessEvent('Toutes les photos ont été importées !')
           } else {
             if (totalSuccess > 0) {
-              this.success.next(`${totalSuccess} photos ont été importées !`)
+              this.sendSuccessEvent(`${totalSuccess} photos ont été importées !`)
             }
             console.error(failures)
-            this.error.next(`${totalFailure} photos n'ont pas pu être importées. Veuillez réessayer ultérieurement.`)
+            this.sendErrorEvent(`${totalFailure} photos n'ont pas pu être importées. Veuillez réessayer ultérieurement.`)
           }
         },
         error => {
           console.error(error)
-          this.error.next('Une erreur inattendue s\'est produite. Veuillez réessayer ultérieurement.')
+          this.sendErrorEvent('Une erreur inattendue s\'est produite. Veuillez réessayer ultérieurement.')
         }
       )
   }

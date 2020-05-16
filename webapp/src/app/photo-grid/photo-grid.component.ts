@@ -1,6 +1,6 @@
 import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core'
 import {IconDefinition} from '@fortawesome/fontawesome-common-types'
-import {faArrowLeft, faArrowRight, faPlus, faTrash} from '@fortawesome/free-solid-svg-icons'
+import {faArrowLeft, faArrowRight, faCog, faPencilAlt, faPlus, faTrash} from '@fortawesome/free-solid-svg-icons'
 import {Page} from '../page'
 import {Photo} from '../photo'
 import {StateService} from '../state.service'
@@ -12,6 +12,7 @@ import {AlbumSelectionModalComponent} from '../album-selection-modal/album-selec
 import {AlbumService} from '../album.service'
 import {Album} from '../album'
 import {handleError} from '../util'
+import {Permission} from '../permission'
 
 @Component({
   selector: 'app-photo-grid',
@@ -23,6 +24,8 @@ export class PhotoGridComponent implements OnInit {
   nextIcon: IconDefinition = faArrowRight
   trashIcon: IconDefinition = faTrash
   plusIcon: IconDefinition = faPlus
+  editIcon: IconDefinition = faPencilAlt
+  cogIcon: IconDefinition = faCog
 
   baseUrl: string = environment.baseUrl
 
@@ -51,12 +54,25 @@ export class PhotoGridComponent implements OnInit {
   ) {
   }
 
+  get albumDeleteAllowed(): boolean {
+    return this.currentAlbum?.permissions.indexOf(Permission.Delete) > -1
+  }
+
+  get albumUpdateAllowed(): boolean {
+    return this.currentAlbum?.permissions.indexOf(Permission.Update) > -1
+  }
+
   emitAlbumDelete(): void {
     this.albumDelete.emit(this.currentAlbum)
   }
 
   emitSelectedPhotosDelete(): void {
     this.selectedPhotosDelete.emit(this.selectedPhotos)
+  }
+
+  navigateToAlbumUpdatePage(): void {
+    // noinspection JSIgnoredPromiseFromCall
+    this.router.navigate(['/album', this.currentAlbum.id, 'edit'])
   }
 
   nextPage(): void {

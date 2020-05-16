@@ -1,18 +1,25 @@
 <div class="text-right mb-3">
   <div ngbDropdown>
-    <button class="btn btn-primary mr-2" ngbDropdownToggle [disabled]="selectedPhotos.size === 0">Actions</button>
-    <button *ngIf="currentAlbum" class="btn btn-danger mr-2" (click)="emitAlbumDelete()">
+    <button *ngIf="albumUpdateAllowed" class="btn btn-success mr-2" (click)="navigateToAlbumUpdatePage()">
+      <fa-icon [icon]="editIcon"></fa-icon>
+      <span class="d-none d-md-inline"> Éditer l'album</span>
+    </button>
+    <button class="btn btn-primary mr-2" ngbDropdownToggle [disabled]="selectedPhotos.size === 0">
+      <fa-icon [icon]="cogIcon"></fa-icon>
+      <span class="d-none d-md-inline"> Actions</span>
+    </button>
+    <button *ngIf="albumDeleteAllowed" class="btn btn-danger mr-2" (click)="emitAlbumDelete()">
       <fa-icon [icon]="trashIcon"></fa-icon>
-      Supprimer l'album
+      <span class="d-none d-md-inline"> Supprimer l'album</span>
     </button>
     <div ngbDropdownMenu>
       <button class="btn" (click)="openAlbumSelectionModal()" ngbDropdownItem>
         <fa-icon [icon]="plusIcon"></fa-icon>
-        Ajouter à l'album...
+        <span> Ajouter à l'album...</span>
       </button>
       <button class="btn btn-danger" (click)="emitSelectedPhotosDelete()" ngbDropdownItem>
         <fa-icon [icon]="trashIcon"></fa-icon>
-        Supprimer
+        <span> Supprimer</span>
       </button>
     </div>
     <div class="btn-group">
