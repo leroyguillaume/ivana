@@ -7,6 +7,7 @@ import io.kotlintest.shouldBe
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import java.net.InetAddress
+import java.time.OffsetDateTime
 import java.util.*
 
 internal class ExtensionsTest {
@@ -77,6 +78,31 @@ internal class ExtensionsTest {
         fun super_admin() {
             Role.SuperAdmin.toRoleData() shouldBe RoleData.SuperAdmin
         }
+    }
+
+    @Test
+    fun setOfUserPermissionsToSetOfSubjectPermissions() {
+        val userId = UUID.randomUUID()
+        val perms = setOf(Permission.Read, Permission.Delete)
+        val usersPerms = setOf(
+            UserPermissions(
+                user = User(
+                    id = userId,
+                    name = "user",
+                    creationDate = OffsetDateTime.now(),
+                    hashedPwd = "hashedPwd",
+                    role = Role.User
+                ),
+                permissions = perms
+            )
+        )
+        val subjsPerms = setOf(
+            SubjectPermissions(
+                subjectId = userId,
+                permissions = perms
+            )
+        )
+        usersPerms.toSubjectPermissionsSet() shouldBe subjsPerms
     }
 
     @Test

@@ -17,6 +17,16 @@ internal abstract class AbstractAuthorizationRepositoryTest {
     @Autowired
     protected lateinit var jdbc: NamedParameterJdbcTemplate
 
+    protected fun deleteAuthorizations(subjectId: UUID, resourceId: UUID) {
+        jdbc.update(
+            """
+            DELETE FROM $tableName
+            WHERE $subjectIdColumnName = :subject_id AND $resourceIdColumnName = :resource_id
+            """,
+            MapSqlParameterSource(mapOf("subject_id" to subjectId, "resource_id" to resourceId))
+        )
+    }
+
     protected fun updateAuthorization(subjectId: UUID, resourceId: UUID, vararg permissions: Permission) {
         val canRead = permissions.contains(Permission.Read)
         val canUpdate = permissions.contains(Permission.Update)

@@ -32,4 +32,17 @@ sealed class AlbumEvent : Event {
             val photosToRemove: List<UUID>
         )
     }
+
+    data class UpdatePermissions(
+        override val date: OffsetDateTime,
+        override val subjectId: UUID,
+        override val number: Long,
+        override val source: EventSource.User,
+        val content: Content
+    ) : AlbumEvent() {
+        data class Content(
+            val permissionsToAdd: Set<SubjectPermissions>,
+            val permissionsToRemove: Set<SubjectPermissions>
+        )
+    }
 }

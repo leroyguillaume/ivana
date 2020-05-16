@@ -3,8 +3,8 @@
 package io.ivana.api.web.v1
 
 import com.nhaarman.mockitokotlin2.*
+import io.ivana.api.impl.OwnerPermissionsUpdateException
 import io.ivana.api.impl.PhotoAlreadyUploadedException
-import io.ivana.api.impl.PhotoOwnerPermissionsUpdateException
 import io.ivana.api.web.AbstractControllerTest
 import io.ivana.core.*
 import io.ivana.dto.*
@@ -601,7 +601,7 @@ internal class PhotoControllerTest : AbstractControllerTest() {
         )
         private val users = setOf(userPrincipal.user, adminPrincipal.user)
         private val usersIds = users.map { it.id }.toSet()
-        private val dto = PhotoUpdatePermissionsDto(
+        private val dto = UpdatePermissionsDto(
             permissionsToAdd = setOf(permissionToAdd),
             permissionsToRemove = setOf(permissionToRemove)
         )
@@ -659,14 +659,14 @@ internal class PhotoControllerTest : AbstractControllerTest() {
             whenever(userPhotoAuthzRepo.fetch(principal.user.id, photo.id)).thenReturn(setOf(Permission.Update))
             whenever(userService.getAllByIds(usersIds)).thenReturn(users)
             whenever(photoService.updatePermissions(photo.id, permissionsToAdd, permissionsToRemove, source))
-                .thenAnswer { throw PhotoOwnerPermissionsUpdateException() }
+                .thenAnswer { throw OwnerPermissionsUpdateException() }
             callAndExpectDto(
                 method = method,
                 uri = uri,
                 reqCookies = listOf(accessTokenCookie()),
                 reqContent = mapper.writeValueAsString(dto),
                 status = HttpStatus.BAD_REQUEST,
-                respDto = ErrorDto.PhotoOwnerPermissionsUpdate
+                respDto = ErrorDto.OwnerPermissionsUpdate
             )
             verify(userPhotoAuthzRepo).fetch(principal.user.id, photo.id)
             verify(userService).getAllByIds(usersIds)

@@ -87,7 +87,7 @@ internal class PhotoEventRepositoryImplTest {
         }
 
         @Test
-        fun `should return update event with number`() {
+        fun `should return update permissions event with number`() {
             val uploadEvent = repo.saveUploadEvent(
                 content = PhotoEvent.Upload.Content(
                     type = Photo.Type.Jpg,

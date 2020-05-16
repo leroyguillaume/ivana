@@ -8,4 +8,10 @@ interface AlbumEventRepository : EventRepository<AlbumEvent> {
     fun saveDeletionEvent(albumId: UUID, source: EventSource.User): AlbumEvent.Deletion
 
     fun saveUpdateEvent(id: UUID, content: AlbumEvent.Update.Content, source: EventSource.User): AlbumEvent.Update
+
+    fun saveUpdatePermissionsEvent(
+        albumId: UUID,
+        content: AlbumEvent.UpdatePermissions.Content,
+        source: EventSource.User
+    ): AlbumEvent.UpdatePermissions
 }

@@ -3,6 +3,7 @@
 package io.ivana.api.impl
 
 import io.ivana.core.*
+import io.kotlintest.matchers.collections.shouldBeEmpty
 import io.kotlintest.matchers.throwable.shouldHaveMessage
 import io.kotlintest.shouldBe
 import io.mockk.confirmVerified
@@ -265,6 +266,19 @@ internal class AlbumServiceImplTest {
         }
 
         @Test
+        fun `should returns empty set if no permissions defined`() {
+            every { albumRepo.existsById(albumId) } returns true
+            every { userRepo.existsById(userId) } returns true
+            every { authzRepo.fetch(userId, albumId) } returns null
+            val perms = service.getPermissions(albumId, userId)
+            perms.shouldBeEmpty()
+            verify { albumRepo.existsById(albumId) }
+            verify { userRepo.existsById(userId) }
+            verify { authzRepo.fetch(userId, albumId) }
+            confirmVerified(albumRepo, userRepo, authzRepo)
+        }
+
+        @Test
         fun `should return permissions`() {
             every { albumRepo.existsById(albumId) } returns true
             every { userRepo.existsById(userId) } returns true
@@ -445,6 +459,103 @@ internal class AlbumServiceImplTest {
             verify { albumEventRepo.saveUpdateEvent(expectedAlbum.id, emptyEvent.content, emptyEvent.source) }
             verify { albumRepo.fetchById(expectedAlbum.id) }
             confirmVerified(albumRepo, photoRepo, albumEventRepo)
+        }
+    }
+
+    @Nested
+    inner class updatePermissions {
+        private val owner = User(
+            id = UUID.randomUUID(),
+            name = "owner",
+            hashedPwd = "hashedPwd",
+            role = Role.User,
+            creationDate = OffsetDateTime.now()
+        )
+        private val user = User(
+            id = UUID.randomUUID(),
+            name = "user",
+            hashedPwd = "hashedPwd",
+            role = Role.User,
+            creationDate = OffsetDateTime.now()
+        )
+        private val album = Album(
+            id = UUID.randomUUID(),
+            name = "test",
+            ownerId = owner.id,
+            creationDate = OffsetDateTime.now()
+        )
+        private val permissionsToAdd = setOf(
+            UserPermissions(
+                user = user,
+                permissions = setOf(Permission.Read, Permission.Delete)
+            )
+        )
+        private val permissionsToRemove = setOf(
+            UserPermissions(
+                user = user,
+                permissions = setOf(Permission.Delete)
+            )
+        )
+        private val event = AlbumEvent.UpdatePermissions(
+            date = OffsetDateTime.now(),
+            subjectId = album.id,
+            number = 2,
+            source = EventSource.User(UUID.randomUUID(), InetAddress.getByName("127.0.0.1")),
+            content = AlbumEvent.UpdatePermissions.Content(
+                permissionsToAdd = setOf(
+                    SubjectPermissions(
+                        subjectId = user.id,
+                        permissions = setOf(Permission.Read, Permission.Delete)
+                    )
+                ),
+                permissionsToRemove = setOf(
+                    SubjectPermissions(
+                        subjectId = user.id,
+                        permissions = setOf(Permission.Delete)
+                    )
+                )
+            )
+        )
+
+        @Test
+        fun `should throw exception if album does not exist`() {
+            every { albumRepo.fetchById(album.id) } returns null
+            val exception = assertThrows<EntityNotFoundException> {
+                service.updatePermissions(album.id, permissionsToAdd, permissionsToRemove, event.source)
+            }
+            exception shouldHaveMessage "Album ${album.id} does not exist"
+            verify { albumRepo.fetchById(album.id) }
+            confirmVerified(albumRepo)
+        }
+
+        @Test
+        fun `should throw exception if owner permission is deleted`() {
+            every { albumRepo.fetchById(album.id) } returns album
+            assertThrows<OwnerPermissionsUpdateException> {
+                service.updatePermissions(
+                    id = album.id,
+                    permissionsToAdd = permissionsToAdd,
+                    permissionsToRemove = setOf(
+                        UserPermissions(
+                            user = owner,
+                            permissions = setOf(Permission.Delete)
+                        )
+                    ),
+                    source = event.source
+                )
+            }
+            verify { albumRepo.fetchById(album.id) }
+            confirmVerified(albumRepo)
+        }
+
+        @Test
+        fun `should update permissions of album`() {
+            every { albumRepo.fetchById(album.id) } returns album
+            every { albumEventRepo.saveUpdatePermissionsEvent(album.id, event.content, event.source) } returns event
+            service.updatePermissions(album.id, permissionsToAdd, permissionsToRemove, event.source)
+            verify { albumRepo.fetchById(album.id) }
+            verify { albumEventRepo.saveUpdatePermissionsEvent(album.id, event.content, event.source) }
+            confirmVerified(albumRepo, albumEventRepo)
         }
     }
 }

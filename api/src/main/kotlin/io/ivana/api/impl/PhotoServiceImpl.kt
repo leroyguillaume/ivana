@@ -87,7 +87,7 @@ class PhotoServiceImpl(
     ) {
         val photo = getById(id)
         if (permissionsToRemove.find { it.user.id == photo.ownerId } != null) {
-            throw PhotoOwnerPermissionsUpdateException()
+            throw OwnerPermissionsUpdateException()
         }
         val content = PhotoEvent.UpdatePermissions.Content(
             permissionsToAdd = permissionsToAdd.toSubjectPermissionsSet(),
@@ -266,14 +266,6 @@ class PhotoServiceImpl(
         Photo.Type.Jpg -> "jpg"
         Photo.Type.Png -> "png"
     }
-
-    private fun Set<UserPermissions>.toSubjectPermissionsSet() =
-        map { userPerms ->
-            SubjectPermissions(
-                subjectId = userPerms.user.id,
-                permissions = userPerms.permissions
-            )
-        }.toSet()
 
     private fun Transform.perform(photo: Photo) = when (this) {
         is Transform.Rotation -> performRotation(photo, degrees)
