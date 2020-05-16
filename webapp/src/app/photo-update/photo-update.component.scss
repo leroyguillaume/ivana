@@ -1,0 +1,16 @@
+@import "../../variables";
+@import "node_modules/bootstrap/scss/bootstrap.scss";
+
+.nav-tabs {
+  .nav-link {
+    color: $navbar-dark-color;
+
+    @include hover-focus() {
+      color: $navbar-dark-hover-color;
+    }
+  }
+
+  .nav-link.active {
+    color: $navbar-dark-active-color;
+  }
+}

@@ -40,6 +40,7 @@ export class AlbumSelectionModalComponent implements OnInit {
 
   ngOnInit(): void {
     this.loading = true
+    // TODO: it won't work when there are too many albums
     this.albumService.getAll(1, 100)
       .pipe(finalize(() => this.loading = false))
       .subscribe(

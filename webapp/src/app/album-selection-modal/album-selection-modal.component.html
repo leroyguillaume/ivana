@@ -3,27 +3,33 @@
   <fa-icon class="clickable" [icon]="closeIcon" (click)="activeModal.dismiss()" size="2x"></fa-icon>
 </div>
 <div class="modal-body">
-  <form [formGroup]="albumForm" (ngSubmit)="submit()" novalidate>
-    <div class="form-group">
-      <label for="album">Album</label>
-      <select id="album"
-              class="form-control"
-              formControlName="albumId"
-              required
-              [ngClass]="{'is-invalid': albumId.invalid && (albumId.dirty || albumId.touched)}">
-        <option *ngFor="let album of albums" [value]="album.id">{{album.name}}</option>
-      </select>
-    </div>
+  <div class="text-center" *ngIf="loading; else content">
+    <fa-icon [icon]="spinnerIcon" spin="true" size="8x"></fa-icon>
+  </div>
 
-    <div class="text-right">
-      <button type="submit"
-              class="btn btn-primary"
-              [disabled]="albumForm.invalid || loading"
-              [ngClass]="{'cursor-forbidden': albumForm.invalid || loading}">
-        <span *ngIf="!loading"> Sélectionner</span>
-        <fa-icon *ngIf="loading" [icon]="spinnerIcon" spin="true"></fa-icon>
-        <span *ngIf="loading"> Chargement en cours...</span>
-      </button>
-    </div>
-  </form>
+  <ng-template #content>
+    <form [formGroup]="albumForm" (ngSubmit)="submit()" novalidate>
+      <div class="form-group">
+        <label for="album">Album</label>
+        <select id="album"
+                class="form-control"
+                formControlName="albumId"
+                required
+                [ngClass]="{'is-invalid': albumId.invalid && (albumId.dirty || albumId.touched)}">
+          <option *ngFor="let album of albums" [value]="album.id">{{album.name}}</option>
+        </select>
+      </div>
+
+      <div class="text-right">
+        <button type="submit"
+                class="btn btn-primary"
+                [disabled]="albumForm.invalid || loading"
+                [ngClass]="{'cursor-forbidden': albumForm.invalid || loading}">
+          <span *ngIf="!loading"> Sélectionner</span>
+          <fa-icon *ngIf="loading" [icon]="spinnerIcon" spin="true"></fa-icon>
+          <span *ngIf="loading"> Chargement en cours...</span>
+        </button>
+      </div>
+    </form>
+  </ng-template>
 </div>

@@ -6,6 +6,8 @@ import {Observable} from 'rxjs'
 import {environment} from '../environments/environment'
 import {NavigablePhoto} from './navigable-photo'
 import {PhotoUploadResults} from './photo-upload-results'
+import {SubjectPermissions} from './subject-permissions'
+import {SubjectPermissionsUpdate} from './subject-permissions-update'
 
 @Injectable({
   providedIn: 'root'
@@ -47,12 +49,37 @@ export class PhotoService {
     )
   }
 
+  getPermissions(id: string, page: number, size: number): Observable<Page<SubjectPermissions>> {
+    return this.http.get<Page<SubjectPermissions>>(
+      `${this.baseUrl}/${id}/permissions`,
+      {
+        withCredentials: true,
+        params: {
+          page: page.toString(),
+          size: size.toString()
+        }
+      }
+    )
+  }
+
   rotate(id: string, degrees: number): Observable<void> {
     const dto = {
       type: 'rotation',
       degrees
     }
     return this.http.put<void>(`${this.baseUrl}/${id}/transform`, dto, {withCredentials: true})
+  }
+
+  updatePermissions(
+    id: string,
+    permissionsToAdd: SubjectPermissionsUpdate[],
+    permissionsToRemove: SubjectPermissionsUpdate[]
+  ): Observable<void> {
+    const dto = {
+      permissionsToAdd,
+      permissionsToRemove
+    }
+    return this.http.put<void>(`${this.baseUrl}/${id}/permissions`, dto, {withCredentials: true})
   }
 
   upload(files: FileList): Observable<PhotoUploadResults> {
