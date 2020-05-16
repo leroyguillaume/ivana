@@ -1,0 +1,39 @@
+<table class="table text-center">
+  <thead>
+  <tr>
+    <th>Utilisateur</th>
+    <th>Lecture</th>
+    <th>Modification</th>
+    <th>Suppression</th>
+    <th>Modification des permissions</th>
+    <th *ngIf="removable">Actions</th>
+  </tr>
+  </thead>
+  <tbody>
+  <tr *ngFor="let subjPerms of subjsPerms">
+    <td>{{subjPerms.subjectName}}</td>
+    <td>
+      <fa-icon *ngIf="subjectCanRead(subjPerms)" [icon]="checkIcon"></fa-icon>
+      <fa-icon *ngIf="!subjectCanRead(subjPerms)" [icon]="crossIcon"></fa-icon>
+    </td>
+    <td>
+      <fa-icon *ngIf="subjectCanUpdate(subjPerms)" [icon]="checkIcon"></fa-icon>
+      <fa-icon *ngIf="!subjectCanUpdate(subjPerms)" [icon]="crossIcon"></fa-icon>
+    </td>
+    <td>
+      <fa-icon *ngIf="subjectCanDelete(subjPerms)" [icon]="checkIcon"></fa-icon>
+      <fa-icon *ngIf="!subjectCanDelete(subjPerms)" [icon]="crossIcon"></fa-icon>
+    </td>
+    <td>
+      <fa-icon *ngIf="subjectCanUpdatePermissions(subjPerms)" [icon]="checkIcon"></fa-icon>
+      <fa-icon *ngIf="!subjectCanUpdatePermissions(subjPerms)" [icon]="crossIcon"></fa-icon>
+    </td>
+    <td *ngIf="removable">
+      <button class="btn btn-danger" (click)="removeSubjectPermissions(subjPerms)">
+        <fa-icon [icon]="trashIcon"></fa-icon>
+        Supprimer
+      </button>
+    </td>
+  </tr>
+  </tbody>
+</table>

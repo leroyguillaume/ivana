@@ -12,6 +12,7 @@ import {ChangePasswordComponent} from './change-password/change-password.compone
 import {AlbumListComponent} from './album-list/album-list.component'
 import {AlbumComponent} from './album/album.component'
 import {ForbiddenComponent} from './forbidden/forbidden.component'
+import {PhotoUpdateComponent} from './photo-update/photo-update.component'
 
 
 const routes: Routes = [
@@ -28,6 +29,11 @@ const routes: Routes = [
   {
     path: 'photo/:id',
     component: PhotoComponent,
+    canActivate: [AuthenticatedGuard]
+  },
+  {
+    path: 'photo/:id/edit',
+    component: PhotoUpdateComponent,
     canActivate: [AuthenticatedGuard]
   },
   {

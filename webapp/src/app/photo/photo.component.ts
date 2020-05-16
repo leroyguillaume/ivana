@@ -22,7 +22,7 @@ import {AlbumService} from '../album.service'
 export class PhotoComponent implements OnDestroy, OnInit {
   spinnerIcon: IconDefinition = faSpinner
   arrowLeftIcon: IconDefinition = faArrowLeft
-  settingsIcon: IconDefinition = faPencilAlt
+  editIcon: IconDefinition = faPencilAlt
   closeIcon: IconDefinition = faTimes
   rotateClockwiseIcon: IconDefinition = faRedo
   rotateCounterclockwiseIcon: IconDefinition = faUndo

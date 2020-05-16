@@ -2,7 +2,6 @@ import {Injectable} from '@angular/core'
 import {HttpClient} from '@angular/common/http'
 import {Observable} from 'rxjs'
 import {Page} from './page'
-import {User} from './user'
 import {environment} from '../environments/environment'
 import {Album} from './album'
 import {Photo} from './photo'
@@ -32,7 +31,7 @@ export class AlbumService {
   }
 
   getAll(page: number, size: number): Observable<Page<Album>> {
-    return this.http.get<Page<User>>(
+    return this.http.get<Page<Album>>(
       this.baseUrl,
       {
         withCredentials: true,

@@ -22,6 +22,10 @@ import {AlbumGridComponent} from './album-grid/album-grid.component'
 import {AlbumComponent} from './album/album.component'
 import {AlbumSelectionModalComponent} from './album-selection-modal/album-selection-modal.component'
 import {ForbiddenComponent} from './forbidden/forbidden.component'
+import {PhotoUpdateComponent} from './photo-update/photo-update.component'
+import {PermissionComponent} from './permission/permission.component'
+import {NewPermissionsModalComponent} from './new-permissions-modal/new-permissions-modal.component'
+import {PermissionsTableComponent} from './permissions-table/permissions-table.component'
 
 @NgModule({
   declarations: [
@@ -40,7 +44,11 @@ import {ForbiddenComponent} from './forbidden/forbidden.component'
     AlbumGridComponent,
     AlbumComponent,
     AlbumSelectionModalComponent,
-    ForbiddenComponent
+    ForbiddenComponent,
+    PhotoUpdateComponent,
+    PermissionComponent,
+    NewPermissionsModalComponent,
+    PermissionsTableComponent
   ],
   imports: [
     BrowserModule,
