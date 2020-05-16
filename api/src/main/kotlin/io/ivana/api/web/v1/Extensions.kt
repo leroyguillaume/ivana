@@ -35,13 +35,14 @@ fun Album.toDto() = AlbumDto(
     creationDate = creationDate
 )
 
-fun LinkedPhotos.toNavigableDto() = PhotoDto.Navigable(
+fun LinkedPhotos.toNavigableDto(permissions: Set<Permission>) = PhotoDto.Complete.Navigable(
     id = current.id,
     ownerId = current.ownerId,
     rawUri = rawUri(current.id),
     compressedUri = compressedUri(current.id),
-    previous = previous?.toSimpleDto(),
-    next = next?.toSimpleDto()
+    permissions = permissions.map { it.toDto() }.toSet(),
+    previous = previous?.toLightDto(),
+    next = next?.toLightDto()
 )
 
 fun <E, D> Page<E>.toDto(mapper: (E) -> D) = PageDto(
@@ -58,11 +59,19 @@ fun Permission.toDto() = when (this) {
     Permission.UpdatePermissions -> PermissionDto.UpdatePermissions
 }
 
-fun Photo.toSimpleDto() = PhotoDto.Simple(
+fun Photo.toLightDto() = PhotoDto.Light(
     id = id,
     ownerId = ownerId,
     rawUri = rawUri(id),
     compressedUri = compressedUri(id)
+)
+
+fun Photo.toSimpleDto(permissions: Set<Permission>) = PhotoDto.Complete.Simple(
+    id = id,
+    ownerId = ownerId,
+    rawUri = rawUri(id),
+    compressedUri = compressedUri(id),
+    permissions = permissions.map { it.toDto() }.toSet()
 )
 
 fun Role.toDto() = when (this) {

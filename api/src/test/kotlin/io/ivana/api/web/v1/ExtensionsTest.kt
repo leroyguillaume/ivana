@@ -57,16 +57,16 @@ internal class ExtensionsTest {
             totalPages = 100
         )
         val dto = PageDto(
-            content = page.content.map { it.toSimpleDto() },
+            content = page.content.map { it.toLightDto() },
             no = page.no,
             totalItems = page.totalItems,
             totalPages = page.totalPages
         )
-        page.toDto { it.toSimpleDto() } shouldBe dto
+        page.toDto { it.toLightDto() } shouldBe dto
     }
 
     @Test
-    fun photoToSimpleDtoTest() {
+    fun photoToLightDtoTest() {
         val photo = Photo(
             id = UUID.randomUUID(),
             ownerId = UUID.randomUUID(),
@@ -76,17 +76,18 @@ internal class ExtensionsTest {
             no = 1,
             version = 1
         )
-        val dto = PhotoDto.Simple(
+        val dto = PhotoDto.Light(
             id = photo.id,
             ownerId = photo.ownerId,
             rawUri = rawUri(photo.id),
             compressedUri = compressedUri(photo.id)
         )
-        photo.toSimpleDto() shouldBe dto
+        photo.toLightDto() shouldBe dto
     }
 
     @Test
     fun linkedPhotosToNavigableDto() {
+        val perms = setOf(Permission.Read)
         val linkedPhotos = LinkedPhotos(
             current = Photo(
                 id = UUID.randomUUID(),
@@ -116,25 +117,48 @@ internal class ExtensionsTest {
                 version = 1
             )
         )
-        val dto = PhotoDto.Navigable(
+        val dto = PhotoDto.Complete.Navigable(
             id = linkedPhotos.current.id,
             ownerId = linkedPhotos.current.ownerId,
             rawUri = rawUri(linkedPhotos.current.id),
             compressedUri = compressedUri(linkedPhotos.current.id),
-            previous = PhotoDto.Simple(
+            permissions = perms.map { it.toDto() }.toSet(),
+            previous = PhotoDto.Light(
                 id = linkedPhotos.previous!!.id,
                 ownerId = linkedPhotos.previous!!.ownerId,
                 rawUri = rawUri(linkedPhotos.previous!!.id),
                 compressedUri = compressedUri(linkedPhotos.previous!!.id)
             ),
-            next = PhotoDto.Simple(
+            next = PhotoDto.Light(
                 id = linkedPhotos.next!!.id,
                 ownerId = linkedPhotos.next!!.ownerId,
                 rawUri = rawUri(linkedPhotos.next!!.id),
                 compressedUri = compressedUri(linkedPhotos.next!!.id)
             )
         )
-        linkedPhotos.toNavigableDto() shouldBe dto
+        linkedPhotos.toNavigableDto(perms) shouldBe dto
+    }
+
+    @Test
+    fun photoToSimpleDtoTest() {
+        val perms = setOf(Permission.Read)
+        val photo = Photo(
+            id = UUID.randomUUID(),
+            ownerId = UUID.randomUUID(),
+            uploadDate = OffsetDateTime.now(),
+            type = Photo.Type.Jpg,
+            hash = "hash",
+            no = 1,
+            version = 1
+        )
+        val dto = PhotoDto.Complete.Simple(
+            id = photo.id,
+            ownerId = photo.ownerId,
+            rawUri = rawUri(photo.id),
+            compressedUri = compressedUri(photo.id),
+            permissions = perms.map { it.toDto() }.toSet()
+        )
+        photo.toSimpleDto(perms) shouldBe dto
     }
 
     @Nested

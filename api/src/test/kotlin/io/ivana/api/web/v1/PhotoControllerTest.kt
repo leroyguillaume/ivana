@@ -99,8 +99,9 @@ internal class PhotoControllerTest : AbstractControllerTest() {
                 version = 1
             )
         )
-        private val photoSimpleDto = linkedPhotos.current.toSimpleDto()
-        private val photoNavigableDto = linkedPhotos.toNavigableDto()
+        private val permissions = setOf(Permission.Read)
+        private val photoSimpleDto = linkedPhotos.current.toLightDto()
+        private val photoNavigableDto = linkedPhotos.toNavigableDto(permissions)
         private val method = HttpMethod.GET
         private val uri = "$PhotoApiEndpoint/${linkedPhotos.current.id}"
 
@@ -136,6 +137,7 @@ internal class PhotoControllerTest : AbstractControllerTest() {
                     linkedPhotos.current.id
                 )
             ).thenReturn(setOf(Permission.Read))
+            whenever(photoService.getPermissions(linkedPhotos.current.id, principal.user.id)).thenReturn(permissions)
             whenever(photoService.getById(linkedPhotos.current.id)).thenReturn(linkedPhotos.current)
             callAndExpectDto(
                 method = method,
@@ -145,6 +147,7 @@ internal class PhotoControllerTest : AbstractControllerTest() {
                 respDto = photoSimpleDto
             )
             verify(userPhotoAuthzRepo).fetch(principal.user.id, linkedPhotos.current.id)
+            verify(photoService).getPermissions(linkedPhotos.current.id, principal.user.id)
             verify(photoService).getById(linkedPhotos.current.id)
         }
 
@@ -152,6 +155,7 @@ internal class PhotoControllerTest : AbstractControllerTest() {
         fun `should return 200 (navigable)`() = authenticated {
             whenever(userPhotoAuthzRepo.fetch(principal.user.id, linkedPhotos.current.id))
                 .thenReturn(setOf(Permission.Read))
+            whenever(photoService.getPermissions(linkedPhotos.current.id, principal.user.id)).thenReturn(permissions)
             whenever(photoService.getLinkedById(linkedPhotos.current.id)).thenReturn(linkedPhotos)
             callAndExpectDto(
                 method = method,
@@ -162,6 +166,7 @@ internal class PhotoControllerTest : AbstractControllerTest() {
                 respDto = photoNavigableDto
             )
             verify(userPhotoAuthzRepo).fetch(principal.user.id, linkedPhotos.current.id)
+            verify(photoService).getPermissions(linkedPhotos.current.id, principal.user.id)
             verify(photoService).getLinkedById(linkedPhotos.current.id)
         }
     }
@@ -195,7 +200,7 @@ internal class PhotoControllerTest : AbstractControllerTest() {
             totalItems = 2,
             totalPages = 1
         )
-        private val pageDto = page.toDto { it.toSimpleDto() }
+        private val pageDto = page.toDto { it.toLightDto() }
         private val method = HttpMethod.GET
         private val uri = PhotoApiEndpoint
 
@@ -425,7 +430,7 @@ internal class PhotoControllerTest : AbstractControllerTest() {
         fun `should return 200`() = authenticated {
             whenever(userPhotoAuthzRepo.fetch(principal.user.id, photoId))
                 .thenReturn(setOf(Permission.UpdatePermissions))
-            whenever(photoService.getPermissions(photoId, pageNo, pageSize)).thenReturn(page)
+            whenever(photoService.getAllPermissions(photoId, pageNo, pageSize)).thenReturn(page)
             whenever(userService.getAllByIds(usersIds)).thenReturn(users)
             callAndExpectDto(
                 method = method,
@@ -439,7 +444,7 @@ internal class PhotoControllerTest : AbstractControllerTest() {
                 respDto = pageDto
             )
             verify(userPhotoAuthzRepo).fetch(principal.user.id, photoId)
-            verify(photoService).getPermissions(photoId, pageNo, pageSize)
+            verify(photoService).getAllPermissions(photoId, pageNo, pageSize)
             verify(userService).getAllByIds(usersIds)
         }
     }
@@ -742,8 +747,8 @@ internal class PhotoControllerTest : AbstractControllerTest() {
                 status = HttpStatus.CREATED,
                 respDto = PhotoUploadResultsDto(
                     listOf(
-                        PhotoUploadResultsDto.Result.Success(jpgPhoto.toSimpleDto()),
-                        PhotoUploadResultsDto.Result.Success(pngPhoto.toSimpleDto()),
+                        PhotoUploadResultsDto.Result.Success(jpgPhoto.toLightDto()),
+                        PhotoUploadResultsDto.Result.Success(pngPhoto.toLightDto()),
                         PhotoUploadResultsDto.Result.Failure(
                             ErrorDto.UnsupportedMediaType(PhotoController.MediaTypeToPhotoType.keys)
                         ),

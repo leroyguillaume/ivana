@@ -283,7 +283,7 @@ internal class AlbumControllerTest : AbstractControllerTest() {
             totalItems = 2,
             totalPages = 1
         )
-        private val pageDto = page.toDto { it.toSimpleDto() }
+        private val pageDto = page.toDto { it.toLightDto() }
         private val method = HttpMethod.GET
         private val uri = "$AlbumApiEndpoint/$albumId$ContentEndpoint"
 

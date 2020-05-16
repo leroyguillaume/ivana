@@ -19,6 +19,7 @@ import java.util.*
 
 internal class AlbumServiceImplTest {
     private lateinit var albumRepo: AlbumRepository
+    private lateinit var userRepo: UserRepository
     private lateinit var authzRepo: UserAlbumAuthorizationRepository
     private lateinit var albumEventRepo: AlbumEventRepository
     private lateinit var photoRepo: PhotoRepository
@@ -27,11 +28,12 @@ internal class AlbumServiceImplTest {
     @BeforeEach
     fun beforeEach() {
         albumRepo = mockk()
+        userRepo = mockk()
         authzRepo = mockk()
         albumEventRepo = mockk()
         photoRepo = mockk()
 
-        service = AlbumServiceImpl(albumRepo, authzRepo, albumEventRepo, photoRepo)
+        service = AlbumServiceImpl(albumRepo, userRepo, authzRepo, albumEventRepo, photoRepo)
     }
 
     @Nested
@@ -204,7 +206,7 @@ internal class AlbumServiceImplTest {
     }
 
     @Nested
-    inner class getPermissions {
+    inner class getAllPermissions {
         private val albumId = UUID.randomUUID()
         private val pageNo = 1
         private val pageSize = 3
@@ -228,11 +230,51 @@ internal class AlbumServiceImplTest {
         fun `should return page`() {
             every { authzRepo.fetchAll(albumId, pageNo - 1, pageSize) } returns expectedPage.content
             every { authzRepo.count(albumId) } returns expectedPage.totalItems
-            val page = service.getPermissions(albumId, pageNo, pageSize)
+            val page = service.getAllPermissions(albumId, pageNo, pageSize)
             page shouldBe expectedPage
             verify { authzRepo.fetchAll(albumId, pageNo - 1, pageSize) }
             verify { authzRepo.count(albumId) }
             confirmVerified(authzRepo)
+        }
+    }
+
+    @Nested
+    inner class getPermissions {
+        private val userId = UUID.randomUUID()
+        private val albumId = UUID.randomUUID()
+        private val permissions = setOf(Permission.Read)
+
+        @Test
+        fun `should throw exception if album does not exist`() {
+            every { albumRepo.existsById(albumId) } returns false
+            val exception = assertThrows<EntityNotFoundException> { service.getPermissions(albumId, userId) }
+            exception shouldHaveMessage "Album $albumId does not exist"
+            verify { albumRepo.existsById(albumId) }
+            confirmVerified(albumRepo)
+        }
+
+        @Test
+        fun `should throw exception if user does not exist`() {
+            every { albumRepo.existsById(albumId) } returns true
+            every { userRepo.existsById(userId) } returns false
+            val exception = assertThrows<EntityNotFoundException> { service.getPermissions(albumId, userId) }
+            exception shouldHaveMessage "User $userId does not exist"
+            verify { albumRepo.existsById(albumId) }
+            verify { userRepo.existsById(userId) }
+            confirmVerified(albumRepo, userRepo)
+        }
+
+        @Test
+        fun `should return permissions`() {
+            every { albumRepo.existsById(albumId) } returns true
+            every { userRepo.existsById(userId) } returns true
+            every { authzRepo.fetch(userId, albumId) } returns permissions
+            val perms = service.getPermissions(albumId, userId)
+            perms shouldBe permissions
+            verify { albumRepo.existsById(albumId) }
+            verify { userRepo.existsById(userId) }
+            verify { authzRepo.fetch(userId, albumId) }
+            confirmVerified(albumRepo, userRepo, authzRepo)
         }
     }
 
