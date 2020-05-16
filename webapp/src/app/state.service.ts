@@ -36,7 +36,7 @@ export class StateService {
   }
 
   clearSuccess(): void {
-    clearTimeout(this.errorTimeoutId)
+    clearTimeout(this.successTimeoutId)
     this.success.next(null)
   }
 
