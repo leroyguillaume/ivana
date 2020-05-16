@@ -28,7 +28,15 @@ const val SizeParamName = "size"
 
 const val UuidRegex = "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}"
 
-fun Album.toDto() = AlbumDto(
+fun Album.toCompleteDto(permissions: Set<Permission>) = AlbumDto.Complete(
+    id = id,
+    name = name,
+    ownerId = ownerId,
+    creationDate = creationDate,
+    permissions = permissions.map { it.toDto() }.toSet()
+)
+
+fun Album.toLightDto() = AlbumDto.Light(
     id = id,
     name = name,
     ownerId = ownerId,
@@ -59,6 +67,13 @@ fun Permission.toDto() = when (this) {
     Permission.UpdatePermissions -> PermissionDto.UpdatePermissions
 }
 
+fun PermissionDto.toPermission() = when (this) {
+    PermissionDto.Read -> Permission.Read
+    PermissionDto.Update -> Permission.Update
+    PermissionDto.Delete -> Permission.Delete
+    PermissionDto.UpdatePermissions -> Permission.UpdatePermissions
+}
+
 fun Photo.toLightDto() = PhotoDto.Light(
     id = id,
     ownerId = ownerId,
@@ -79,6 +94,13 @@ fun Role.toDto() = when (this) {
     Role.Admin -> RoleDto.Admin
     Role.SuperAdmin -> RoleDto.SuperAdmin
 }
+
+fun Set<SubjectPermissionsUpdateDto>.toUserPermissionsSet(users: Map<UUID, User>) = map { dto ->
+    UserPermissions(
+        user = users.getValue(dto.subjectId),
+        permissions = dto.permissions.map { it.toPermission() }.toSet()
+    )
+}.toSet()
 
 fun SubjectPermissions.toDto(name: String) = SubjectPermissionsDto(
     subjectId = subjectId,

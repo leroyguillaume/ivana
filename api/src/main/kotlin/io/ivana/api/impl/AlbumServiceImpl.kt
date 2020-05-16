@@ -70,6 +70,25 @@ class AlbumServiceImpl(
         return getById(id)
     }
 
+    @Transactional
+    override fun updatePermissions(
+        id: UUID,
+        permissionsToAdd: Set<UserPermissions>,
+        permissionsToRemove: Set<UserPermissions>,
+        source: EventSource.User
+    ) {
+        val album = getById(id)
+        if (permissionsToRemove.find { it.user.id == album.ownerId } != null) {
+            throw OwnerPermissionsUpdateException()
+        }
+        val content = AlbumEvent.UpdatePermissions.Content(
+            permissionsToAdd = permissionsToAdd.toSubjectPermissionsSet(),
+            permissionsToRemove = permissionsToRemove.toSubjectPermissionsSet()
+        )
+        eventRepo.saveUpdatePermissionsEvent(id, content, source)
+        Logger.info("User ${source.id} (${source.ip}) updated permissions of album $id")
+    }
+
     override fun throwResourcesNotFoundException(ids: Set<UUID>) {
         throw ResourcesNotFoundException.Album(ids)
     }

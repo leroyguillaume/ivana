@@ -38,6 +38,6 @@ abstract class AbstractOwnableEntityService<E : OwnableEntity> : OwnableEntitySe
         if (!userRepo.existsById(userId)) {
             throw EntityNotFoundException("User $userId does not exist")
         }
-        return authzRepo.fetch(userId, id)
+        return authzRepo.fetch(userId, id) ?: emptySet()
     }
 }

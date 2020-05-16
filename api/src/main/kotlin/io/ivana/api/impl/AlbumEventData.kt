@@ -26,4 +26,14 @@ internal sealed class AlbumEventData : EventData {
             val photosToRemove: List<UUID>
         )
     }
+
+    data class UpdatePermissions(
+        override val source: EventSourceData.User,
+        val content: Content
+    ) : AlbumEventData() {
+        data class Content(
+            val permissionsToAdd: Set<SubjectPermissionsData>,
+            val permissionsToRemove: Set<SubjectPermissionsData>
+        )
+    }
 }

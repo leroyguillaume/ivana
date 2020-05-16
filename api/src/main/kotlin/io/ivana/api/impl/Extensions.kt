@@ -25,6 +25,13 @@ internal fun Role.toRoleData() = when (this) {
     Role.SuperAdmin -> RoleData.SuperAdmin
 }
 
+internal fun Set<UserPermissions>.toSubjectPermissionsSet() = map { userPerms ->
+    SubjectPermissions(
+        subjectId = userPerms.user.id,
+        permissions = userPerms.permissions
+    )
+}.toSet()
+
 internal fun SubjectPermissions.toData() = SubjectPermissionsData(
     subjectId = subjectId,
     permissions = permissions.map { it.toData() }.toSet()

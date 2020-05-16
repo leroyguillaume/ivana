@@ -74,9 +74,9 @@ internal class ErrorDtoTest {
     )
 
     @Nested
-    inner class PhotoOwnerPermissionsUpdate : JsonTest(
-        filename = "error/photo-owner-permissions-update.json",
-        expectedValue = ErrorDto.PhotoOwnerPermissionsUpdate,
+    inner class OwnerPermissionsUpdate : JsonTest(
+        filename = "error/owner-permissions-update.json",
+        expectedValue = ErrorDto.OwnerPermissionsUpdate,
         deserializeAs = typeOf<ErrorDto>()
     )
 

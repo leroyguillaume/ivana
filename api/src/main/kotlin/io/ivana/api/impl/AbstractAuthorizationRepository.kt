@@ -39,7 +39,7 @@ abstract class AbstractAuthorizationRepository(
         MapSqlParameterSource(mapOf("resource_id" to resourceId))
     ) { rs, _ -> rs.getInt(1) }
 
-    override fun fetch(subjectId: UUID, resourceId: UUID): Set<Permission> = try {
+    override fun fetch(subjectId: UUID, resourceId: UUID): Set<Permission>? = try {
         jdbc.queryForObject(
             """
             SELECT *
@@ -49,7 +49,7 @@ abstract class AbstractAuthorizationRepository(
             MapSqlParameterSource(mapOf("subject_id" to subjectId, "resource_id" to resourceId))
         ) { rs, _ -> rs.toPermissions() }!!
     } catch (exception: EmptyResultDataAccessException) {
-        emptySet()
+        null
     }
 
     override fun fetchAll(resourceId: UUID, offset: Int, limit: Int) = jdbc.query(

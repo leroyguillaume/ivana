@@ -5,10 +5,8 @@ import io.ivana.api.security.UserPrincipal
 import io.ivana.api.web.source
 import io.ivana.core.AlbumEvent
 import io.ivana.core.AlbumService
-import io.ivana.dto.AlbumCreationDto
-import io.ivana.dto.AlbumDto
-import io.ivana.dto.AlbumUpdateDto
-import io.ivana.dto.PageDto
+import io.ivana.core.UserService
+import io.ivana.dto.*
 import org.springframework.http.HttpStatus
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.Authentication
@@ -24,7 +22,8 @@ import javax.validation.constraints.Min
 @RequestMapping(AlbumApiEndpoint)
 @Validated
 class AlbumController(
-    private val albumService: AlbumService
+    private val albumService: AlbumService,
+    private val userService: UserService
 ) {
     @Transactional
     @PostMapping
@@ -35,7 +34,7 @@ class AlbumController(
         req: HttpServletRequest
     ): AlbumDto {
         val principal = auth.principal as UserPrincipal
-        return albumService.create(creationDto.name, req.source(principal)).toDto()
+        return albumService.create(creationDto.name, req.source(principal)).toLightDto()
     }
 
     @Transactional
@@ -52,7 +51,11 @@ class AlbumController(
     @PreAuthorize("hasPermission(#id, '$AlbumTargetType', 'read')")
     @ResponseStatus(HttpStatus.OK)
     @Suppress("MVCPathVariableInspection", "RegExpUnexpectedAnchor")
-    fun get(@PathVariable id: UUID) = albumService.getById(id).toDto()
+    fun get(@PathVariable id: UUID, auth: Authentication): AlbumDto.Complete {
+        val principal = auth.principal as UserPrincipal
+        val perms = albumService.getPermissions(id, principal.user.id)
+        return albumService.getById(id).toCompleteDto(perms)
+    }
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
@@ -60,9 +63,9 @@ class AlbumController(
         @RequestParam(name = PageParamName, required = false, defaultValue = "1") @Min(1) page: Int,
         @RequestParam(name = SizeParamName, required = false, defaultValue = "10") @Min(1) size: Int,
         auth: Authentication
-    ): PageDto<AlbumDto> {
+    ): PageDto<AlbumDto.Light> {
         val principal = auth.principal as UserPrincipal
-        return albumService.getAll(principal.user.id, page, size).toDto { it.toDto() }
+        return albumService.getAll(principal.user.id, page, size).toDto { it.toLightDto() }
     }
 
     @GetMapping("/{id:$UuidRegex}$ContentEndpoint")
@@ -74,6 +77,21 @@ class AlbumController(
         @RequestParam(name = PageParamName, required = false, defaultValue = "1") @Min(1) page: Int,
         @RequestParam(name = SizeParamName, required = false, defaultValue = "10") @Min(1) size: Int
     ) = albumService.getAllPhotos(id, page, size).toDto { it.toLightDto() }
+
+    @GetMapping("/{id:$UuidRegex}$PermissionsEndpoint")
+    @PreAuthorize("hasPermission(#id, '$AlbumTargetType', 'update_permissions')")
+    @ResponseStatus(HttpStatus.OK)
+    @Suppress("MVCPathVariableInspection", "RegExpUnexpectedAnchor")
+    fun getPermissions(
+        @PathVariable id: UUID,
+        @RequestParam(name = PageParamName, required = false, defaultValue = "1") @Min(1) page: Int,
+        @RequestParam(name = SizeParamName, required = false, defaultValue = "10") @Min(1) size: Int
+    ): PageDto<SubjectPermissionsDto> {
+        val subjPerms = albumService.getAllPermissions(id, page, size)
+        val usersIds = subjPerms.content.map { it.subjectId }.toSet()
+        val users = userService.getAllByIds(usersIds).map { it.id to it }.toMap()
+        return subjPerms.toDto { it.toDto(users.getValue(it.subjectId).name) }
+    }
 
     @Transactional
     @PutMapping("/{id:$UuidRegex}")
@@ -87,7 +105,29 @@ class AlbumController(
         req: HttpServletRequest
     ): AlbumDto {
         val principal = auth.principal as UserPrincipal
-        return albumService.update(id, updateDto.toUpdateContent(), req.source(principal)).toDto()
+        return albumService.update(id, updateDto.toUpdateContent(), req.source(principal)).toLightDto()
+    }
+
+    @Transactional
+    @PutMapping("/{id:$UuidRegex}$PermissionsEndpoint")
+    @PreAuthorize("hasPermission(#id, '$AlbumTargetType', 'update')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Suppress("MVCPathVariableInspection", "RegExpUnexpectedAnchor")
+    fun updatePermissions(
+        @PathVariable id: UUID,
+        @RequestBody @Valid dto: UpdatePermissionsDto,
+        auth: Authentication,
+        req: HttpServletRequest
+    ) {
+        val principal = auth.principal as UserPrincipal
+        val usersIds = (dto.permissionsToAdd + dto.permissionsToRemove).map { it.subjectId }.toSet()
+        val users = userService.getAllByIds(usersIds).map { it.id to it }.toMap()
+        albumService.updatePermissions(
+            id = id,
+            permissionsToAdd = dto.permissionsToAdd.toUserPermissionsSet(users),
+            permissionsToRemove = dto.permissionsToRemove.toUserPermissionsSet(users),
+            source = req.source(principal)
+        )
     }
 
     private fun AlbumUpdateDto.toUpdateContent() = AlbumEvent.Update.Content(

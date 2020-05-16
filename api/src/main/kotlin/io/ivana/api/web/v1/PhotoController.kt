@@ -119,7 +119,7 @@ class PhotoController(
     @Suppress("MVCPathVariableInspection", "RegExpUnexpectedAnchor")
     fun updatePermissions(
         @PathVariable id: UUID,
-        @RequestBody @Valid dto: PhotoUpdatePermissionsDto,
+        @RequestBody @Valid dto: UpdatePermissionsDto,
         auth: Authentication,
         req: HttpServletRequest
     ) {
@@ -187,21 +187,6 @@ class PhotoController(
             }
         }
     }
-
-    private fun PermissionDto.toPermission() = when (this) {
-        PermissionDto.Read -> Permission.Read
-        PermissionDto.Update -> Permission.Update
-        PermissionDto.Delete -> Permission.Delete
-        PermissionDto.UpdatePermissions -> Permission.UpdatePermissions
-    }
-
-    private fun Set<SubjectPermissionsUpdateDto>.toUserPermissionsSet(users: Map<UUID, User>) =
-        map { dto ->
-            UserPermissions(
-                user = users.getValue(dto.subjectId),
-                permissions = dto.permissions.map { it.toPermission() }.toSet()
-            )
-        }.toSet()
 
     private fun TransformDto.toTransform() = when (this) {
         is TransformDto.Rotation -> Transform.Rotation(degrees)

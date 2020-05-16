@@ -53,10 +53,27 @@ class AlbumEventRepositoryImpl(
             )
         )
 
+    override fun saveUpdatePermissionsEvent(
+        albumId: UUID,
+        content: AlbumEvent.UpdatePermissions.Content,
+        source: EventSource.User
+    ) = insert<AlbumEvent.UpdatePermissions>(
+        subjectId = albumId,
+        type = AlbumEventType.UpdatePermissions,
+        data = AlbumEventData.UpdatePermissions(
+            source = source.toData() as EventSourceData.User,
+            content = AlbumEventData.UpdatePermissions.Content(
+                permissionsToAdd = content.permissionsToAdd.map { it.toData() }.toSet(),
+                permissionsToRemove = content.permissionsToRemove.map { it.toData() }.toSet()
+            )
+        )
+    )
+
     override fun RawEvent<AlbumEventType>.toEvent() = when (type) {
         AlbumEventType.Creation -> toCreationEvent()
         AlbumEventType.Deletion -> toDeletionEvent()
         AlbumEventType.Update -> toUpdateEvent()
+        AlbumEventType.UpdatePermissions -> toUpdatePermissionsEvent()
     }
 
     private fun RawEvent<AlbumEventType>.toCreationEvent() =
@@ -91,6 +108,20 @@ class AlbumEventRepositoryImpl(
                     name = data.content.name,
                     photosToAdd = data.content.photosToAdd,
                     photosToRemove = data.content.photosToRemove
+                )
+            )
+        }
+
+    private fun RawEvent<AlbumEventType>.toUpdatePermissionsEvent() =
+        mapper.readValue<AlbumEventData.UpdatePermissions>(jsonData).let { data ->
+            AlbumEvent.UpdatePermissions(
+                date = date,
+                subjectId = subjectId,
+                number = number,
+                source = data.source.toSource(),
+                content = AlbumEvent.UpdatePermissions.Content(
+                    permissionsToAdd = data.content.permissionsToAdd.map { it.toSubjectPermissions() }.toSet(),
+                    permissionsToRemove = data.content.permissionsToRemove.map { it.toSubjectPermissions() }.toSet()
                 )
             )
         }

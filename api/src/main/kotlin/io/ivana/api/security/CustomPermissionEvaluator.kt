@@ -40,10 +40,18 @@ class CustomPermissionEvaluator(
     }
 
     private fun checkAlbumAuthz(principal: UserPrincipal, targetId: UUID, permission: Permission) =
-        userAlbumAuthzRepo.fetch(principal.user.id, targetId).contains(permission)
+        userAlbumAuthzRepo.fetch(principal.user.id, targetId)?.contains(permission) ?: false
 
-    private fun checkPhotoAuthz(principal: UserPrincipal, targetId: UUID, permission: Permission) =
-        userPhotoAuthzRepo.fetch(principal.user.id, targetId).contains(permission)
+    private fun checkPhotoAuthz(principal: UserPrincipal, targetId: UUID, permission: Permission): Boolean {
+        val photoPerms = userPhotoAuthzRepo.fetch(principal.user.id, targetId)
+        return if (photoPerms != null) {
+            photoPerms.contains(permission)
+        } else if (permission == Permission.Read) {
+            false
+        } else {
+            false
+        }
+    }
 
     private fun checkUserAuthz(principal: UserPrincipal, targetId: UUID, permission: Permission) = when (permission) {
         Permission.Delete -> principal.user.id != targetId && (principal.user.role == Role.SuperAdmin ||

@@ -4,6 +4,7 @@ package io.ivana.api.impl
 
 import io.ivana.api.config.IvanaProperties
 import io.ivana.core.*
+import io.kotlintest.matchers.collections.shouldBeEmpty
 import io.kotlintest.matchers.file.shouldExist
 import io.kotlintest.matchers.file.shouldNotExist
 import io.kotlintest.matchers.throwable.shouldHaveMessage
@@ -429,6 +430,19 @@ internal class PhotoServiceImplTest {
         }
 
         @Test
+        fun `should returns empty set if no permissions defined`() {
+            every { photoRepo.existsById(photoId) } returns true
+            every { userRepo.existsById(userId) } returns true
+            every { authzRepo.fetch(userId, photoId) } returns null
+            val perms = service.getPermissions(photoId, userId)
+            perms.shouldBeEmpty()
+            verify { photoRepo.existsById(photoId) }
+            verify { userRepo.existsById(userId) }
+            verify { authzRepo.fetch(userId, photoId) }
+            confirmVerified(photoRepo, userRepo, authzRepo)
+        }
+
+        @Test
         fun `should return permissions`() {
             every { photoRepo.existsById(photoId) } returns true
             every { userRepo.existsById(userId) } returns true
@@ -691,7 +705,7 @@ internal class PhotoServiceImplTest {
         @Test
         fun `should throw exception if owner permission is deleted`() {
             every { photoRepo.fetchById(photo.id) } returns photo
-            assertThrows<PhotoOwnerPermissionsUpdateException> {
+            assertThrows<OwnerPermissionsUpdateException> {
                 service.updatePermissions(
                     id = photo.id,
                     permissionsToAdd = permissionsToAdd,

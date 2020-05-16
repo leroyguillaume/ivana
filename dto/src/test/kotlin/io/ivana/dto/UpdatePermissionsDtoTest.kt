@@ -2,9 +2,9 @@ package io.ivana.dto
 
 import java.util.*
 
-internal class PhotoUpdatePermissionsDtoTest : JsonTest(
-    filename = "photo-permissions-update.json",
-    expectedValue = PhotoUpdatePermissionsDto(
+internal class UpdatePermissionsDtoTest : JsonTest(
+    filename = "update-permissions.json",
+    expectedValue = UpdatePermissionsDto(
         permissionsToAdd = setOf(
             SubjectPermissionsUpdateDto(
                 subjectId = UUID.fromString("a526a3f3-98dc-4cca-8d5b-43a20fe02963"),
@@ -18,5 +18,5 @@ internal class PhotoUpdatePermissionsDtoTest : JsonTest(
             )
         )
     ),
-    deserializeAs = typeOf<PhotoUpdatePermissionsDto>()
+    deserializeAs = typeOf<UpdatePermissionsDto>()
 )

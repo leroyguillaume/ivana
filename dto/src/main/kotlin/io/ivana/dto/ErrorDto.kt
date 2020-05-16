@@ -15,7 +15,7 @@ private const val MalformedRequestCodeValue = "malformed_request"
 private const val MethodNotAllowedCodeValue = "method_not_allowed"
 private const val MissingParameterCodeValue = "missing_parameter"
 private const val NotFoundCodeValue = "not_found"
-private const val PhotoOwnerPermissionsUpdateCodeValue = "photo_owner_permissions_update"
+private const val OwnerPermissionsUpdateCodeValue = "photo_owner_permissions_update"
 private const val ResourcesNotFoundCodeValue = "resources_not_found"
 private const val UnauthorizedCodeValue = "unauthorized"
 private const val UnsupportedMediaTypeCodeValue = "unsupported_media_type"
@@ -36,7 +36,7 @@ private const val ValidationErrorCodeValue = "validation_error"
     JsonSubTypes.Type(value = ErrorDto.MethodNotAllowed::class, name = MethodNotAllowedCodeValue),
     JsonSubTypes.Type(value = ErrorDto.MissingParameter::class, name = MissingParameterCodeValue),
     JsonSubTypes.Type(value = ErrorDto.NotFound::class, name = NotFoundCodeValue),
-    JsonSubTypes.Type(value = ErrorDto.PhotoOwnerPermissionsUpdate::class, name = PhotoOwnerPermissionsUpdateCodeValue),
+    JsonSubTypes.Type(value = ErrorDto.OwnerPermissionsUpdate::class, name = OwnerPermissionsUpdateCodeValue),
     JsonSubTypes.Type(value = ErrorDto.ResourcesNotFound::class, name = ResourcesNotFoundCodeValue),
     JsonSubTypes.Type(value = ErrorDto.Unauthorized::class, name = UnauthorizedCodeValue),
     JsonSubTypes.Type(value = ErrorDto.UnsupportedMediaType::class, name = UnsupportedMediaTypeCodeValue),
@@ -71,8 +71,8 @@ sealed class ErrorDto {
         @JsonProperty(NotFoundCodeValue)
         NotFound,
 
-        @JsonProperty(PhotoOwnerPermissionsUpdateCodeValue)
-        PhotoOwnerPermissionsUpdate,
+        @JsonProperty(OwnerPermissionsUpdateCodeValue)
+        OwnerPermissionsUpdate,
 
         @JsonProperty(ResourcesNotFoundCodeValue)
         ResourcesNotFound,
@@ -142,10 +142,10 @@ sealed class ErrorDto {
         override fun equals(other: Any?) = other is NotFound
     }
 
-    object PhotoOwnerPermissionsUpdate : ErrorDto() {
-        override val code = Code.PhotoOwnerPermissionsUpdate
+    object OwnerPermissionsUpdate : ErrorDto() {
+        override val code = Code.OwnerPermissionsUpdate
 
-        override fun equals(other: Any?) = other is PhotoOwnerPermissionsUpdate
+        override fun equals(other: Any?) = other is OwnerPermissionsUpdate
     }
 
     data class ResourcesNotFound(

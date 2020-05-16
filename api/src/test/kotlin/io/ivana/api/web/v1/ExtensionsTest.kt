@@ -13,20 +13,39 @@ import java.util.*
 
 internal class ExtensionsTest {
     @Test
-    fun albumToDto() {
+    fun albumToCompleteDto() {
+        val perms = setOf(Permission.Read)
         val album = Album(
             id = UUID.randomUUID(),
             ownerId = UUID.randomUUID(),
             name = "album",
             creationDate = OffsetDateTime.now()
         )
-        val dto = AlbumDto(
+        val dto = AlbumDto.Complete(
+            id = album.id,
+            name = album.name,
+            ownerId = album.ownerId,
+            creationDate = album.creationDate,
+            permissions = perms.map { it.toDto() }.toSet()
+        )
+        album.toCompleteDto(perms) shouldBe dto
+    }
+
+    @Test
+    fun albumToLightDto() {
+        val album = Album(
+            id = UUID.randomUUID(),
+            ownerId = UUID.randomUUID(),
+            name = "album",
+            creationDate = OffsetDateTime.now()
+        )
+        val dto = AlbumDto.Light(
             id = album.id,
             name = album.name,
             ownerId = album.ownerId,
             creationDate = album.creationDate
         )
-        album.toDto() shouldBe dto
+        album.toLightDto() shouldBe dto
     }
 
     @Test
@@ -185,6 +204,29 @@ internal class ExtensionsTest {
     }
 
     @Nested
+    inner class permissionDtoToPermission {
+        @Test
+        fun read() {
+            PermissionDto.Read.toPermission() shouldBe Permission.Read
+        }
+
+        @Test
+        fun update() {
+            PermissionDto.Update.toPermission() shouldBe Permission.Update
+        }
+
+        @Test
+        fun delete() {
+            PermissionDto.Delete.toPermission() shouldBe Permission.Delete
+        }
+
+        @Test
+        fun updatePermissions() {
+            PermissionDto.UpdatePermissions.toPermission() shouldBe Permission.UpdatePermissions
+        }
+    }
+
+    @Nested
     inner class roleToRoleDto {
         @Test
         fun user() {
@@ -200,6 +242,32 @@ internal class ExtensionsTest {
         fun super_admin() {
             Role.SuperAdmin.toDto() shouldBe RoleDto.SuperAdmin
         }
+    }
+
+    @Test
+    fun setOfSubjectPermissionsUpdateDtoToSetOfUserPermissions() {
+        val user = User(
+            id = UUID.randomUUID(),
+            name = "user",
+            creationDate = OffsetDateTime.now(),
+            hashedPwd = "hashedPwd",
+            role = Role.User
+        )
+        val perms = setOf(Permission.Read, Permission.Delete)
+        val users = mapOf(user.id to user)
+        val subjPermsUpdateDtos = setOf(
+            SubjectPermissionsUpdateDto(
+                subjectId = user.id,
+                permissions = perms.map { it.toDto() }.toSet()
+            )
+        )
+        val usersPerms = setOf(
+            UserPermissions(
+                user = user,
+                permissions = perms
+            )
+        )
+        subjPermsUpdateDtos.toUserPermissionsSet(users) shouldBe usersPerms
     }
 
     @Test

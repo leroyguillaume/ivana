@@ -115,11 +115,11 @@ class ErrorController(
         }
     }
 
-    @ExceptionHandler(PhotoOwnerPermissionsUpdateException::class)
+    @ExceptionHandler(OwnerPermissionsUpdateException::class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    fun handlePhotoOwnerPermissionsUpdate(exception: PhotoOwnerPermissionsUpdateException): ErrorDto {
+    fun handlePhotoOwnerPermissionsUpdate(exception: OwnerPermissionsUpdateException): ErrorDto {
         Logger.debug(exception.message, exception)
-        return ErrorDto.PhotoOwnerPermissionsUpdate
+        return ErrorDto.OwnerPermissionsUpdate
     }
 
     @ExceptionHandler(ResourcesNotFoundException::class)

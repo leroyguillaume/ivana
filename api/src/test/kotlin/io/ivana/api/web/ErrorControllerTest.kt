@@ -131,7 +131,7 @@ internal class ErrorControllerTest : AbstractControllerTest() {
     @Test
     fun `should return 400 if user does not exist`() = authenticated {
         val photoId = UUID.randomUUID()
-        val dto = PhotoUpdatePermissionsDto(
+        val dto = UpdatePermissionsDto(
             permissionsToAdd = setOf(
                 SubjectPermissionsUpdateDto(
                     subjectId = UUID.randomUUID(),

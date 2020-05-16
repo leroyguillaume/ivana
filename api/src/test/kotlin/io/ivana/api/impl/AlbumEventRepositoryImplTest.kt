@@ -21,10 +21,15 @@ import java.util.*
 @SpringBootTest
 internal class AlbumEventRepositoryImplTest {
     private val pwdEncoder = BCryptPasswordEncoder()
-    private val userCreationEventContent = UserEvent.Creation.Content(
+    private val ownerCreationEventContent = UserEvent.Creation.Content(
         name = "admin",
         hashedPwd = pwdEncoder.encode("changeit"),
         role = Role.SuperAdmin
+    )
+    private val user1CreationEventContent = UserEvent.Creation.Content(
+        name = "user1",
+        hashedPwd = pwdEncoder.encode("changeit"),
+        role = Role.User
     )
 
     @Autowired
@@ -48,20 +53,14 @@ internal class AlbumEventRepositoryImplTest {
     @Autowired
     private lateinit var photoRepo: PhotoRepository
 
-    private lateinit var userCreationEvent: UserEvent.Creation
-    private lateinit var createdUser: User
+    private lateinit var owner: User
+    private lateinit var user: User
 
     @BeforeEach
     fun beforeEach() {
         cleanDb(jdbc)
-        userCreationEvent = userEventRepo.saveCreationEvent(userCreationEventContent, EventSource.System)
-        createdUser = User(
-            id = userCreationEvent.subjectId,
-            name = userCreationEvent.content.name,
-            hashedPwd = userCreationEvent.content.hashedPwd,
-            role = userCreationEvent.content.role,
-            creationDate = userCreationEvent.date
-        )
+        owner = userEventRepo.saveCreationEvent(ownerCreationEventContent, EventSource.System).toUser()
+        user = userEventRepo.saveCreationEvent(user1CreationEventContent, EventSource.System).toUser()
     }
 
     @Nested
@@ -73,7 +72,7 @@ internal class AlbumEventRepositoryImplTest {
 
         @BeforeEach
         fun beforeEach() {
-            source = EventSource.User(createdUser.id, InetAddress.getByName("127.0.0.1"))
+            source = EventSource.User(owner.id, InetAddress.getByName("127.0.0.1"))
             photo1 = photoEventRepo.saveUploadEvent(
                 source = source,
                 content = PhotoEvent.Upload.Content(
@@ -115,7 +114,6 @@ internal class AlbumEventRepositoryImplTest {
 
     @Nested
     inner class fetch {
-        private val subjectId = UUID.randomUUID()
         private val number = 1L
 
         @Test
@@ -128,7 +126,7 @@ internal class AlbumEventRepositoryImplTest {
         fun `should return creation event with subject id and number`() {
             val expectedEvent = repo.saveCreationEvent(
                 name = "album",
-                source = EventSource.User(createdUser.id, InetAddress.getByName("127.0.0.1"))
+                source = EventSource.User(owner.id, InetAddress.getByName("127.0.0.1"))
             )
             val event = repo.fetch(expectedEvent.number)
             event shouldBe expectedEvent
@@ -138,7 +136,7 @@ internal class AlbumEventRepositoryImplTest {
         fun `should return deletion event with subject id and number`() {
             val expectedEvent = repo.saveDeletionEvent(
                 albumId = UUID.randomUUID(),
-                source = EventSource.User(createdUser.id, InetAddress.getByName("127.0.0.1"))
+                source = EventSource.User(owner.id, InetAddress.getByName("127.0.0.1"))
             )
             val event = repo.fetch(expectedEvent.number)
             event shouldBe expectedEvent
@@ -148,12 +146,40 @@ internal class AlbumEventRepositoryImplTest {
         fun `should return update event with subject id and number`() {
             val expectedEvent = repo.saveUpdateEvent(
                 id = UUID.randomUUID(),
-                source = EventSource.User(createdUser.id, InetAddress.getByName("127.0.0.1")),
+                source = EventSource.User(owner.id, InetAddress.getByName("127.0.0.1")),
                 content = AlbumEvent.Update.Content(
                     name = "album",
                     photosToAdd = emptyList(),
                     photosToRemove = emptyList()
                 )
+            )
+            val event = repo.fetch(expectedEvent.number)
+            event shouldBe expectedEvent
+        }
+
+        @Test
+        fun `should return update permissions event with number`() {
+            val creationEvent = repo.saveCreationEvent(
+                name = "album",
+                source = EventSource.User(owner.id, InetAddress.getByName("127.0.0.1"))
+            )
+            val expectedEvent = repo.saveUpdatePermissionsEvent(
+                albumId = creationEvent.subjectId,
+                content = AlbumEvent.UpdatePermissions.Content(
+                    permissionsToAdd = setOf(
+                        SubjectPermissions(
+                            subjectId = user.id,
+                            permissions = setOf(Permission.Read)
+                        )
+                    ),
+                    permissionsToRemove = setOf(
+                        SubjectPermissions(
+                            subjectId = user.id,
+                            permissions = setOf(Permission.Delete)
+                        )
+                    )
+                ),
+                source = EventSource.User(owner.id, InetAddress.getByName("127.0.0.1"))
             )
             val event = repo.fetch(expectedEvent.number)
             event shouldBe expectedEvent
@@ -172,13 +198,13 @@ internal class AlbumEventRepositoryImplTest {
                     date = OffsetDateTime.now(),
                     subjectId = id,
                     number = 1,
-                    source = EventSource.User(createdUser.id, InetAddress.getByName("127.0.0.1")),
+                    source = EventSource.User(owner.id, InetAddress.getByName("127.0.0.1")),
                     albumName = "album"
                 )
             }
             expectedAlbum = Album(
                 id = expectedEvent.subjectId,
-                ownerId = createdUser.id,
+                ownerId = owner.id,
                 name = expectedEvent.albumName,
                 creationDate = expectedEvent.date
             )
@@ -195,7 +221,7 @@ internal class AlbumEventRepositoryImplTest {
                 id = event.subjectId,
                 creationDate = event.date
             )
-            val permissions = authzRepo.fetch(createdUser.id, event.subjectId)
+            val permissions = authzRepo.fetch(owner.id, event.subjectId)
             permissions shouldContainExactly Permission.values().toSet()
         }
     }
@@ -208,7 +234,7 @@ internal class AlbumEventRepositoryImplTest {
         fun beforeEach() {
             val creationEvent = repo.saveCreationEvent(
                 name = "album",
-                source = EventSource.User(createdUser.id, InetAddress.getByName("127.0.0.1"))
+                source = EventSource.User(owner.id, InetAddress.getByName("127.0.0.1"))
             )
             expectedEvent = AlbumEvent.Deletion(
                 date = OffsetDateTime.now(),
@@ -241,7 +267,7 @@ internal class AlbumEventRepositoryImplTest {
 
         @BeforeEach
         fun beforeEach() {
-            source = EventSource.User(createdUser.id, InetAddress.getByName("127.0.0.1"))
+            source = EventSource.User(owner.id, InetAddress.getByName("127.0.0.1"))
             photo1 = photoEventRepo.saveUploadEvent(
                 source = source,
                 content = PhotoEvent.Upload.Content(
@@ -277,7 +303,7 @@ internal class AlbumEventRepositoryImplTest {
             )
             expectedAlbum = Album(
                 id = expectedAddEvent.subjectId,
-                ownerId = createdUser.id,
+                ownerId = owner.id,
                 name = expectedAddEvent.content.name,
                 creationDate = albumCreationEvent.date
             )
@@ -316,6 +342,53 @@ internal class AlbumEventRepositoryImplTest {
             )
             albumRepo.fetchById(removeEvent.subjectId) shouldBe expectedAlbum
             photoRepo.fetchAllOfAlbum(albumCreationEvent.subjectId, 0, 10).shouldBeEmpty()
+        }
+    }
+
+    @Nested
+    inner class saveUpdatePermissionsEvent {
+        private lateinit var expectedEvent: AlbumEvent.UpdatePermissions
+
+        @BeforeEach
+        fun beforeEach() {
+            val creationEvent = repo.saveCreationEvent(
+                name = "album",
+                source = EventSource.User(owner.id, InetAddress.getByName("127.0.0.1"))
+            )
+            expectedEvent = AlbumEvent.UpdatePermissions(
+                date = OffsetDateTime.now(),
+                subjectId = creationEvent.subjectId,
+                number = 2,
+                source = EventSource.User(owner.id, InetAddress.getByName("127.0.0.1")),
+                content = AlbumEvent.UpdatePermissions.Content(
+                    permissionsToAdd = setOf(
+                        SubjectPermissions(
+                            subjectId = user.id,
+                            permissions = EnumSet.allOf(Permission::class.java)
+                        )
+                    ),
+                    permissionsToRemove = setOf(
+                        SubjectPermissions(
+                            subjectId = owner.id,
+                            permissions = EnumSet.allOf(Permission::class.java)
+                        )
+                    )
+                )
+            )
+        }
+
+        @Test
+        fun `should return created event`() {
+            val event =
+                repo.saveUpdatePermissionsEvent(expectedEvent.subjectId, expectedEvent.content, expectedEvent.source)
+            event shouldBe expectedEvent.copy(
+                date = event.date,
+                subjectId = event.subjectId
+            )
+            val ownerPermissions = authzRepo.fetch(owner.id, event.subjectId)
+            ownerPermissions shouldBe emptySet()
+            val userPermissions = authzRepo.fetch(user.id, event.subjectId)
+            userPermissions shouldBe EnumSet.allOf(Permission::class.java)
         }
     }
 }

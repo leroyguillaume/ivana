@@ -5,6 +5,7 @@ package io.ivana.api.impl
 import io.ivana.core.*
 import io.kotlintest.matchers.collections.shouldBeEmpty
 import io.kotlintest.matchers.collections.shouldContainExactly
+import io.kotlintest.matchers.types.shouldBeNull
 import io.kotlintest.shouldBe
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
@@ -99,22 +100,29 @@ internal class UserAlbumAuthorizationRepositoryImplTest : AbstractAuthorizationR
     @Nested
     inner class fetch {
         @Test
-        fun `should return empty set if user does not exist`() {
+        fun `should return null if user does not exist`() {
             val permissions = repo.fetch(UUID.randomUUID(), albumCreationEvent.subjectId)
-            permissions.shouldBeEmpty()
+            permissions.shouldBeNull()
         }
 
         @Test
-        fun `should return empty set if album does not exist`() {
+        fun `should return null if album does not exist`() {
             val permissions = repo.fetch(ownerCreationEvent.subjectId, UUID.randomUUID())
-            permissions.shouldBeEmpty()
+            permissions.shouldBeNull()
+        }
+
+        @Test
+        fun `should return null if no authorization defined`() {
+            deleteAuthorizations(ownerCreationEvent.subjectId, albumCreationEvent.subjectId)
+            val permissions = repo.fetch(ownerCreationEvent.subjectId, albumCreationEvent.subjectId)
+            permissions.shouldBeNull()
         }
 
         @Test
         fun `should return empty set if user does not have rights`() {
             updateAuthorization(ownerCreationEvent.subjectId, albumCreationEvent.subjectId)
             val permissions = repo.fetch(ownerCreationEvent.subjectId, albumCreationEvent.subjectId)
-            permissions.shouldBeEmpty()
+            permissions!!.shouldBeEmpty()
         }
 
         @Test
@@ -143,7 +151,7 @@ internal class UserAlbumAuthorizationRepositoryImplTest : AbstractAuthorizationR
             val expectedPermissions = Permission.values()
             updateAuthorization(ownerCreationEvent.subjectId, albumCreationEvent.subjectId, *expectedPermissions)
             val permissions = repo.fetch(ownerCreationEvent.subjectId, albumCreationEvent.subjectId)
-            permissions shouldContainExactly permissions.toSet()
+            permissions shouldContainExactly permissions!!.toSet()
         }
     }
 
