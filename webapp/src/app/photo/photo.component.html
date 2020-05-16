@@ -1,61 +1,63 @@
-<div class="container m-0 p-0 text-center photo-page">
-  <div class="back-button">
-    <button class="btn btn-secondary" (click)="close()">
-      <fa-icon [icon]="arrowLeftIcon" size="2x"></fa-icon>
-    </button>
+<div *ngIf="loading; else content">
+  <div class="text-center">
+    <fa-icon [icon]="spinnerIcon" spin="true" size="8x"></fa-icon>
   </div>
+</div>
 
-  <div class="settings-button">
-    <button *ngIf="!settingsPanelOpened" class="btn btn-secondary" (click)="settingsPanelOpened = true">
-      <fa-icon [icon]="editIcon" size="2x"></fa-icon>
-    </button>
-  </div>
+<ng-template #content>
+  <div class="container m-0 p-0 text-center photo-page">
+    <div class="back-button">
+      <button class="btn btn-secondary" (click)="close()">
+        <fa-icon [icon]="arrowLeftIcon" size="2x"></fa-icon>
+      </button>
+    </div>
 
-  <div *ngIf="settingsPanelOpened" class="settings-panel">
-    <div class="container mt-2">
-      <div class="text-right mb-2">
-        <fa-icon class="clickable" [icon]="closeIcon" (click)="settingsPanelOpened = false" size="2x"></fa-icon>
-      </div>
+    <div class="settings-button">
+      <button *ngIf="!settingsPanelOpened" class="btn btn-secondary" (click)="settingsPanelOpened = true">
+        <fa-icon [icon]="editIcon" size="2x"></fa-icon>
+      </button>
+    </div>
 
-      <app-error></app-error>
+    <div *ngIf="settingsPanelOpened" class="settings-panel">
+      <div class="container mt-2">
+        <div class="text-right mb-2">
+          <fa-icon class="clickable" [icon]="closeIcon" (click)="settingsPanelOpened = false" size="2x"></fa-icon>
+        </div>
 
-      <div class="text-center">
-        <h4>Rotations</h4>
-        <button class="btn btn-secondary mr-2" (click)="rotateClockwise()">
-          <fa-icon [icon]="rotateClockwiseIcon"></fa-icon>
-        </button>
-        <button class="btn btn-secondary" (click)="rotateCounterclockwise()">
-          <fa-icon [icon]="rotateCounterclockwiseIcon"></fa-icon>
-        </button>
+        <app-error></app-error>
 
-        <h4 class="mt-4">Actions</h4>
-        <button class="btn btn-success" [routerLink]="['edit']">
-          <fa-icon [icon]="editIcon"></fa-icon>
-          Éditer
-        </button>
+        <div class="text-center">
+          <div *ngIf="updateAllowed">
+            <h4>Rotations</h4>
+            <button class="btn btn-secondary mr-2" (click)="rotateClockwise()">
+              <fa-icon [icon]="rotateClockwiseIcon"></fa-icon>
+            </button>
+            <button class="btn btn-secondary" (click)="rotateCounterclockwise()">
+              <fa-icon [icon]="rotateCounterclockwiseIcon"></fa-icon>
+            </button>
+          </div>
 
-        <button class="btn btn-primary mt-2" (click)="openAlbumSelectionModal()">
-          <fa-icon [icon]="plusIcon"></fa-icon>
-          Ajouter à l'album...
-        </button>
+          <h4 class="mt-4">Actions</h4>
+          <button class="btn btn-success" [routerLink]="['edit']" *ngIf="updateAllowed">
+            <fa-icon [icon]="editIcon"></fa-icon>
+            Éditer
+          </button>
 
-        <button class="btn btn-danger mt-2" (click)="delete()">
-          <fa-icon [icon]="trashIcon"></fa-icon>
-          Supprimer
-        </button>
+          <button class="btn btn-primary mt-2" (click)="openAlbumSelectionModal()">
+            <fa-icon [icon]="plusIcon"></fa-icon>
+            Ajouter à l'album...
+          </button>
+
+          <button class="btn btn-danger mt-2" (click)="delete()" *ngIf="deleteAllowed">
+            <fa-icon [icon]="trashIcon"></fa-icon>
+            Supprimer
+          </button>
+        </div>
       </div>
     </div>
-  </div>
 
-  <div *ngIf="loading; else photoBlock">
-    <div class="text-center">
-      <fa-icon [icon]="spinnerIcon" spin="true" size="8x"></fa-icon>
-    </div>
-  </div>
-
-  <ng-template #photoBlock>
     <div class="text-center" (swipeleft)="next()" (swiperight)="previous()">
       <img src="{{baseUrl}}{{photo.rawUri}}" style="transform: rotate({{rotationDegrees}}deg);">
     </div>
-  </ng-template>
-</div>
+  </div>
+</ng-template>

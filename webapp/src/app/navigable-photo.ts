@@ -1,5 +1,6 @@
 import {Photo} from './photo'
 import {OwnableEntity} from './ownable-entity'
+import {Permission} from './permission'
 
 export class NavigablePhoto implements OwnableEntity {
   constructor(
@@ -7,6 +8,7 @@ export class NavigablePhoto implements OwnableEntity {
     public readonly ownerId: string,
     public readonly rawUri: string,
     public readonly compressedUri: string,
+    public readonly permissions: Permission[],
     public readonly previous: Photo,
     public readonly next: Photo
   ) {

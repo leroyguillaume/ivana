@@ -13,6 +13,7 @@ import {AlbumSelectionModalComponent} from '../album-selection-modal/album-selec
 import {Album} from '../album'
 import {NgbModal} from '@ng-bootstrap/ng-bootstrap'
 import {AlbumService} from '../album.service'
+import {Permission} from '../permission'
 
 @Component({
   selector: 'app-photo',
@@ -49,6 +50,14 @@ export class PhotoComponent implements OnDestroy, OnInit {
     private route: ActivatedRoute,
     private router: Router,
   ) {
+  }
+
+  get deleteAllowed(): boolean {
+    return this.photo.permissions.indexOf(Permission.Delete) > -1
+  }
+
+  get updateAllowed(): boolean {
+    return this.photo.permissions.indexOf(Permission.Update) > -1
   }
 
   close(): void {
@@ -173,10 +182,6 @@ export class PhotoComponent implements OnDestroy, OnInit {
     this.rotationDegrees -= 90.
     this.rotationDegreesOffset -= 90.
     this.rotateTimeout()
-  }
-
-  swipe(event: any): void {
-    console.log(event)
   }
 
 }

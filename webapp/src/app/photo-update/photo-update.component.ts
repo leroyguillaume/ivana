@@ -10,6 +10,7 @@ import {StateService} from '../state.service'
 import {SubjectPermissions} from '../subject-permissions'
 import {Page} from '../page'
 import {SubjectPermissionsUpdateEvent} from '../subject-permissions-update-event'
+import {Permission} from '../permission'
 
 export const PermissionsPageSize = 10
 
@@ -34,6 +35,10 @@ export class PhotoUpdateComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router
   ) {
+  }
+
+  get updatePermissionsAllowed(): boolean {
+    return this.photo.permissions.indexOf(Permission.UpdatePermissions) > -1
   }
 
   back(): void {
