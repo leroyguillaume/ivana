@@ -27,9 +27,9 @@ import kotlin.math.sin
 @Service
 class PhotoServiceImpl(
     override val repo: PhotoRepository,
+    override val userRepo: UserRepository,
     override val authzRepo: UserPhotoAuthorizationRepository,
     private val eventRepo: PhotoEventRepository,
-    private val userRepo: UserRepository,
     private val props: IvanaProperties
 ) : PhotoService, AbstractOwnableEntityService<Photo>() {
     internal companion object {

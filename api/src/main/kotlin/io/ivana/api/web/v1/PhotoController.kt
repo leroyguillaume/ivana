@@ -57,11 +57,16 @@ class PhotoController(
     @Suppress("MVCPathVariableInspection", "RegExpUnexpectedAnchor")
     fun get(
         @PathVariable id: UUID,
-        @RequestParam(name = NavigableParamName, required = false) navigable: Boolean = false
-    ) = if (navigable) {
-        photoService.getLinkedById(id).toNavigableDto()
-    } else {
-        photoService.getById(id).toSimpleDto()
+        @RequestParam(name = NavigableParamName, required = false) navigable: Boolean = false,
+        auth: Authentication
+    ): PhotoDto.Complete {
+        val principal = auth.principal as UserPrincipal
+        val perms = photoService.getPermissions(id, principal.user.id)
+        return if (navigable) {
+            photoService.getLinkedById(id).toNavigableDto(perms)
+        } else {
+            photoService.getById(id).toSimpleDto(perms)
+        }
     }
 
     @GetMapping
@@ -72,7 +77,7 @@ class PhotoController(
         auth: Authentication
     ): PageDto<PhotoDto> {
         val principal = auth.principal as UserPrincipal
-        return photoService.getAll(principal.user.id, page, size).toDto { it.toSimpleDto() }
+        return photoService.getAll(principal.user.id, page, size).toDto { it.toLightDto() }
     }
 
     @GetMapping("/{id:$UuidRegex}$CompressedPhotoEndpoint")
@@ -92,7 +97,7 @@ class PhotoController(
         @RequestParam(name = PageParamName, required = false, defaultValue = "1") @Min(1) page: Int,
         @RequestParam(name = SizeParamName, required = false, defaultValue = "10") @Min(1) size: Int
     ): PageDto<SubjectPermissionsDto> {
-        val subjPerms = photoService.getPermissions(id, page, size)
+        val subjPerms = photoService.getAllPermissions(id, page, size)
         val usersIds = subjPerms.content.map { it.subjectId }.toSet()
         val users = userService.getAllByIds(usersIds).map { it.id to it }.toMap()
         return subjPerms.toDto { it.toDto(users.getValue(it.subjectId).name) }
@@ -171,7 +176,7 @@ class PhotoController(
         } else {
             try {
                 val photo = photoService.upload(file.inputStream, MediaTypeToPhotoType.getValue(contentType), source)
-                PhotoUploadResultsDto.Result.Success(photo.toSimpleDto())
+                PhotoUploadResultsDto.Result.Success(photo.toLightDto())
             } catch (exception: PhotoAlreadyUploadedException) {
                 PhotoUploadResultsDto.Result.Failure(
                     ErrorDto.DuplicateResource(URI("$PhotoApiEndpoint/${exception.photo.id}"))

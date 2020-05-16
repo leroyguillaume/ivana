@@ -4,20 +4,33 @@ import java.net.URI
 import java.util.*
 
 sealed class PhotoDto : EntityDto {
-    data class Simple(
+    sealed class Complete : PhotoDto() {
+        data class Navigable(
+            override val id: UUID,
+            override val ownerId: UUID,
+            override val rawUri: URI,
+            override val compressedUri: URI,
+            override val permissions: Set<PermissionDto>,
+            val previous: Light? = null,
+            val next: Light? = null
+        ) : Complete()
+
+        data class Simple(
+            override val id: UUID,
+            override val ownerId: UUID,
+            override val rawUri: URI,
+            override val compressedUri: URI,
+            override val permissions: Set<PermissionDto>
+        ) : Complete()
+
+        abstract val permissions: Set<PermissionDto>
+    }
+
+    data class Light(
         override val id: UUID,
         override val ownerId: UUID,
         override val rawUri: URI,
         override val compressedUri: URI
-    ) : PhotoDto()
-
-    data class Navigable(
-        override val id: UUID,
-        override val ownerId: UUID,
-        override val rawUri: URI,
-        override val compressedUri: URI,
-        val previous: Simple? = null,
-        val next: Simple? = null
     ) : PhotoDto()
 
     abstract val id: UUID

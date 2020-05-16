@@ -46,7 +46,7 @@ internal class PhotoServiceImplTest {
         photoRepo = mockk()
         userRepo = mockk()
 
-        service = PhotoServiceImpl(photoRepo, authzRepo, photoEventRepo, userRepo, Props)
+        service = PhotoServiceImpl(photoRepo, userRepo, authzRepo, photoEventRepo, Props)
     }
 
     @Nested
@@ -370,7 +370,7 @@ internal class PhotoServiceImplTest {
     }
 
     @Nested
-    inner class getPermissions {
+    inner class getAllPermissions {
         private val photoId = UUID.randomUUID()
         private val pageNo = 1
         private val pageSize = 3
@@ -394,11 +394,51 @@ internal class PhotoServiceImplTest {
         fun `should return page`() {
             every { authzRepo.fetchAll(photoId, pageNo - 1, pageSize) } returns expectedPage.content
             every { authzRepo.count(photoId) } returns expectedPage.totalItems
-            val page = service.getPermissions(photoId, pageNo, pageSize)
+            val page = service.getAllPermissions(photoId, pageNo, pageSize)
             page shouldBe expectedPage
             verify { authzRepo.fetchAll(photoId, pageNo - 1, pageSize) }
             verify { authzRepo.count(photoId) }
             confirmVerified(authzRepo)
+        }
+    }
+
+    @Nested
+    inner class getPermissions {
+        private val userId = UUID.randomUUID()
+        private val photoId = UUID.randomUUID()
+        private val permissions = setOf(Permission.Read)
+
+        @Test
+        fun `should throw exception if photo does not exist`() {
+            every { photoRepo.existsById(photoId) } returns false
+            val exception = assertThrows<EntityNotFoundException> { service.getPermissions(photoId, userId) }
+            exception shouldHaveMessage "Photo $photoId does not exist"
+            verify { photoRepo.existsById(photoId) }
+            confirmVerified(photoRepo)
+        }
+
+        @Test
+        fun `should throw exception if user does not exist`() {
+            every { photoRepo.existsById(photoId) } returns true
+            every { userRepo.existsById(userId) } returns false
+            val exception = assertThrows<EntityNotFoundException> { service.getPermissions(photoId, userId) }
+            exception shouldHaveMessage "User $userId does not exist"
+            verify { photoRepo.existsById(photoId) }
+            verify { userRepo.existsById(userId) }
+            confirmVerified(photoRepo, userRepo)
+        }
+
+        @Test
+        fun `should return permissions`() {
+            every { photoRepo.existsById(photoId) } returns true
+            every { userRepo.existsById(userId) } returns true
+            every { authzRepo.fetch(userId, photoId) } returns permissions
+            val perms = service.getPermissions(photoId, userId)
+            perms shouldBe permissions
+            verify { photoRepo.existsById(photoId) }
+            verify { userRepo.existsById(userId) }
+            verify { authzRepo.fetch(userId, photoId) }
+            confirmVerified(photoRepo, userRepo, authzRepo)
         }
     }
 

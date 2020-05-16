@@ -10,6 +10,7 @@ import kotlin.math.ceil
 @Service
 class AlbumServiceImpl(
     override val repo: AlbumRepository,
+    override val userRepo: UserRepository,
     override val authzRepo: UserAlbumAuthorizationRepository,
     private val eventRepo: AlbumEventRepository,
     private val photoRepo: PhotoRepository
