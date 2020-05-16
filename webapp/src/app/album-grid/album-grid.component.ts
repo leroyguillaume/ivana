@@ -1,6 +1,6 @@
 import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core'
 import {IconDefinition} from '@fortawesome/fontawesome-common-types'
-import {faArrowLeft, faArrowRight, faImages, faPlus, faTrash} from '@fortawesome/free-solid-svg-icons'
+import {faArrowLeft, faArrowRight, faCog, faImages, faPlus, faTrash} from '@fortawesome/free-solid-svg-icons'
 import {environment} from '../../environments/environment'
 import {Page} from '../page'
 import {StateService} from '../state.service'
@@ -19,6 +19,7 @@ export class AlbumGridComponent implements OnInit {
   trashIcon: IconDefinition = faTrash
   albumIcon: IconDefinition = faImages
   plusIcon: IconDefinition = faPlus
+  cogIcon: IconDefinition = faCog
 
   baseUrl: string = environment.baseUrl
 

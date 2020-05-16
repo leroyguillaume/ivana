@@ -13,6 +13,7 @@ import {AlbumListComponent} from './album-list/album-list.component'
 import {AlbumComponent} from './album/album.component'
 import {ForbiddenComponent} from './forbidden/forbidden.component'
 import {PhotoUpdateComponent} from './photo-update/photo-update.component'
+import {AlbumUpdateComponent} from './album-update/album-update.component'
 
 
 const routes: Routes = [
@@ -64,6 +65,12 @@ const routes: Routes = [
     path: 'album/:id',
     pathMatch: 'full',
     component: AlbumComponent,
+    canActivate: [AuthenticatedGuard]
+  },
+  {
+    path: 'album/:id/edit',
+    pathMatch: 'full',
+    component: AlbumUpdateComponent,
     canActivate: [AuthenticatedGuard]
   },
   {
