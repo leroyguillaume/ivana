@@ -3,6 +3,8 @@
 package io.ivana.api.impl
 
 import io.ivana.core.*
+import io.kotlintest.matchers.boolean.shouldBeFalse
+import io.kotlintest.matchers.boolean.shouldBeTrue
 import io.kotlintest.matchers.collections.shouldBeEmpty
 import io.kotlintest.matchers.collections.shouldContainExactly
 import io.kotlintest.matchers.types.shouldBeNull
@@ -18,10 +20,6 @@ import java.util.*
 
 @SpringBootTest
 internal class UserPhotoAuthorizationRepositoryImplTest : AbstractAuthorizationRepositoryTest() {
-    override val tableName = UserPhotoAuthorizationRepositoryImpl.TableName
-    override val subjectIdColumnName = UserPhotoAuthorizationRepositoryImpl.UserIdColumnName
-    override val resourceIdColumnName = UserPhotoAuthorizationRepositoryImpl.PhotoIdColumnName
-
     private val pwdEncoder = BCryptPasswordEncoder()
     private val ownerCreationEventContent = UserEvent.Creation.Content(
         name = "admin",
@@ -38,6 +36,9 @@ internal class UserPhotoAuthorizationRepositoryImplTest : AbstractAuthorizationR
 
     @Autowired
     private lateinit var photoEventRepo: PhotoEventRepository
+
+    @Autowired
+    private lateinit var albumEventRepo: AlbumEventRepository
 
     @Autowired
     private lateinit var repo: UserPhotoAuthorizationRepositoryImpl
@@ -87,7 +88,7 @@ internal class UserPhotoAuthorizationRepositoryImplTest : AbstractAuthorizationR
                 )
             )
             subjsPerms.forEach { subjPerms ->
-                updateAuthorization(
+                updateUserPhotoAuthorizations(
                     subjectId = subjPerms.subjectId,
                     resourceId = photoUploadEvent.subjectId,
                     permissions = *subjPerms.permissions.toTypedArray()
@@ -117,35 +118,35 @@ internal class UserPhotoAuthorizationRepositoryImplTest : AbstractAuthorizationR
 
         @Test
         fun `should return null if no authorization defined`() {
-            deleteAuthorizations(ownerCreationEvent.subjectId, photoUploadEvent.subjectId)
+            deleteUserPhotoAuthorizations(ownerCreationEvent.subjectId, photoUploadEvent.subjectId)
             val permissions = repo.fetch(ownerCreationEvent.subjectId, photoUploadEvent.subjectId)
             permissions.shouldBeNull()
         }
 
         @Test
         fun `should return empty set if user does not have rights`() {
-            updateAuthorization(ownerCreationEvent.subjectId, photoUploadEvent.subjectId)
+            updateUserPhotoAuthorizations(ownerCreationEvent.subjectId, photoUploadEvent.subjectId)
             val permissions = repo.fetch(ownerCreationEvent.subjectId, photoUploadEvent.subjectId)
             permissions!!.shouldBeEmpty()
         }
 
         @Test
         fun `should return read if user has read permission`() {
-            updateAuthorization(ownerCreationEvent.subjectId, photoUploadEvent.subjectId, Permission.Read)
+            updateUserPhotoAuthorizations(ownerCreationEvent.subjectId, photoUploadEvent.subjectId, Permission.Read)
             val permissions = repo.fetch(ownerCreationEvent.subjectId, photoUploadEvent.subjectId)
             permissions shouldContainExactly setOf(Permission.Read)
         }
 
         @Test
         fun `should return update if user has update permission`() {
-            updateAuthorization(ownerCreationEvent.subjectId, photoUploadEvent.subjectId, Permission.Update)
+            updateUserPhotoAuthorizations(ownerCreationEvent.subjectId, photoUploadEvent.subjectId, Permission.Update)
             val permissions = repo.fetch(ownerCreationEvent.subjectId, photoUploadEvent.subjectId)
             permissions shouldContainExactly setOf(Permission.Update)
         }
 
         @Test
         fun `should return delete if user has delete permission`() {
-            updateAuthorization(ownerCreationEvent.subjectId, photoUploadEvent.subjectId, Permission.Delete)
+            updateUserPhotoAuthorizations(ownerCreationEvent.subjectId, photoUploadEvent.subjectId, Permission.Delete)
             val permissions = repo.fetch(ownerCreationEvent.subjectId, photoUploadEvent.subjectId)
             permissions shouldContainExactly setOf(Permission.Delete)
         }
@@ -153,7 +154,11 @@ internal class UserPhotoAuthorizationRepositoryImplTest : AbstractAuthorizationR
         @Test
         fun `should return all if user has all permissions`() {
             val expectedPermissions = Permission.values()
-            updateAuthorization(ownerCreationEvent.subjectId, photoUploadEvent.subjectId, *expectedPermissions)
+            updateUserPhotoAuthorizations(
+                subjectId = ownerCreationEvent.subjectId,
+                resourceId = photoUploadEvent.subjectId,
+                permissions = *expectedPermissions
+            )
             val permissions = repo.fetch(ownerCreationEvent.subjectId, photoUploadEvent.subjectId)
             permissions shouldContainExactly permissions!!.toSet()
         }
@@ -191,7 +196,7 @@ internal class UserPhotoAuthorizationRepositoryImplTest : AbstractAuthorizationR
                 )
             )
             subjsPerms.forEach { subjPerms ->
-                updateAuthorization(
+                updateUserPhotoAuthorizations(
                     subjectId = subjPerms.subjectId,
                     resourceId = photoUploadEvent.subjectId,
                     permissions = *subjPerms.permissions.toTypedArray()
@@ -204,6 +209,68 @@ internal class UserPhotoAuthorizationRepositoryImplTest : AbstractAuthorizationR
             repo.fetchAll(photoUploadEvent.subjectId, 1, 10) shouldBe subjsPerms
                 .sortedBy { it.subjectId.toString() }
                 .subList(1, subjsPerms.size)
+        }
+    }
+
+    @Nested
+    inner class photoIsInReadableAlbum {
+        private lateinit var albumCreationEvent: AlbumEvent.Creation
+        private lateinit var photoInAlbumUploadEvent: PhotoEvent.Upload
+
+        @BeforeEach
+        fun beforeEach() {
+            val source = EventSource.User(ownerCreationEvent.subjectId, InetAddress.getByName("127.0.0.1"))
+            albumCreationEvent = albumEventRepo.saveCreationEvent(
+                name = "test",
+                source = source
+            )
+            photoInAlbumUploadEvent = photoEventRepo.saveUploadEvent(
+                content = PhotoEvent.Upload.Content(
+                    type = Photo.Type.Jpg,
+                    hash = "hash2"
+                ),
+                source = source
+            )
+            albumEventRepo.saveUpdateEvent(
+                id = albumCreationEvent.subjectId,
+                content = AlbumEvent.Update.Content(
+                    name = albumCreationEvent.albumName,
+                    photosToAdd = listOf(photoInAlbumUploadEvent.subjectId),
+                    photosToRemove = emptyList()
+                ),
+                source = source
+            )
+        }
+
+        @Test
+        fun `should return false if photo is not in any album`() {
+            val readable = repo.photoIsInReadableAlbum(photoUploadEvent.subjectId, ownerCreationEvent.subjectId)
+            readable.shouldBeFalse()
+        }
+
+        @Test
+        fun `should return false if photo is in not readable album`() {
+            deleteUserAlbumAuthorizations(ownerCreationEvent.subjectId, albumCreationEvent.subjectId)
+            val readable = repo.photoIsInReadableAlbum(photoInAlbumUploadEvent.subjectId, ownerCreationEvent.subjectId)
+            readable.shouldBeFalse()
+        }
+
+        @Test
+        fun `should return false if photo is in album but album read is not allowed`() {
+            updateUserAlbumAuthorizations(ownerCreationEvent.subjectId, albumCreationEvent.subjectId)
+            val readable = repo.photoIsInReadableAlbum(photoInAlbumUploadEvent.subjectId, ownerCreationEvent.subjectId)
+            readable.shouldBeFalse()
+        }
+
+        @Test
+        fun `should return true if photo is readable`() {
+            updateUserPhotoAuthorizations(
+                subjectId = ownerCreationEvent.subjectId,
+                resourceId = photoInAlbumUploadEvent.subjectId,
+                permissions = *arrayOf(Permission.Read)
+            )
+            val readable = repo.photoIsInReadableAlbum(photoInAlbumUploadEvent.subjectId, ownerCreationEvent.subjectId)
+            readable.shouldBeTrue()
         }
     }
 }

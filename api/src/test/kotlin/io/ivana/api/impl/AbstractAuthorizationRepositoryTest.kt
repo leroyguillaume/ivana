@@ -10,14 +10,54 @@ import java.util.*
 
 @Suppress("SpringJavaAutowiredMembersInspection")
 internal abstract class AbstractAuthorizationRepositoryTest {
-    protected abstract val tableName: String
-    protected abstract val subjectIdColumnName: String
-    protected abstract val resourceIdColumnName: String
-
     @Autowired
     protected lateinit var jdbc: NamedParameterJdbcTemplate
 
-    protected fun deleteAuthorizations(subjectId: UUID, resourceId: UUID) {
+    protected fun deleteUserAlbumAuthorizations(subjectId: UUID, resourceId: UUID) =
+        deleteAuthorizations(
+            subjectId = subjectId,
+            resourceId = resourceId,
+            tableName = UserAlbumAuthorizationRepositoryImpl.TableName,
+            subjectIdColumnName = UserAlbumAuthorizationRepositoryImpl.UserIdColumnName,
+            resourceIdColumnName = UserAlbumAuthorizationRepositoryImpl.AlbumIdColumnName
+        )
+
+    protected fun deleteUserPhotoAuthorizations(subjectId: UUID, resourceId: UUID) =
+        deleteAuthorizations(
+            subjectId = subjectId,
+            resourceId = resourceId,
+            tableName = UserPhotoAuthorizationRepositoryImpl.TableName,
+            subjectIdColumnName = UserPhotoAuthorizationRepositoryImpl.UserIdColumnName,
+            resourceIdColumnName = UserPhotoAuthorizationRepositoryImpl.PhotoIdColumnName
+        )
+
+    protected fun updateUserAlbumAuthorizations(subjectId: UUID, resourceId: UUID, vararg permissions: Permission) =
+        updateAuthorization(
+            subjectId = subjectId,
+            resourceId = resourceId,
+            tableName = UserAlbumAuthorizationRepositoryImpl.TableName,
+            subjectIdColumnName = UserAlbumAuthorizationRepositoryImpl.UserIdColumnName,
+            resourceIdColumnName = UserAlbumAuthorizationRepositoryImpl.AlbumIdColumnName,
+            permissions = permissions
+        )
+
+    protected fun updateUserPhotoAuthorizations(subjectId: UUID, resourceId: UUID, vararg permissions: Permission) =
+        updateAuthorization(
+            subjectId = subjectId,
+            resourceId = resourceId,
+            tableName = UserPhotoAuthorizationRepositoryImpl.TableName,
+            subjectIdColumnName = UserPhotoAuthorizationRepositoryImpl.UserIdColumnName,
+            resourceIdColumnName = UserPhotoAuthorizationRepositoryImpl.PhotoIdColumnName,
+            permissions = permissions
+        )
+
+    private fun deleteAuthorizations(
+        subjectId: UUID,
+        resourceId: UUID,
+        tableName: String,
+        subjectIdColumnName: String,
+        resourceIdColumnName: String
+    ) {
         jdbc.update(
             """
             DELETE FROM $tableName
@@ -27,7 +67,14 @@ internal abstract class AbstractAuthorizationRepositoryTest {
         )
     }
 
-    protected fun updateAuthorization(subjectId: UUID, resourceId: UUID, vararg permissions: Permission) {
+    private fun updateAuthorization(
+        subjectId: UUID,
+        resourceId: UUID,
+        tableName: String,
+        subjectIdColumnName: String,
+        resourceIdColumnName: String,
+        permissions: Array<out Permission>
+    ) {
         val canRead = permissions.contains(Permission.Read)
         val canUpdate = permissions.contains(Permission.Update)
         val canDelete = permissions.contains(Permission.Delete)

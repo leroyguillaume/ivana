@@ -116,7 +116,7 @@ internal class PhotoControllerTest : AbstractControllerTest() {
         }
 
         @Test
-        fun `should return 403 if user does not have permission`() = authenticated {
+        fun `should return 403 if user does not have permission (not readable photo)`() = authenticated {
             whenever(userPhotoAuthzRepo.fetch(principal.user.id, linkedPhotos.current.id))
                 .thenReturn(EnumSet.complementOf(EnumSet.of(Permission.Read)))
             callAndExpectDto(
@@ -127,6 +127,23 @@ internal class PhotoControllerTest : AbstractControllerTest() {
                 respDto = ErrorDto.Forbidden
             )
             verify(userPhotoAuthzRepo).fetch(principal.user.id, linkedPhotos.current.id)
+            verify(userPhotoAuthzRepo, never()).photoIsInReadableAlbum(linkedPhotos.current.id, principal.user.id)
+        }
+
+        @Test
+        fun `should return 403 if user does not have permission (not readable album)`() = authenticated {
+            whenever(userPhotoAuthzRepo.fetch(principal.user.id, linkedPhotos.current.id)).thenReturn(null)
+            whenever(userPhotoAuthzRepo.photoIsInReadableAlbum(linkedPhotos.current.id, principal.user.id))
+                .thenReturn(false)
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                reqCookies = listOf(accessTokenCookie()),
+                status = HttpStatus.FORBIDDEN,
+                respDto = ErrorDto.Forbidden
+            )
+            verify(userPhotoAuthzRepo).fetch(principal.user.id, linkedPhotos.current.id)
+            verify(userPhotoAuthzRepo).photoIsInReadableAlbum(linkedPhotos.current.id, principal.user.id)
         }
 
         @Test
@@ -147,6 +164,7 @@ internal class PhotoControllerTest : AbstractControllerTest() {
                 respDto = photoSimpleDto
             )
             verify(userPhotoAuthzRepo).fetch(principal.user.id, linkedPhotos.current.id)
+            verify(userPhotoAuthzRepo, never()).photoIsInReadableAlbum(linkedPhotos.current.id, principal.user.id)
             verify(photoService).getPermissions(linkedPhotos.current.id, principal.user.id)
             verify(photoService).getById(linkedPhotos.current.id)
         }
@@ -166,8 +184,29 @@ internal class PhotoControllerTest : AbstractControllerTest() {
                 respDto = photoNavigableDto
             )
             verify(userPhotoAuthzRepo).fetch(principal.user.id, linkedPhotos.current.id)
+            verify(userPhotoAuthzRepo, never()).photoIsInReadableAlbum(linkedPhotos.current.id, principal.user.id)
             verify(photoService).getPermissions(linkedPhotos.current.id, principal.user.id)
             verify(photoService).getLinkedById(linkedPhotos.current.id)
+        }
+
+        @Test
+        fun `should return 200 (in readable album)`() = authenticated {
+            whenever(userPhotoAuthzRepo.fetch(principal.user.id, linkedPhotos.current.id)).thenReturn(null)
+            whenever(userPhotoAuthzRepo.photoIsInReadableAlbum(linkedPhotos.current.id, principal.user.id))
+                .thenReturn(true)
+            whenever(photoService.getPermissions(linkedPhotos.current.id, principal.user.id)).thenReturn(permissions)
+            whenever(photoService.getById(linkedPhotos.current.id)).thenReturn(linkedPhotos.current)
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                reqCookies = listOf(accessTokenCookie()),
+                status = HttpStatus.OK,
+                respDto = photoSimpleDto
+            )
+            verify(userPhotoAuthzRepo).fetch(principal.user.id, linkedPhotos.current.id)
+            verify(userPhotoAuthzRepo).photoIsInReadableAlbum(linkedPhotos.current.id, principal.user.id)
+            verify(photoService).getPermissions(linkedPhotos.current.id, principal.user.id)
+            verify(photoService).getById(linkedPhotos.current.id)
         }
     }
 

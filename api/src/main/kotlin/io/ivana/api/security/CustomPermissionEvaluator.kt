@@ -44,13 +44,8 @@ class CustomPermissionEvaluator(
 
     private fun checkPhotoAuthz(principal: UserPrincipal, targetId: UUID, permission: Permission): Boolean {
         val photoPerms = userPhotoAuthzRepo.fetch(principal.user.id, targetId)
-        return if (photoPerms != null) {
-            photoPerms.contains(permission)
-        } else if (permission == Permission.Read) {
-            false
-        } else {
-            false
-        }
+        return photoPerms?.contains(permission)
+            ?: (permission == Permission.Read && userPhotoAuthzRepo.photoIsInReadableAlbum(targetId, principal.user.id))
     }
 
     private fun checkUserAuthz(principal: UserPrincipal, targetId: UUID, permission: Permission) = when (permission) {

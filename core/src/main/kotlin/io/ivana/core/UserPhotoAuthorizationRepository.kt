@@ -1,3 +1,7 @@
 package io.ivana.core
 
-interface UserPhotoAuthorizationRepository : AuthorizationRepository
+import java.util.*
+
+interface UserPhotoAuthorizationRepository : AuthorizationRepository {
+    fun photoIsInReadableAlbum(photoId: UUID, userId: UUID): Boolean
+}
