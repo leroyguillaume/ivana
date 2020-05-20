@@ -321,7 +321,8 @@ internal class AlbumEventRepositoryImplTest {
                 subjectId = addEvent.subjectId
             )
             albumRepo.fetchById(addEvent.subjectId) shouldBe expectedAlbum
-            photoRepo.fetchAllOfAlbum(albumCreationEvent.subjectId, 0, 10).shouldContainExactly(listOf(photo1, photo2))
+            photoRepo.fetchAllOfAlbum(albumCreationEvent.subjectId, owner.id, 0, 10)
+                .shouldContainExactly(listOf(photo1, photo2))
         }
 
         @Test
@@ -341,7 +342,7 @@ internal class AlbumEventRepositoryImplTest {
                 subjectId = removeEvent.subjectId
             )
             albumRepo.fetchById(removeEvent.subjectId) shouldBe expectedAlbum
-            photoRepo.fetchAllOfAlbum(albumCreationEvent.subjectId, 0, 10).shouldBeEmpty()
+            photoRepo.fetchAllOfAlbum(albumCreationEvent.subjectId, owner.id, 0, 10).shouldBeEmpty()
         }
     }
 

@@ -337,7 +337,7 @@ internal class AlbumControllerTest : AbstractControllerTest() {
         @Test
         fun `should return 200`() = authenticated {
             whenever(userAlbumAuthzRepo.fetch(principal.user.id, albumId)).thenReturn(setOf(Permission.Read))
-            whenever(albumService.getAllPhotos(albumId, pageNo, pageSize)).thenReturn(page)
+            whenever(albumService.getAllPhotos(albumId, principal.user.id, pageNo, pageSize)).thenReturn(page)
             callAndExpectDto(
                 method = method,
                 params = mapOf(
@@ -350,7 +350,7 @@ internal class AlbumControllerTest : AbstractControllerTest() {
                 respDto = pageDto
             )
             verify(userAlbumAuthzRepo).fetch(principal.user.id, albumId)
-            verify(albumService).getAllPhotos(albumId, pageNo, pageSize)
+            verify(albumService).getAllPhotos(albumId, principal.user.id, pageNo, pageSize)
         }
     }
 

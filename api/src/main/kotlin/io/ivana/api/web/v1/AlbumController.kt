@@ -75,8 +75,12 @@ class AlbumController(
     fun getAllPhotos(
         @PathVariable id: UUID,
         @RequestParam(name = PageParamName, required = false, defaultValue = "1") @Min(1) page: Int,
-        @RequestParam(name = SizeParamName, required = false, defaultValue = "10") @Min(1) size: Int
-    ) = albumService.getAllPhotos(id, page, size).toDto { it.toLightDto() }
+        @RequestParam(name = SizeParamName, required = false, defaultValue = "10") @Min(1) size: Int,
+        auth: Authentication
+    ): PageDto<PhotoDto.Light> {
+        val principal = auth.principal as UserPrincipal
+        return albumService.getAllPhotos(id, principal.user.id, page, size).toDto { it.toLightDto() }
+    }
 
     @GetMapping("/{id:$UuidRegex}$PermissionsEndpoint")
     @PreAuthorize("hasPermission(#id, '$AlbumTargetType', 'update_permissions')")

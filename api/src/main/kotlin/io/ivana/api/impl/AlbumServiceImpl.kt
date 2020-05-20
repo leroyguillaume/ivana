@@ -28,9 +28,9 @@ class AlbumServiceImpl(
         return repo.fetchById(event.subjectId)!!
     }
 
-    override fun getAllPhotos(id: UUID, pageNo: Int, pageSize: Int): Page<Photo> {
-        val content = photoRepo.fetchAllOfAlbum(id, (pageNo - 1) * pageSize, pageSize)
-        val itemsNb = photoRepo.countOfAlbum(id)
+    override fun getAllPhotos(id: UUID, userId: UUID, pageNo: Int, pageSize: Int): Page<Photo> {
+        val content = photoRepo.fetchAllOfAlbum(id, userId, (pageNo - 1) * pageSize, pageSize)
+        val itemsNb = photoRepo.countOfAlbum(id, userId)
         return Page(
             content = content,
             no = pageNo,

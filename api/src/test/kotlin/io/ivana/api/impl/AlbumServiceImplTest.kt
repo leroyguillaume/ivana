@@ -295,13 +295,14 @@ internal class AlbumServiceImplTest {
     @Nested
     inner class getAllPhotos {
         private val albumId = UUID.randomUUID()
+        private val userId = UUID.randomUUID()
         private val pageNo = 1
         private val pageSize = 3
         private val expectedPage = Page(
             content = listOf(
                 Photo(
                     id = UUID.randomUUID(),
-                    ownerId = UUID.randomUUID(),
+                    ownerId = userId,
                     uploadDate = OffsetDateTime.now(),
                     type = Photo.Type.Jpg,
                     hash = "hash1",
@@ -310,7 +311,7 @@ internal class AlbumServiceImplTest {
                 ),
                 Photo(
                     id = UUID.randomUUID(),
-                    ownerId = UUID.randomUUID(),
+                    ownerId = userId,
                     uploadDate = OffsetDateTime.now(),
                     type = Photo.Type.Jpg,
                     hash = "hash2",
@@ -325,12 +326,12 @@ internal class AlbumServiceImplTest {
 
         @Test
         fun `should return page`() {
-            every { photoRepo.fetchAllOfAlbum(albumId, pageNo - 1, pageSize) } returns expectedPage.content
-            every { photoRepo.countOfAlbum(albumId) } returns expectedPage.totalItems
-            val page = service.getAllPhotos(albumId, pageNo, pageSize)
+            every { photoRepo.fetchAllOfAlbum(albumId, userId, pageNo - 1, pageSize) } returns expectedPage.content
+            every { photoRepo.countOfAlbum(albumId, userId) } returns expectedPage.totalItems
+            val page = service.getAllPhotos(albumId, userId, pageNo, pageSize)
             page shouldBe expectedPage
-            verify { photoRepo.fetchAllOfAlbum(albumId, pageNo - 1, pageSize) }
-            verify { photoRepo.countOfAlbum(albumId) }
+            verify { photoRepo.fetchAllOfAlbum(albumId, userId, pageNo - 1, pageSize) }
+            verify { photoRepo.countOfAlbum(albumId, userId) }
             confirmVerified(photoRepo)
         }
     }

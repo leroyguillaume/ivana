@@ -18,10 +18,6 @@ import java.util.*
 
 @SpringBootTest
 internal class UserAlbumAuthorizationRepositoryImplTest : AbstractAuthorizationRepositoryTest() {
-    override val tableName = UserAlbumAuthorizationRepositoryImpl.TableName
-    override val subjectIdColumnName = UserAlbumAuthorizationRepositoryImpl.UserIdColumnName
-    override val resourceIdColumnName = UserAlbumAuthorizationRepositoryImpl.AlbumIdColumnName
-
     private val pwdEncoder = BCryptPasswordEncoder()
     private val ownerCreationEventContent = UserEvent.Creation.Content(
         name = "admin",
@@ -83,7 +79,7 @@ internal class UserAlbumAuthorizationRepositoryImplTest : AbstractAuthorizationR
                 )
             )
             subjsPerms.forEach { subjPerms ->
-                updateAuthorization(
+                updateUserAlbumAuthorizations(
                     subjectId = subjPerms.subjectId,
                     resourceId = albumCreationEvent.subjectId,
                     permissions = *subjPerms.permissions.toTypedArray()
@@ -113,35 +109,35 @@ internal class UserAlbumAuthorizationRepositoryImplTest : AbstractAuthorizationR
 
         @Test
         fun `should return null if no authorization defined`() {
-            deleteAuthorizations(ownerCreationEvent.subjectId, albumCreationEvent.subjectId)
+            deleteUserAlbumAuthorizations(ownerCreationEvent.subjectId, albumCreationEvent.subjectId)
             val permissions = repo.fetch(ownerCreationEvent.subjectId, albumCreationEvent.subjectId)
             permissions.shouldBeNull()
         }
 
         @Test
         fun `should return empty set if user does not have rights`() {
-            updateAuthorization(ownerCreationEvent.subjectId, albumCreationEvent.subjectId)
+            updateUserAlbumAuthorizations(ownerCreationEvent.subjectId, albumCreationEvent.subjectId)
             val permissions = repo.fetch(ownerCreationEvent.subjectId, albumCreationEvent.subjectId)
             permissions!!.shouldBeEmpty()
         }
 
         @Test
         fun `should return read if user has read permission`() {
-            updateAuthorization(ownerCreationEvent.subjectId, albumCreationEvent.subjectId, Permission.Read)
+            updateUserAlbumAuthorizations(ownerCreationEvent.subjectId, albumCreationEvent.subjectId, Permission.Read)
             val permissions = repo.fetch(ownerCreationEvent.subjectId, albumCreationEvent.subjectId)
             permissions shouldContainExactly setOf(Permission.Read)
         }
 
         @Test
         fun `should return update if user has update permission`() {
-            updateAuthorization(ownerCreationEvent.subjectId, albumCreationEvent.subjectId, Permission.Update)
+            updateUserAlbumAuthorizations(ownerCreationEvent.subjectId, albumCreationEvent.subjectId, Permission.Update)
             val permissions = repo.fetch(ownerCreationEvent.subjectId, albumCreationEvent.subjectId)
             permissions shouldContainExactly setOf(Permission.Update)
         }
 
         @Test
         fun `should return delete if user has delete permission`() {
-            updateAuthorization(ownerCreationEvent.subjectId, albumCreationEvent.subjectId, Permission.Delete)
+            updateUserAlbumAuthorizations(ownerCreationEvent.subjectId, albumCreationEvent.subjectId, Permission.Delete)
             val permissions = repo.fetch(ownerCreationEvent.subjectId, albumCreationEvent.subjectId)
             permissions shouldContainExactly setOf(Permission.Delete)
         }
@@ -149,7 +145,11 @@ internal class UserAlbumAuthorizationRepositoryImplTest : AbstractAuthorizationR
         @Test
         fun `should return all if user has all permissions`() {
             val expectedPermissions = Permission.values()
-            updateAuthorization(ownerCreationEvent.subjectId, albumCreationEvent.subjectId, *expectedPermissions)
+            updateUserAlbumAuthorizations(
+                subjectId = ownerCreationEvent.subjectId,
+                resourceId = albumCreationEvent.subjectId,
+                permissions = *expectedPermissions
+            )
             val permissions = repo.fetch(ownerCreationEvent.subjectId, albumCreationEvent.subjectId)
             permissions shouldContainExactly permissions!!.toSet()
         }
@@ -187,7 +187,7 @@ internal class UserAlbumAuthorizationRepositoryImplTest : AbstractAuthorizationR
                 )
             )
             subjsPerms.forEach { subjPerms ->
-                updateAuthorization(
+                updateUserAlbumAuthorizations(
                     subjectId = subjPerms.subjectId,
                     resourceId = albumCreationEvent.subjectId,
                     permissions = *subjPerms.permissions.toTypedArray()

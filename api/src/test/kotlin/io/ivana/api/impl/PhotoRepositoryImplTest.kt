@@ -54,6 +54,10 @@ internal class PhotoRepositoryImplTest {
                 PhotoEvent.Upload.Content(
                     type = Photo.Type.Jpg,
                     hash = "hash4"
+                ),
+                PhotoEvent.Upload.Content(
+                    type = Photo.Type.Jpg,
+                    hash = "hash5"
                 )
             )
         )
@@ -91,6 +95,20 @@ internal class PhotoRepositoryImplTest {
                 }
             }
             .flatten()
+        val photo = uploadedPhotos[uploadedPhotos.size - 1]
+        eventRepo.saveUpdatePermissionsEvent(
+            photoId = photo.id,
+            content = PhotoEvent.UpdatePermissions.Content(
+                permissionsToAdd = emptySet(),
+                permissionsToRemove = setOf(
+                    SubjectPermissions(
+                        subjectId = uploadedPhotos[0].ownerId,
+                        permissions = setOf(Permission.Read)
+                    )
+                )
+            ),
+            source = EventSource.User(photo.ownerId, InetAddress.getByName("127.0.0.1"))
+        )
     }
 
     @Nested
@@ -132,7 +150,7 @@ internal class PhotoRepositoryImplTest {
                 id = albumCreationEvent.subjectId,
                 content = AlbumEvent.Update.Content(
                     name = albumCreationEvent.albumName,
-                    photosToAdd = uploadedPhotos.filter { it.ownerId == ownerId }.map { it.id },
+                    photosToAdd = uploadedPhotos.map { it.id },
                     photosToRemove = emptyList()
                 ),
                 source = source
@@ -141,8 +159,8 @@ internal class PhotoRepositoryImplTest {
 
         @Test
         fun `should return count of photos of album`() {
-            val count = repo.countOfAlbum(albumCreationEvent.subjectId)
-            count shouldBe uploadedPhotos.count { it.ownerId == ownerId }
+            val count = repo.countOfAlbum(albumCreationEvent.subjectId, ownerId)
+            count shouldBe uploadedPhotos.size - 1
         }
     }
 
@@ -210,18 +228,19 @@ internal class PhotoRepositoryImplTest {
 
     @Nested
     inner class fetchAllOfAlbum {
+        private lateinit var ownerId: UUID
         private lateinit var albumCreationEvent: AlbumEvent.Creation
 
         @BeforeEach
         fun beforeEach() {
-            val ownerId = uploadedPhotos[0].ownerId
+            ownerId = uploadedPhotos[0].ownerId
             val source = EventSource.User(ownerId, InetAddress.getByName("127.0.0.1"))
             albumCreationEvent = albumEventRepo.saveCreationEvent("album", source)
             albumEventRepo.saveUpdateEvent(
                 id = albumCreationEvent.subjectId,
                 content = AlbumEvent.Update.Content(
                     name = albumCreationEvent.albumName,
-                    photosToAdd = uploadedPhotos.filter { it.ownerId == ownerId }.map { it.id },
+                    photosToAdd = uploadedPhotos.map { it.id },
                     photosToRemove = emptyList()
                 ),
                 source = source
@@ -230,8 +249,8 @@ internal class PhotoRepositoryImplTest {
 
         @Test
         fun `should return all photos in interval`() {
-            val photos = repo.fetchAllOfAlbum(albumCreationEvent.subjectId, 1, 10)
-            photos shouldBe uploadedPhotos.subList(1, 3)
+            val photos = repo.fetchAllOfAlbum(albumCreationEvent.subjectId, ownerId, 1, 10)
+            photos shouldBe uploadedPhotos.subList(1, 4)
         }
     }
 
@@ -305,7 +324,7 @@ internal class PhotoRepositoryImplTest {
     inner class fetchNextOf {
         @Test
         fun `should return null if photo does not exist`() {
-            val photo = repo.fetchNextOf(uploadedPhotos[3])
+            val photo = repo.fetchNextOf(uploadedPhotos[4])
             photo.shouldBeNull()
         }
 
@@ -332,7 +351,7 @@ internal class PhotoRepositoryImplTest {
 
         @Test
         fun `should return null if previous photo does not have same owner`() {
-            val photo = repo.fetchNextOf(uploadedPhotos[3])
+            val photo = repo.fetchPreviousOf(uploadedPhotos[3])
             photo.shouldBeNull()
         }
 

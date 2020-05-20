@@ -12,14 +12,35 @@ import java.util.*
 @Repository
 class AlbumRepositoryImpl(
     override val jdbc: NamedParameterJdbcTemplate
-) : AlbumRepository, AbstractOwnableEntityRepository<Album>() {
+) : AlbumRepository, AbstractEntityRepository<Album>() {
     internal companion object {
         const val TableName = "album"
         const val NameColumnName = "name"
+        const val OwnerIdColumnName = "owner_id"
         const val CreationDateColumnName = "creation_date"
     }
 
     override val tableName = TableName
+
+    override fun count(ownerId: UUID) = jdbc.queryForObject(
+        """
+        SELECT COUNT($IdColumnName)
+        FROM $tableName
+        WHERE $OwnerIdColumnName = :owner_id
+        """,
+        MapSqlParameterSource(mapOf("owner_id" to ownerId))
+    ) { rs, _ -> rs.getInt(1) }
+
+    override fun fetchAll(ownerId: UUID, offset: Int, limit: Int) = jdbc.query(
+        """
+        SELECT *
+        FROM $tableName
+        WHERE $OwnerIdColumnName = :owner_id
+        OFFSET :offset
+        LIMIT :limit
+        """,
+        MapSqlParameterSource(mapOf("owner_id" to ownerId, "offset" to offset, "limit" to limit))
+    ) { rs, _ -> rs.toEntity() }
 
     override fun fetchDuplicateIds(id: UUID, photosIds: Set<UUID>) = jdbc.query(
         """

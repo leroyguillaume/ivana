@@ -13,9 +13,10 @@ import java.util.*
 @Repository
 class PhotoRepositoryImpl(
     override val jdbc: NamedParameterJdbcTemplate
-) : PhotoRepository, AbstractOwnableEntityRepository<Photo>() {
+) : PhotoRepository, AbstractEntityRepository<Photo>() {
     internal companion object {
         const val TableName = "photo"
+        const val OwnerIdColumnName = "owner_id"
         const val UploadedDateColumnName = "upload_date"
         const val TypeColumnName = "type"
         const val HashColumnName = "hash"
@@ -30,16 +31,32 @@ class PhotoRepositoryImpl(
 
     override val tableName = TableName
 
-    override fun countOfAlbum(albumId: UUID) = jdbc.queryForObject(
+    override fun count(ownerId: UUID) = jdbc.queryForObject(
+        """
+        SELECT COUNT($IdColumnName)
+        FROM $tableName
+        WHERE $OwnerIdColumnName = :owner_id
+        """,
+        MapSqlParameterSource(mapOf("owner_id" to ownerId))
+    ) { rs, _ -> rs.getInt(1) }
+
+    override fun countOfAlbum(albumId: UUID, userId: UUID) = jdbc.queryForObject(
         """
         SELECT COUNT($PhotoIdColumnName)
         FROM $AlbumPhotoTableName
+        JOIN $tableName
+        ON $IdColumnName = $PhotoIdColumnName
         WHERE $AlbumIdColumnName = :album_id
+        AND (
+            SELECT ${AbstractAuthorizationRepository.CanReadColumnName}
+            FROM ${UserPhotoAuthorizationRepositoryImpl.TableName}
+            WHERE ${UserPhotoAuthorizationRepositoryImpl.PhotoIdColumnName} = $tableName.$IdColumnName
+                AND ${UserPhotoAuthorizationRepositoryImpl.UserIdColumnName} = :user_id
+        ) IS NOT FALSE
         """,
-        MapSqlParameterSource(mapOf("album_id" to albumId))
+        MapSqlParameterSource(mapOf("album_id" to albumId, "user_id" to userId))
     ) { rs, _ -> rs.getInt(1) }
 
-    // TODO: Remove this override and user order as parameter
     override fun fetchAll(ownerId: UUID, offset: Int, limit: Int) = jdbc.query(
         """
         SELECT *
@@ -52,18 +69,24 @@ class PhotoRepositoryImpl(
         MapSqlParameterSource(mapOf("owner_id" to ownerId, "offset" to offset, "limit" to limit))
     ) { rs, _ -> rs.toEntity() }
 
-    override fun fetchAllOfAlbum(albumId: UUID, offset: Int, limit: Int) = jdbc.query(
+    override fun fetchAllOfAlbum(albumId: UUID, userId: UUID, offset: Int, limit: Int) = jdbc.query(
         """
         SELECT $tableName.*
         FROM $AlbumPhotoTableName
         JOIN $tableName
         ON $IdColumnName = $PhotoIdColumnName
-        WHERE $AlbumIdColumnName = :album_id
+        WHERE $AlbumIdColumnName = :album_id 
+            AND (
+                SELECT ${AbstractAuthorizationRepository.CanReadColumnName}
+                FROM ${UserPhotoAuthorizationRepositoryImpl.TableName}
+                WHERE ${UserPhotoAuthorizationRepositoryImpl.PhotoIdColumnName} = $tableName.$IdColumnName
+                    AND ${UserPhotoAuthorizationRepositoryImpl.UserIdColumnName} = :user_id
+            ) IS NOT FALSE
         ORDER BY $OrderColumnName
         OFFSET :offset
         LIMIT :limit
         """,
-        MapSqlParameterSource(mapOf("album_id" to albumId, "offset" to offset, "limit" to limit))
+        MapSqlParameterSource(mapOf("album_id" to albumId, "user_id" to userId, "offset" to offset, "limit" to limit))
     ) { rs, _ -> rs.toEntity() }
 
     override fun fetchByHash(ownerId: UUID, hash: String) = fetchBy(
