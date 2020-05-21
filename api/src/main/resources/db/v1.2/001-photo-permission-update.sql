@@ -71,16 +71,16 @@ BEGIN
         (
             _user_id,
             event.subject_id,
-            NOT (_user_permissions ? 'read'),
-            NOT (_user_permissions ? 'update'),
-            NOT (_user_permissions ? 'delete'),
-            NOT (_user_permissions ? 'update_permissions')
+            false,
+            false,
+            false,
+            false
         )
         ON CONFLICT (user_id, photo_id) DO UPDATE
-            SET can_read = NOT(_user_permissions ? 'read'),
-                can_update = NOT(_user_permissions ? 'update'),
-                can_delete = NOT(_user_permissions ? 'delete'),
-                can_update_permissions = NOT(_user_permissions ? 'update_permissions');
+            SET can_read = CASE WHEN _user_permissions ? 'read' THEN false ELSE user_photo_authorization.can_read END,
+                can_update = CASE WHEN _user_permissions ? 'update' THEN false ELSE user_photo_authorization.can_update END,
+                can_delete = CASE WHEN _user_permissions ? 'delete' THEN false ELSE user_photo_authorization.can_delete END,
+                can_update_permissions = CASE WHEN _user_permissions ? 'update_permissions' THEN false ELSE user_photo_authorization.can_update_permissions END;
     END LOOP;
 END;
 $$;

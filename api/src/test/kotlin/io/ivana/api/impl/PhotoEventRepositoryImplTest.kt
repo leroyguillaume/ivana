@@ -3,6 +3,7 @@
 package io.ivana.api.impl
 
 import io.ivana.core.*
+import io.kotlintest.matchers.collections.shouldBeEmpty
 import io.kotlintest.matchers.types.shouldBeNull
 import io.kotlintest.shouldBe
 import org.junit.jupiter.api.BeforeEach
@@ -29,6 +30,7 @@ internal class PhotoEventRepositoryImplTest {
         hashedPwd = pwdEncoder.encode("changeit"),
         role = Role.User
     )
+    private val user2CreationEventContent = user1CreationEventContent.copy(name = "user2")
 
     @Autowired
     private lateinit var jdbc: NamedParameterJdbcTemplate
@@ -46,13 +48,15 @@ internal class PhotoEventRepositoryImplTest {
     private lateinit var authzRepo: UserPhotoAuthorizationRepositoryImpl
 
     private lateinit var owner: User
-    private lateinit var user: User
+    private lateinit var user1: User
+    private lateinit var user2: User
 
     @BeforeEach
     fun beforeEach() {
         cleanDb(jdbc)
         owner = userEventRepo.saveCreationEvent(ownerCreationEventContent, EventSource.System).toUser()
-        user = userEventRepo.saveCreationEvent(user1CreationEventContent, EventSource.System).toUser()
+        user1 = userEventRepo.saveCreationEvent(user1CreationEventContent, EventSource.System).toUser()
+        user2 = userEventRepo.saveCreationEvent(user2CreationEventContent, EventSource.System).toUser()
     }
 
     @Nested
@@ -100,13 +104,13 @@ internal class PhotoEventRepositoryImplTest {
                 content = PhotoEvent.UpdatePermissions.Content(
                     permissionsToAdd = setOf(
                         SubjectPermissions(
-                            subjectId = user.id,
+                            subjectId = user1.id,
                             permissions = setOf(Permission.Read)
                         )
                     ),
                     permissionsToRemove = setOf(
                         SubjectPermissions(
-                            subjectId = user.id,
+                            subjectId = user1.id,
                             permissions = setOf(Permission.Delete)
                         )
                     )
@@ -218,7 +222,7 @@ internal class PhotoEventRepositoryImplTest {
                 content = PhotoEvent.UpdatePermissions.Content(
                     permissionsToAdd = setOf(
                         SubjectPermissions(
-                            subjectId = user.id,
+                            subjectId = user1.id,
                             permissions = EnumSet.allOf(Permission::class.java)
                         )
                     ),
@@ -226,6 +230,10 @@ internal class PhotoEventRepositoryImplTest {
                         SubjectPermissions(
                             subjectId = owner.id,
                             permissions = EnumSet.allOf(Permission::class.java)
+                        ),
+                        SubjectPermissions(
+                            subjectId = user2.id,
+                            permissions = setOf(Permission.Read)
                         )
                     )
                 )
@@ -234,16 +242,21 @@ internal class PhotoEventRepositoryImplTest {
 
         @Test
         fun `should return created event`() {
-            val event =
-                repo.saveUpdatePermissionsEvent(expectedEvent.subjectId, expectedEvent.content, expectedEvent.source)
+            val event = repo.saveUpdatePermissionsEvent(
+                photoId = expectedEvent.subjectId,
+                content = expectedEvent.content,
+                source = expectedEvent.source
+            )
             event shouldBe expectedEvent.copy(
                 date = event.date,
                 subjectId = event.subjectId
             )
             val ownerPermissions = authzRepo.fetch(owner.id, event.subjectId)
-            ownerPermissions shouldBe emptySet()
-            val userPermissions = authzRepo.fetch(user.id, event.subjectId)
-            userPermissions shouldBe EnumSet.allOf(Permission::class.java)
+            ownerPermissions!!.shouldBeEmpty()
+            val user1Permissions = authzRepo.fetch(user1.id, event.subjectId)
+            user1Permissions shouldBe EnumSet.allOf(Permission::class.java)
+            val user2Permissions = authzRepo.fetch(user2.id, event.subjectId)
+            user2Permissions!!.shouldBeEmpty()
         }
     }
 
