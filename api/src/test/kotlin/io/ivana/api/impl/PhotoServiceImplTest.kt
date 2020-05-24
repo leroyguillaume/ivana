@@ -38,6 +38,7 @@ internal class PhotoServiceImplTest {
     private lateinit var authzRepo: UserPhotoAuthorizationRepository
     private lateinit var photoRepo: PhotoRepository
     private lateinit var userRepo: UserRepository
+    private lateinit var albumRepo: AlbumRepository
     private lateinit var service: PhotoServiceImpl
 
     @BeforeEach
@@ -46,8 +47,9 @@ internal class PhotoServiceImplTest {
         authzRepo = mockk()
         photoRepo = mockk()
         userRepo = mockk()
+        albumRepo = mockk()
 
-        service = PhotoServiceImpl(photoRepo, userRepo, authzRepo, photoEventRepo, Props)
+        service = PhotoServiceImpl(photoRepo, userRepo, authzRepo, photoEventRepo, albumRepo, Props)
     }
 
     @Nested
@@ -344,28 +346,201 @@ internal class PhotoServiceImplTest {
         }
 
         @Test
-        fun `should return default time window`() {
+        fun `should return default linked photos`() {
             every { photoRepo.fetchById(defaultLinkedPhotos.current.id) } returns defaultLinkedPhotos.current
-            every { photoRepo.fetchPreviousOf(defaultLinkedPhotos.current) } returns null
-            every { photoRepo.fetchNextOf(defaultLinkedPhotos.current) } returns null
+            every { photoRepo.fetchPreviousOf(defaultLinkedPhotos.current.no) } returns null
+            every { photoRepo.fetchNextOf(defaultLinkedPhotos.current.no) } returns null
             val linkedPhotos = service.getLinkedById(defaultLinkedPhotos.current.id)
             linkedPhotos shouldBe defaultLinkedPhotos
             verify { photoRepo.fetchById(defaultLinkedPhotos.current.id) }
-            verify { photoRepo.fetchPreviousOf(defaultLinkedPhotos.current) }
-            verify { photoRepo.fetchNextOf(defaultLinkedPhotos.current) }
+            verify { photoRepo.fetchPreviousOf(defaultLinkedPhotos.current.no) }
+            verify { photoRepo.fetchNextOf(defaultLinkedPhotos.current.no) }
             confirmVerified(photoRepo)
         }
 
         @Test
-        fun `should return complete time window`() {
+        fun `should return complete linked photos`() {
             every { photoRepo.fetchById(completeLinkedPhotos.current.id) } returns completeLinkedPhotos.current
-            every { photoRepo.fetchPreviousOf(completeLinkedPhotos.current) } returns completeLinkedPhotos.previous
-            every { photoRepo.fetchNextOf(completeLinkedPhotos.current) } returns completeLinkedPhotos.next
+            every {
+                photoRepo.fetchPreviousOf(completeLinkedPhotos.current.no)
+            } returns completeLinkedPhotos.previous
+            every {
+                photoRepo.fetchNextOf(completeLinkedPhotos.current.no)
+            } returns completeLinkedPhotos.next
             val linkedPhotos = service.getLinkedById(completeLinkedPhotos.current.id)
             linkedPhotos shouldBe completeLinkedPhotos
             verify { photoRepo.fetchById(completeLinkedPhotos.current.id) }
-            verify { photoRepo.fetchPreviousOf(completeLinkedPhotos.current) }
-            verify { photoRepo.fetchNextOf(defaultLinkedPhotos.current) }
+            verify { photoRepo.fetchPreviousOf(completeLinkedPhotos.current.no) }
+            verify { photoRepo.fetchNextOf(defaultLinkedPhotos.current.no) }
+            confirmVerified(photoRepo)
+        }
+    }
+
+    @Nested
+    inner class `getLinkedById with user id` {
+        private val userId = UUID.randomUUID()
+        private val defaultLinkedPhotos = LinkedPhotos(
+            current = Photo(
+                id = UUID.randomUUID(),
+                ownerId = UUID.randomUUID(),
+                uploadDate = OffsetDateTime.now(),
+                type = Photo.Type.Jpg,
+                hash = "hash",
+                no = 2,
+                version = 1
+            )
+        )
+        private val completeLinkedPhotos = defaultLinkedPhotos.copy(
+            next = Photo(
+                id = UUID.randomUUID(),
+                ownerId = UUID.randomUUID(),
+                uploadDate = OffsetDateTime.now(),
+                type = Photo.Type.Jpg,
+                hash = "hash",
+                no = 1,
+                version = 1
+            ),
+            previous = Photo(
+                id = UUID.randomUUID(),
+                ownerId = UUID.randomUUID(),
+                uploadDate = OffsetDateTime.now(),
+                type = Photo.Type.Jpg,
+                hash = "hash",
+                no = 3,
+                version = 1
+            )
+        )
+
+        @Test
+        fun `should throw exception if photo does not exist`() {
+            every { photoRepo.fetchById(defaultLinkedPhotos.current.id) } returns null
+            val exception = assertThrows<EntityNotFoundException> {
+                service.getLinkedById(defaultLinkedPhotos.current.id, userId)
+            }
+            exception shouldHaveMessage "Photo ${defaultLinkedPhotos.current.id} does not exist"
+            verify { photoRepo.fetchById(defaultLinkedPhotos.current.id) }
+            confirmVerified(photoRepo)
+        }
+
+        @Test
+        fun `should return default linked photos`() {
+            every { photoRepo.fetchById(defaultLinkedPhotos.current.id) } returns defaultLinkedPhotos.current
+            every { photoRepo.fetchPreviousOf(defaultLinkedPhotos.current.no, userId) } returns null
+            every { photoRepo.fetchNextOf(defaultLinkedPhotos.current.no, userId) } returns null
+            val linkedPhotos = service.getLinkedById(defaultLinkedPhotos.current.id, userId)
+            linkedPhotos shouldBe defaultLinkedPhotos
+            verify { photoRepo.fetchById(defaultLinkedPhotos.current.id) }
+            verify { photoRepo.fetchPreviousOf(defaultLinkedPhotos.current.no, userId) }
+            verify { photoRepo.fetchNextOf(defaultLinkedPhotos.current.no, userId) }
+            confirmVerified(photoRepo)
+        }
+
+        @Test
+        fun `should return complete linked photos`() {
+            every { photoRepo.fetchById(completeLinkedPhotos.current.id) } returns completeLinkedPhotos.current
+            every {
+                photoRepo.fetchPreviousOf(completeLinkedPhotos.current.no, userId)
+            } returns completeLinkedPhotos.previous
+            every {
+                photoRepo.fetchNextOf(completeLinkedPhotos.current.no, userId)
+            } returns completeLinkedPhotos.next
+            val linkedPhotos = service.getLinkedById(completeLinkedPhotos.current.id, userId)
+            linkedPhotos shouldBe completeLinkedPhotos
+            verify { photoRepo.fetchById(completeLinkedPhotos.current.id) }
+            verify { photoRepo.fetchPreviousOf(completeLinkedPhotos.current.no, userId) }
+            verify { photoRepo.fetchNextOf(defaultLinkedPhotos.current.no, userId) }
+            confirmVerified(photoRepo)
+        }
+    }
+
+    @Nested
+    inner class `getLinkedById with albumId` {
+        private val userId = UUID.randomUUID()
+        private val albumId = UUID.randomUUID()
+        private val defaultLinkedPhotos = LinkedPhotos(
+            current = Photo(
+                id = UUID.randomUUID(),
+                ownerId = UUID.randomUUID(),
+                uploadDate = OffsetDateTime.now(),
+                type = Photo.Type.Jpg,
+                hash = "hash",
+                no = 2,
+                version = 1
+            )
+        )
+        private val completeLinkedPhotos = defaultLinkedPhotos.copy(
+            next = Photo(
+                id = UUID.randomUUID(),
+                ownerId = UUID.randomUUID(),
+                uploadDate = OffsetDateTime.now(),
+                type = Photo.Type.Jpg,
+                hash = "hash",
+                no = 1,
+                version = 1
+            ),
+            previous = Photo(
+                id = UUID.randomUUID(),
+                ownerId = UUID.randomUUID(),
+                uploadDate = OffsetDateTime.now(),
+                type = Photo.Type.Jpg,
+                hash = "hash",
+                no = 3,
+                version = 1
+            )
+        )
+        private val order = 1
+
+        @Test
+        fun `should throw exception if photo does not exist`() {
+            every { photoRepo.fetchById(defaultLinkedPhotos.current.id) } returns null
+            val exception = assertThrows<EntityNotFoundException> {
+                service.getLinkedById(defaultLinkedPhotos.current.id, userId, albumId)
+            }
+            exception shouldHaveMessage "Photo ${defaultLinkedPhotos.current.id} does not exist"
+            verify { photoRepo.fetchById(defaultLinkedPhotos.current.id) }
+            confirmVerified(photoRepo)
+        }
+
+        @Test
+        fun `should throw exception if photo is not present in album`() {
+            every { photoRepo.fetchById(defaultLinkedPhotos.current.id) } returns defaultLinkedPhotos.current
+            every { albumRepo.fetchOrder(albumId, defaultLinkedPhotos.current.id) } returns null
+            val exception = assertThrows<PhotoNotPresentInAlbumException> {
+                service.getLinkedById(defaultLinkedPhotos.current.id, userId, albumId)
+            }
+            exception shouldHaveMessage "Photo ${defaultLinkedPhotos.current.id} not present in album $albumId"
+            verify { photoRepo.fetchById(defaultLinkedPhotos.current.id) }
+            verify { albumRepo.fetchOrder(albumId, defaultLinkedPhotos.current.id) }
+            confirmVerified(photoRepo)
+        }
+
+        @Test
+        fun `should return default linked photos`() {
+            every { photoRepo.fetchById(defaultLinkedPhotos.current.id) } returns defaultLinkedPhotos.current
+            every { albumRepo.fetchOrder(albumId, defaultLinkedPhotos.current.id) } returns order
+            every { photoRepo.fetchPreviousOf(order, userId, albumId) } returns null
+            every { photoRepo.fetchNextOf(order, userId, albumId) } returns null
+            val linkedPhotos = service.getLinkedById(defaultLinkedPhotos.current.id, userId, albumId)
+            linkedPhotos shouldBe defaultLinkedPhotos
+            verify { photoRepo.fetchById(defaultLinkedPhotos.current.id) }
+            verify { albumRepo.fetchOrder(albumId, defaultLinkedPhotos.current.id) }
+            verify { photoRepo.fetchPreviousOf(order, userId, albumId) }
+            verify { photoRepo.fetchNextOf(order, userId, albumId) }
+            confirmVerified(photoRepo)
+        }
+
+        @Test
+        fun `should return complete linked photos`() {
+            every { photoRepo.fetchById(completeLinkedPhotos.current.id) } returns completeLinkedPhotos.current
+            every { albumRepo.fetchOrder(albumId, defaultLinkedPhotos.current.id) } returns order
+            every { photoRepo.fetchPreviousOf(order, userId, albumId) } returns completeLinkedPhotos.previous
+            every { photoRepo.fetchNextOf(order, userId, albumId) } returns completeLinkedPhotos.next
+            val linkedPhotos = service.getLinkedById(completeLinkedPhotos.current.id, userId, albumId)
+            linkedPhotos shouldBe completeLinkedPhotos
+            verify { photoRepo.fetchById(completeLinkedPhotos.current.id) }
+            verify { albumRepo.fetchOrder(albumId, defaultLinkedPhotos.current.id) }
+            verify { photoRepo.fetchPreviousOf(order, userId, albumId) }
+            verify { photoRepo.fetchNextOf(order, userId, albumId) }
             confirmVerified(photoRepo)
         }
     }

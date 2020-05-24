@@ -39,9 +39,9 @@ class AlbumEventRepositoryImpl(
             data = AlbumEventData.Deletion(source.toData() as EventSourceData.User)
         )
 
-    override fun saveUpdateEvent(id: UUID, content: AlbumEvent.Update.Content, source: EventSource.User) =
+    override fun saveUpdateEvent(albumId: UUID, content: AlbumEvent.Update.Content, source: EventSource.User) =
         insert<AlbumEvent.Update>(
-            subjectId = id,
+            subjectId = albumId,
             type = AlbumEventType.Update,
             data = AlbumEventData.Update(
                 source = source.toData() as EventSourceData.User,

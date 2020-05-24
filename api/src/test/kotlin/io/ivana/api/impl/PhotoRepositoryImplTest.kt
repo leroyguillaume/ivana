@@ -2,7 +2,7 @@
 
 package io.ivana.api.impl
 
-import io.ivana.core.*
+import io.ivana.core.Photo
 import io.kotlintest.matchers.boolean.shouldBeFalse
 import io.kotlintest.matchers.boolean.shouldBeTrue
 import io.kotlintest.matchers.collections.shouldBeEmpty
@@ -12,111 +12,17 @@ import io.kotlintest.shouldBe
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
-import java.net.InetAddress
 import java.util.*
 
 @SpringBootTest
-internal class PhotoRepositoryImplTest {
-    private val pwdEncoder = BCryptPasswordEncoder()
-    private val initData = listOf(
-        InitDataEntry(
-            userCreationContent = UserEvent.Creation.Content(
-                name = "admin",
-                hashedPwd = pwdEncoder.encode("changeit"),
-                role = Role.SuperAdmin
-            ),
-            photoUploadContents = listOf(
-                PhotoEvent.Upload.Content(
-                    type = Photo.Type.Jpg,
-                    hash = "hash1"
-                ),
-                PhotoEvent.Upload.Content(
-                    type = Photo.Type.Png,
-                    hash = "hash2"
-                ),
-                PhotoEvent.Upload.Content(
-                    type = Photo.Type.Png,
-                    hash = "hash3"
-                )
-            )
-        ),
-        InitDataEntry(
-            userCreationContent = UserEvent.Creation.Content(
-                name = "gleroy",
-                hashedPwd = pwdEncoder.encode("changeit"),
-                role = Role.User
-            ),
-            photoUploadContents = listOf(
-                PhotoEvent.Upload.Content(
-                    type = Photo.Type.Jpg,
-                    hash = "hash4"
-                ),
-                PhotoEvent.Upload.Content(
-                    type = Photo.Type.Jpg,
-                    hash = "hash5"
-                )
-            )
-        )
-    )
-
-    @Autowired
-    private lateinit var jdbc: NamedParameterJdbcTemplate
-
-    @Autowired
-    private lateinit var repo: PhotoRepositoryImpl
-
-    @Autowired
-    private lateinit var eventRepo: PhotoEventRepository
-
-    @Autowired
-    private lateinit var userEventRepo: UserEventRepository
-
-    @Autowired
-    private lateinit var albumEventRepo: AlbumEventRepository
-
-    private lateinit var uploadedPhotos: List<Photo>
-
-    @BeforeEach
-    fun beforeEach() {
-        cleanDb(jdbc)
-        var no = 1
-        uploadedPhotos = initData
-            .map { entry ->
-                val user = userEventRepo.saveCreationEvent(entry.userCreationContent, EventSource.System).toUser()
-                entry.photoUploadContents.map { content ->
-                    eventRepo.saveUploadEvent(
-                        content = content,
-                        source = EventSource.User(user.id, InetAddress.getByName("127.0.0.1"))
-                    ).toPhoto(no++)
-                }
-            }
-            .flatten()
-        val photo = uploadedPhotos[uploadedPhotos.size - 1]
-        eventRepo.saveUpdatePermissionsEvent(
-            photoId = photo.id,
-            content = PhotoEvent.UpdatePermissions.Content(
-                permissionsToAdd = emptySet(),
-                permissionsToRemove = setOf(
-                    SubjectPermissions(
-                        subjectId = uploadedPhotos[0].ownerId,
-                        permissions = setOf(Permission.Read)
-                    )
-                )
-            ),
-            source = EventSource.User(photo.ownerId, InetAddress.getByName("127.0.0.1"))
-        )
-    }
-
+internal class PhotoRepositoryImplTest : AbstractRepositoryTest() {
     @Nested
     inner class count {
         @Test
         fun `should return count of photos of user`() {
-            val count = repo.count()
-            count shouldBe uploadedPhotos.size
+            val count = photoRepo.count()
+            count shouldBe photoUploadEvents.size
         }
     }
 
@@ -126,181 +32,178 @@ internal class PhotoRepositoryImplTest {
 
         @BeforeEach
         fun beforeEach() {
-            ownerId = uploadedPhotos[0].ownerId
+            ownerId = photoUploadEvents[0].source.id
         }
 
         @Test
         fun `should return count of photos of user`() {
-            val count = repo.count(ownerId)
+            val count = photoRepo.count(ownerId)
             count shouldBe 3
         }
     }
 
     @Nested
-    inner class countOfAlbum {
-        private lateinit var ownerId: UUID
-        private lateinit var albumCreationEvent: AlbumEvent.Creation
-
-        @BeforeEach
-        fun beforeEach() {
-            ownerId = uploadedPhotos[0].ownerId
-            val source = EventSource.User(ownerId, InetAddress.getByName("127.0.0.1"))
-            albumCreationEvent = albumEventRepo.saveCreationEvent("album", source)
-            albumEventRepo.saveUpdateEvent(
-                id = albumCreationEvent.subjectId,
-                content = AlbumEvent.Update.Content(
-                    name = albumCreationEvent.albumName,
-                    photosToAdd = uploadedPhotos.map { it.id },
-                    photosToRemove = emptyList()
-                ),
-                source = source
-            )
-        }
-
-        @Test
-        fun `should return count of photos of album`() {
-            val count = repo.countOfAlbum(albumCreationEvent.subjectId, ownerId)
-            count shouldBe uploadedPhotos.size - 1
-        }
-    }
-
-    @Nested
     inner class existsById {
-        private lateinit var photo: Photo
+        private lateinit var photoId: UUID
 
         @BeforeEach
         fun beforeEach() {
-            photo = uploadedPhotos[0]
+            photoId = photoUploadEvents[0].subjectId
         }
 
         @Test
         fun `should return false if photo does not exist`() {
-            val exists = repo.existsById(UUID.randomUUID())
+            val exists = photoRepo.existsById(UUID.randomUUID())
             exists.shouldBeFalse()
         }
 
         @Test
         fun `should return true if photo exists`() {
-            val exists = repo.existsById(photo.id)
+            val exists = photoRepo.existsById(photoId)
             exists.shouldBeTrue()
         }
     }
 
     @Nested
     inner class fetchAll {
+        private lateinit var uploadedPhotos: List<Photo>
+
+        @BeforeEach
+        fun beforeEach() {
+            uploadedPhotos = photoUploadEvents
+                .map { it.toPhoto() }
+                .sortedBy { it.id.toString() }
+        }
+
         @Test
         fun `should return all photos in interval`() {
-            val photos = repo.fetchAll(1, 10)
-            photos shouldBe uploadedPhotos.sortedBy { it.id.toString() }.subList(1, uploadedPhotos.size)
+            val photos = photoRepo.fetchAll(1, 10)
+            photos shouldBe uploadedPhotos.subList(1, uploadedPhotos.size)
         }
     }
 
     @Nested
     inner class `fetchAll with owner id` {
+        private lateinit var uploadedPhotos: List<Photo>
         private lateinit var ownerId: UUID
 
         @BeforeEach
         fun beforeEach() {
-            ownerId = uploadedPhotos[0].ownerId
+            ownerId = userCreationEvents[0].subjectId
+            uploadedPhotos = photoUploadEvents
+                .filter { it.source.id == ownerId }
+                .map { it.toPhoto() }
+                .sortedBy { it.no }
         }
 
         @Test
         fun `should return all photos in interval`() {
-            val photos = repo.fetchAll(ownerId, 1, 10)
+            val photos = photoRepo.fetchAll(ownerId, 1, 10)
             photos shouldBe uploadedPhotos.subList(1, 3)
         }
     }
 
     @Nested
     inner class fetchAllByIds {
+        private lateinit var uploadedPhotos: List<Photo>
+
+        @BeforeEach
+        fun beforeEach() {
+            uploadedPhotos = photoUploadEvents.map { it.toPhoto() }
+        }
+
         @Test
         fun `should return empty set if ids is empty`() {
-            val photos = repo.fetchAllByIds(emptySet())
+            val photos = photoRepo.fetchAllByIds(emptySet())
             photos.shouldBeEmpty()
         }
 
         @Test
         fun `should return all photos`() {
-            val photos = repo.fetchAllByIds(uploadedPhotos.map { it.id }.toSet())
+            val photos = photoRepo.fetchAllByIds(uploadedPhotos.map { it.id }.toSet())
             photos shouldContainExactlyInAnyOrder uploadedPhotos
         }
     }
 
     @Nested
     inner class fetchAllOfAlbum {
+        private lateinit var albumId: UUID
         private lateinit var ownerId: UUID
-        private lateinit var albumCreationEvent: AlbumEvent.Creation
+        private lateinit var expectedPhotos: List<Photo>
 
         @BeforeEach
         fun beforeEach() {
-            ownerId = uploadedPhotos[0].ownerId
-            val source = EventSource.User(ownerId, InetAddress.getByName("127.0.0.1"))
-            albumCreationEvent = albumEventRepo.saveCreationEvent("album", source)
-            albumEventRepo.saveUpdateEvent(
-                id = albumCreationEvent.subjectId,
-                content = AlbumEvent.Update.Content(
-                    name = albumCreationEvent.albumName,
-                    photosToAdd = uploadedPhotos.map { it.id },
-                    photosToRemove = emptyList()
-                ),
-                source = source
-            )
+            val albumCreationEvent = albumCreationEvents[0]
+            albumId = albumCreationEvent.subjectId
+            ownerId = albumCreationEvent.source.id
+            expectedPhotos = photoUploadEvents
+                .filter { it.source.id == ownerId }
+                .map { it.toPhoto() }
+                .sortedBy { it.no }
         }
 
         @Test
-        fun `should return all photos in interval`() {
-            val photos = repo.fetchAllOfAlbum(albumCreationEvent.subjectId, ownerId, 1, 10)
-            photos shouldBe uploadedPhotos.subList(1, 4)
+        fun `should return all photos in interval (owner)`() {
+            val photos = photoRepo.fetchAllOfAlbum(albumId, ownerId, 1, 10)
+            photos shouldBe expectedPhotos.subList(1, expectedPhotos.size)
+        }
+
+        @Test
+        fun `should return all photos in interval (other user)`() {
+            val photos = photoRepo.fetchAllOfAlbum(albumId, userCreationEvents[1].subjectId, 1, 10)
+            photos shouldBe expectedPhotos
+                .filter { it.id != photoUploadEvents[1].subjectId }
+                .subList(1, expectedPhotos.size - 1)
         }
     }
 
     @Nested
     inner class fetchById {
-        private lateinit var photo: Photo
+        private lateinit var expectedPhoto: Photo
 
         @BeforeEach
         fun beforeEach() {
-            photo = uploadedPhotos[0]
+            expectedPhoto = photoUploadEvents[0].toPhoto()
         }
 
         @Test
         fun `should return null if photo does not exist`() {
-            val photo = repo.fetchById(UUID.randomUUID())
+            val photo = photoRepo.fetchById(UUID.randomUUID())
             photo.shouldBeNull()
         }
 
         @Test
         fun `should return photo with id`() {
-            val photo = repo.fetchById(photo.id)
-            photo shouldBe photo
+            val photo = photoRepo.fetchById(expectedPhoto.id)
+            photo shouldBe expectedPhoto
         }
     }
 
     @Nested
     inner class fetchByHash {
-        private lateinit var photo: Photo
+        private lateinit var expectedPhoto: Photo
 
         @BeforeEach
         fun beforeEach() {
-            photo = uploadedPhotos[0]
+            expectedPhoto = photoUploadEvents[0].toPhoto()
         }
 
         @Test
         fun `should return null if photo does not exist`() {
-            val photo = repo.fetchByHash(photo.ownerId, photo.hash.reversed())
+            val photo = photoRepo.fetchByHash(expectedPhoto.ownerId, expectedPhoto.hash.reversed())
             photo.shouldBeNull()
         }
 
         @Test
         fun `should return null if owner is not the same`() {
-            val photo = repo.fetchByHash(UUID.randomUUID(), photo.hash)
+            val photo = photoRepo.fetchByHash(UUID.randomUUID(), expectedPhoto.hash)
             photo.shouldBeNull()
         }
 
         @Test
         fun `should return photo with hash`() {
-            val photo = repo.fetchByHash(photo.ownerId, photo.hash)
-            photo shouldBe photo
+            val photo = photoRepo.fetchByHash(expectedPhoto.ownerId, expectedPhoto.hash)
+            photo shouldBe expectedPhoto
         }
     }
 
@@ -310,60 +213,159 @@ internal class PhotoRepositoryImplTest {
 
         @BeforeEach
         fun beforeEach() {
-            expectedExistingIds = uploadedPhotos.map { it.id }.toSet()
+            expectedExistingIds = photoUploadEvents.map { it.subjectId }.toSet()
         }
 
         @Test
         fun `should return existing ids`() {
-            val existingIds = repo.fetchExistingIds(expectedExistingIds + setOf(UUID.randomUUID()))
+            val existingIds = photoRepo.fetchExistingIds(expectedExistingIds + setOf(UUID.randomUUID()))
             existingIds shouldBe expectedExistingIds
         }
     }
 
     @Nested
-    inner class fetchNextOf {
+    inner class fetchNext {
         @Test
-        fun `should return null if photo does not exist`() {
-            val photo = repo.fetchNextOf(uploadedPhotos[4])
+        fun `should be null if no is last`() {
+            val photo = photoRepo.fetchNextOf(3)
             photo.shouldBeNull()
         }
 
         @Test
-        fun `should return null if next photo does not have same owner`() {
-            val photo = repo.fetchNextOf(uploadedPhotos[2])
-            photo.shouldBeNull()
-        }
-
-        @Test
-        fun `should return closet photo after`() {
-            val photo = repo.fetchNextOf(uploadedPhotos[1])
-            photo shouldBe uploadedPhotos[2]
+        fun `should be next photo (same owner)`() {
+            val photo = photoRepo.fetchNextOf(1)
+            photo shouldBe photoUploadEvents[1].toPhoto()
         }
     }
 
     @Nested
-    inner class fetchPreviousOf {
+    inner class `fetchNext with user id` {
         @Test
-        fun `should return null if photo does not exist`() {
-            val photo = repo.fetchPreviousOf(uploadedPhotos[0])
+        fun `should be null if no is last`() {
+            val photo = photoRepo.fetchNextOf(8, userCreationEvents[0].subjectId)
             photo.shouldBeNull()
         }
 
         @Test
-        fun `should return null if previous photo does not have same owner`() {
-            val photo = repo.fetchPreviousOf(uploadedPhotos[3])
-            photo.shouldBeNull()
+        fun `should be next photo (same owner)`() {
+            val photo = photoRepo.fetchNextOf(2, userCreationEvents[0].subjectId)
+            photo shouldBe photoUploadEvents[2].toPhoto()
         }
 
         @Test
-        fun `should return closet photo after`() {
-            val photo = repo.fetchPreviousOf(uploadedPhotos[2])
-            photo shouldBe uploadedPhotos[1]
+        fun `should be next photo (other owner)`() {
+            val photo = photoRepo.fetchNextOf(3, userCreationEvents[0].subjectId)
+            photo shouldBe photoUploadEvents[7].toPhoto()
+        }
+
+        @Test
+        fun `should be next photo (in album)`() {
+            val photo = photoRepo.fetchNextOf(1, userCreationEvents[1].subjectId)
+            photo shouldBe photoUploadEvents[2].toPhoto()
         }
     }
 
-    private data class InitDataEntry(
-        val userCreationContent: UserEvent.Creation.Content,
-        val photoUploadContents: List<PhotoEvent.Upload.Content>
-    )
+    @Nested
+    inner class `fetchNext with album id` {
+        private lateinit var albumId: UUID
+        private lateinit var ownerId: UUID
+
+        @BeforeEach
+        fun beforeEach() {
+            val albumCreationEvent = albumCreationEvents[0]
+            ownerId = albumCreationEvent.source.id
+            albumId = albumCreationEvent.subjectId
+        }
+
+        @Test
+        fun `should be null if no is last`() {
+            val photo = photoRepo.fetchNextOf(3, ownerId, albumId)
+            photo.shouldBeNull()
+        }
+
+        @Test
+        fun `should be next photo (same owner)`() {
+            val photo = photoRepo.fetchNextOf(1, ownerId, albumId)
+            photo shouldBe photoUploadEvents[1].toPhoto()
+        }
+
+        @Test
+        fun `should be next photo (other owner)`() {
+            val photo = photoRepo.fetchNextOf(1, userCreationEvents[1].subjectId, albumId)
+            photo shouldBe photoUploadEvents[2].toPhoto()
+        }
+    }
+
+    @Nested
+    inner class fetchPrevious {
+        @Test
+        fun `should be null if no is first`() {
+            val photo = photoRepo.fetchPreviousOf(1)
+            photo.shouldBeNull()
+        }
+
+        @Test
+        fun `should be previous photo (same owner)`() {
+            val photo = photoRepo.fetchPreviousOf(2)
+            photo shouldBe photoUploadEvents[0].toPhoto()
+        }
+    }
+
+    @Nested
+    inner class `fetchPrevious with user id` {
+        @Test
+        fun `should be null if no is first`() {
+            val photo = photoRepo.fetchPreviousOf(0, userCreationEvents[0].subjectId)
+            photo.shouldBeNull()
+        }
+
+        @Test
+        fun `should be previous photo (same owner)`() {
+            val photo = photoRepo.fetchPreviousOf(2, userCreationEvents[0].subjectId)
+            photo shouldBe photoUploadEvents[0].toPhoto()
+        }
+
+        @Test
+        fun `should be previous photo (other owner)`() {
+            val photo = photoRepo.fetchPreviousOf(8, userCreationEvents[0].subjectId)
+            photo shouldBe photoUploadEvents[2].toPhoto()
+        }
+
+        @Test
+        fun `should be previous photo (in album)`() {
+            val photo = photoRepo.fetchPreviousOf(3, userCreationEvents[1].subjectId)
+            photo shouldBe photoUploadEvents[0].toPhoto()
+        }
+    }
+
+    @Nested
+    inner class `fetchPrevious with album id` {
+        private lateinit var albumId: UUID
+        private lateinit var ownerId: UUID
+
+        @BeforeEach
+        fun beforeEach() {
+            val albumCreationEvent = albumCreationEvents[0]
+            ownerId = albumCreationEvent.source.id
+            albumId = albumCreationEvent.subjectId
+        }
+
+        @Test
+        fun `should be null if no is first`() {
+            val photo = photoRepo.fetchPreviousOf(1, ownerId, albumId)
+            photo.shouldBeNull()
+        }
+
+        @Test
+        fun `should be previous photo (same owner)`() {
+            val photo = photoRepo.fetchPreviousOf(2, ownerId, albumId)
+            photo shouldBe photoUploadEvents[0].toPhoto()
+        }
+
+        @Test
+        fun `should be next photo (other owner)`() {
+            val photo = photoRepo.fetchPreviousOf(3, userCreationEvents[1].subjectId, albumId)
+            photo shouldBe photoUploadEvents[0].toPhoto()
+        }
+    }
 }

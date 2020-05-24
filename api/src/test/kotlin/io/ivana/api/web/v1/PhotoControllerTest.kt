@@ -5,6 +5,7 @@ package io.ivana.api.web.v1
 import com.nhaarman.mockitokotlin2.*
 import io.ivana.api.impl.OwnerPermissionsUpdateException
 import io.ivana.api.impl.PhotoAlreadyUploadedException
+import io.ivana.api.impl.PhotoNotPresentInAlbumException
 import io.ivana.api.web.AbstractControllerTest
 import io.ivana.core.*
 import io.ivana.dto.*
@@ -70,6 +71,7 @@ internal class PhotoControllerTest : AbstractControllerTest() {
 
     @Nested
     inner class get {
+        private val albumId = UUID.randomUUID()
         private val linkedPhotos = LinkedPhotos(
             current = Photo(
                 id = UUID.randomUUID(),
@@ -147,6 +149,50 @@ internal class PhotoControllerTest : AbstractControllerTest() {
         }
 
         @Test
+        fun `should return 403 if user does not have permission to read album`() = authenticated {
+            whenever(userPhotoAuthzRepo.fetch(principal.user.id, linkedPhotos.current.id))
+                .thenReturn(setOf(Permission.Read))
+            whenever(photoService.getPermissions(linkedPhotos.current.id, principal.user.id)).thenReturn(permissions)
+            whenever(albumService.getPermissions(albumId, principal.user.id)).thenReturn(emptySet())
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                params = mapOf(NavigableParamName to listOf("true"), AlbumParamName to listOf(albumId.toString())),
+                reqCookies = listOf(accessTokenCookie()),
+                status = HttpStatus.FORBIDDEN,
+                respDto = ErrorDto.Forbidden
+            )
+            verify(userPhotoAuthzRepo).fetch(principal.user.id, linkedPhotos.current.id)
+            verify(userPhotoAuthzRepo, never()).photoIsInReadableAlbum(linkedPhotos.current.id, principal.user.id)
+            verify(photoService).getPermissions(linkedPhotos.current.id, principal.user.id)
+            verify(albumService).getPermissions(albumId, principal.user.id)
+        }
+
+        @Test
+        fun `should return 400 if photo is not present in album`() = authenticated {
+            whenever(userPhotoAuthzRepo.fetch(principal.user.id, linkedPhotos.current.id))
+                .thenReturn(setOf(Permission.Read))
+            whenever(photoService.getPermissions(linkedPhotos.current.id, principal.user.id)).thenReturn(permissions)
+            whenever(albumService.getPermissions(albumId, principal.user.id)).thenReturn(setOf(Permission.Read))
+            whenever(photoService.getLinkedById(linkedPhotos.current.id, principal.user.id, albumId)).thenAnswer {
+                throw PhotoNotPresentInAlbumException("")
+            }
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                params = mapOf(NavigableParamName to listOf("true"), AlbumParamName to listOf(albumId.toString())),
+                reqCookies = listOf(accessTokenCookie()),
+                status = HttpStatus.BAD_REQUEST,
+                respDto = ErrorDto.PhotoNotPresentInAlbum
+            )
+            verify(userPhotoAuthzRepo).fetch(principal.user.id, linkedPhotos.current.id)
+            verify(userPhotoAuthzRepo, never()).photoIsInReadableAlbum(linkedPhotos.current.id, principal.user.id)
+            verify(photoService).getPermissions(linkedPhotos.current.id, principal.user.id)
+            verify(albumService).getPermissions(albumId, principal.user.id)
+            verify(photoService).getLinkedById(linkedPhotos.current.id, principal.user.id, albumId)
+        }
+
+        @Test
         fun `should return 200 (simple)`() = authenticated {
             whenever(
                 userPhotoAuthzRepo.fetch(
@@ -187,6 +233,29 @@ internal class PhotoControllerTest : AbstractControllerTest() {
             verify(userPhotoAuthzRepo, never()).photoIsInReadableAlbum(linkedPhotos.current.id, principal.user.id)
             verify(photoService).getPermissions(linkedPhotos.current.id, principal.user.id)
             verify(photoService).getLinkedById(linkedPhotos.current.id)
+        }
+
+        @Test
+        fun `should return 200 (navigable in album)`() = authenticated {
+            whenever(userPhotoAuthzRepo.fetch(principal.user.id, linkedPhotos.current.id))
+                .thenReturn(setOf(Permission.Read))
+            whenever(photoService.getPermissions(linkedPhotos.current.id, principal.user.id)).thenReturn(permissions)
+            whenever(photoService.getLinkedById(linkedPhotos.current.id, principal.user.id, albumId))
+                .thenReturn(linkedPhotos)
+            whenever(albumService.getPermissions(albumId, principal.user.id)).thenReturn(setOf(Permission.Read))
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                params = mapOf(NavigableParamName to listOf("true"), AlbumParamName to listOf(albumId.toString())),
+                reqCookies = listOf(accessTokenCookie()),
+                status = HttpStatus.OK,
+                respDto = photoNavigableDto
+            )
+            verify(userPhotoAuthzRepo).fetch(principal.user.id, linkedPhotos.current.id)
+            verify(userPhotoAuthzRepo, never()).photoIsInReadableAlbum(linkedPhotos.current.id, principal.user.id)
+            verify(photoService).getPermissions(linkedPhotos.current.id, principal.user.id)
+            verify(albumService).getPermissions(albumId, principal.user.id)
+            verify(photoService).getLinkedById(linkedPhotos.current.id, principal.user.id, albumId)
         }
 
         @Test

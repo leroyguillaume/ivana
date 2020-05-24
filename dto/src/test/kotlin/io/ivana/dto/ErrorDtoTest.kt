@@ -81,6 +81,13 @@ internal class ErrorDtoTest {
     )
 
     @Nested
+    inner class PhotoNotPresentInAlbum : JsonTest(
+        filename = "error/photo-not-present-in-album.json",
+        expectedValue = ErrorDto.PhotoNotPresentInAlbum,
+        deserializeAs = typeOf<ErrorDto>()
+    )
+
+    @Nested
     inner class ResourcesNotFound {
         @Nested
         inner class Album : JsonTest(

@@ -11,6 +11,10 @@ interface PhotoService : OwnableEntityService<Photo> {
 
     fun getLinkedById(id: UUID): LinkedPhotos
 
+    fun getLinkedById(id: UUID, userId: UUID): LinkedPhotos
+
+    fun getLinkedById(id: UUID, userId: UUID, albumId: UUID): LinkedPhotos
+
     fun getRawFile(photo: Photo): File
 
     fun transform(id: UUID, transform: Transform, source: EventSource.User)

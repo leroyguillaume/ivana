@@ -30,6 +30,7 @@ class PhotoServiceImpl(
     override val userRepo: UserRepository,
     override val authzRepo: UserPhotoAuthorizationRepository,
     private val eventRepo: PhotoEventRepository,
+    private val albumRepo: AlbumRepository,
     private val props: IvanaProperties
 ) : PhotoService, AbstractOwnableEntityService<Photo>() {
     internal companion object {
@@ -61,8 +62,26 @@ class PhotoServiceImpl(
     override fun getLinkedById(id: UUID) = getById(id).let { photo ->
         LinkedPhotos(
             current = photo,
-            previous = repo.fetchPreviousOf(photo),
-            next = repo.fetchNextOf(photo)
+            previous = repo.fetchPreviousOf(photo.no),
+            next = repo.fetchNextOf(photo.no)
+        )
+    }
+
+    override fun getLinkedById(id: UUID, userId: UUID) = getById(id).let { photo ->
+        LinkedPhotos(
+            current = getById(id),
+            previous = repo.fetchPreviousOf(photo.no, userId),
+            next = repo.fetchNextOf(photo.no, userId)
+        )
+    }
+
+    override fun getLinkedById(id: UUID, userId: UUID, albumId: UUID) = getById(id).let { photo ->
+        val order = albumRepo.fetchOrder(albumId, id)
+            ?: throw PhotoNotPresentInAlbumException("Photo $id not present in album $albumId")
+        LinkedPhotos(
+            current = photo,
+            previous = repo.fetchPreviousOf(order, userId, albumId),
+            next = repo.fetchNextOf(order, userId, albumId)
         )
     }
 
