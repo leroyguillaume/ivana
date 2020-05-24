@@ -2,6 +2,7 @@ package io.ivana.api.impl
 
 import io.ivana.core.Album
 import io.ivana.core.AlbumRepository
+import org.springframework.dao.EmptyResultDataAccessException
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Repository
@@ -36,6 +37,7 @@ class AlbumRepositoryImpl(
         SELECT *
         FROM $tableName
         WHERE $OwnerIdColumnName = :owner_id
+        ORDER BY $CreationDateColumnName, $NameColumnName, $IdColumnName
         OFFSET :offset
         LIMIT :limit
         """,
@@ -51,6 +53,35 @@ class AlbumRepositoryImpl(
         """,
         MapSqlParameterSource(mapOf("album_id" to id, "photos_ids" to photosIds))
     ) { rs, _ -> rs.getObject(1, UUID::class.java) }.toSet()
+
+    override fun fetchOrder(id: UUID, photoId: UUID) = try {
+        jdbc.queryForObject(
+            """
+        SELECT ${PhotoRepositoryImpl.OrderColumnName}
+        FROM ${PhotoRepositoryImpl.AlbumPhotoTableName}
+        WHERE ${PhotoRepositoryImpl.AlbumIdColumnName} = :album_id 
+            AND ${PhotoRepositoryImpl.PhotoIdColumnName} = :photo_id 
+        """,
+            MapSqlParameterSource(mapOf("album_id" to id, "photo_id" to photoId))
+        ) { rs, _ -> rs.getInt(1) }
+    } catch (exception: EmptyResultDataAccessException) {
+        null
+    }
+
+    override fun fetchSize(id: UUID, userId: UUID) = jdbc.queryForObject(
+        """
+        SELECT COUNT(ap.${PhotoRepositoryImpl.PhotoIdColumnName})
+        FROM ${PhotoRepositoryImpl.AlbumPhotoTableName} ap
+        WHERE ap.${PhotoRepositoryImpl.AlbumIdColumnName} = :album_id
+        AND (
+            SELECT ${AbstractAuthorizationRepository.CanReadColumnName}
+            FROM ${UserPhotoAuthorizationRepositoryImpl.TableName}
+            WHERE ${UserPhotoAuthorizationRepositoryImpl.PhotoIdColumnName} = ap.${PhotoRepositoryImpl.PhotoIdColumnName}
+                AND ${UserPhotoAuthorizationRepositoryImpl.UserIdColumnName} = :user_id
+        ) IS NOT FALSE
+        """,
+        MapSqlParameterSource(mapOf("album_id" to id, "user_id" to userId))
+    ) { rs, _ -> rs.getInt(1) }
 
     override fun ResultSet.toEntity() = Album(
         id = getObject(IdColumnName, UUID::class.java),

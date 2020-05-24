@@ -325,14 +325,25 @@ internal class AlbumServiceImplTest {
         )
 
         @Test
+        fun `should throw exception if album does not exist`() {
+            every { albumRepo.fetchSize(albumId, userId) } returns null
+            val exception = assertThrows<EntityNotFoundException> {
+                service.getAllPhotos(albumId, userId, pageNo, pageSize)
+            }
+            exception shouldHaveMessage "Album $albumId does not exist"
+            verify { albumRepo.fetchSize(albumId, userId) }
+            confirmVerified(albumRepo)
+        }
+
+        @Test
         fun `should return page`() {
+            every { albumRepo.fetchSize(albumId, userId) } returns expectedPage.totalItems
             every { photoRepo.fetchAllOfAlbum(albumId, userId, pageNo - 1, pageSize) } returns expectedPage.content
-            every { photoRepo.countOfAlbum(albumId, userId) } returns expectedPage.totalItems
             val page = service.getAllPhotos(albumId, userId, pageNo, pageSize)
             page shouldBe expectedPage
+            verify { albumRepo.fetchSize(albumId, userId) }
             verify { photoRepo.fetchAllOfAlbum(albumId, userId, pageNo - 1, pageSize) }
-            verify { photoRepo.countOfAlbum(albumId, userId) }
-            confirmVerified(photoRepo)
+            confirmVerified(albumRepo, photoRepo)
         }
     }
 

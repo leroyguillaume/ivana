@@ -29,8 +29,8 @@ class AlbumServiceImpl(
     }
 
     override fun getAllPhotos(id: UUID, userId: UUID, pageNo: Int, pageSize: Int): Page<Photo> {
+        val itemsNb = repo.fetchSize(id, userId) ?: throw EntityNotFoundException("Album $id does not exist")
         val content = photoRepo.fetchAllOfAlbum(id, userId, (pageNo - 1) * pageSize, pageSize)
-        val itemsNb = photoRepo.countOfAlbum(id, userId)
         return Page(
             content = content,
             no = pageNo,

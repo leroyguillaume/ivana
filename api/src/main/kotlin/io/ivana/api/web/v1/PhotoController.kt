@@ -1,9 +1,11 @@
 package io.ivana.api.web.v1
 
+import io.ivana.api.impl.ForbiddenException
 import io.ivana.api.impl.PhotoAlreadyUploadedException
 import io.ivana.api.security.CustomAuthentication
 import io.ivana.api.security.PhotoTargetType
 import io.ivana.api.security.UserPrincipal
+import io.ivana.api.web.remoteHost
 import io.ivana.api.web.source
 import io.ivana.core.*
 import io.ivana.dto.*
@@ -30,7 +32,8 @@ import javax.validation.constraints.Min
 @Validated
 class PhotoController(
     private val photoService: PhotoService,
-    private val userService: UserService
+    private val userService: UserService,
+    private val albumService: AlbumService
 ) {
     internal companion object {
         val MediaTypeToPhotoType = mapOf(
@@ -58,14 +61,27 @@ class PhotoController(
     fun get(
         @PathVariable id: UUID,
         @RequestParam(name = NavigableParamName, required = false) navigable: Boolean = false,
-        auth: Authentication
+        @RequestParam(name = AlbumParamName, required = false) albumId: UUID? = null,
+        auth: Authentication,
+        req: HttpServletRequest
     ): PhotoDto.Complete {
         val principal = auth.principal as UserPrincipal
         val perms = photoService.getPermissions(id, principal.user.id)
-        return if (navigable) {
-            photoService.getLinkedById(id).toNavigableDto(perms)
-        } else {
+        return if (!navigable) {
             photoService.getById(id).toSimpleDto(perms)
+        } else {
+            val linkedPhotos = if (albumId == null) {
+                photoService.getLinkedById(id)
+            } else {
+                val user = principal.user
+                val permissions = albumService.getPermissions(albumId, user.id)
+                if (!permissions.contains(Permission.Read)) {
+                    val remoteAddr = req.remoteHost()
+                    throw ForbiddenException("User '${user.name}' ($remoteAddr) attempted to access album $albumId")
+                }
+                photoService.getLinkedById(id, principal.user.id, albumId)
+            }
+            linkedPhotos.toNavigableDto(perms)
         }
     }
 

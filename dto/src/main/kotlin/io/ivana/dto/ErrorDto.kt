@@ -15,7 +15,8 @@ private const val MalformedRequestCodeValue = "malformed_request"
 private const val MethodNotAllowedCodeValue = "method_not_allowed"
 private const val MissingParameterCodeValue = "missing_parameter"
 private const val NotFoundCodeValue = "not_found"
-private const val OwnerPermissionsUpdateCodeValue = "photo_owner_permissions_update"
+private const val OwnerPermissionsUpdateCodeValue = "owner_permissions_update"
+private const val PhotoNotPresentInAlbumCodeValue = "photo_not_present_in_album"
 private const val ResourcesNotFoundCodeValue = "resources_not_found"
 private const val UnauthorizedCodeValue = "unauthorized"
 private const val UnsupportedMediaTypeCodeValue = "unsupported_media_type"
@@ -37,6 +38,7 @@ private const val ValidationErrorCodeValue = "validation_error"
     JsonSubTypes.Type(value = ErrorDto.MissingParameter::class, name = MissingParameterCodeValue),
     JsonSubTypes.Type(value = ErrorDto.NotFound::class, name = NotFoundCodeValue),
     JsonSubTypes.Type(value = ErrorDto.OwnerPermissionsUpdate::class, name = OwnerPermissionsUpdateCodeValue),
+    JsonSubTypes.Type(value = ErrorDto.PhotoNotPresentInAlbum::class, name = PhotoNotPresentInAlbumCodeValue),
     JsonSubTypes.Type(value = ErrorDto.ResourcesNotFound::class, name = ResourcesNotFoundCodeValue),
     JsonSubTypes.Type(value = ErrorDto.Unauthorized::class, name = UnauthorizedCodeValue),
     JsonSubTypes.Type(value = ErrorDto.UnsupportedMediaType::class, name = UnsupportedMediaTypeCodeValue),
@@ -73,6 +75,9 @@ sealed class ErrorDto {
 
         @JsonProperty(OwnerPermissionsUpdateCodeValue)
         OwnerPermissionsUpdate,
+
+        @JsonProperty(PhotoNotPresentInAlbumCodeValue)
+        PhotoNotPresentInAlbum,
 
         @JsonProperty(ResourcesNotFoundCodeValue)
         ResourcesNotFound,
@@ -146,6 +151,12 @@ sealed class ErrorDto {
         override val code = Code.OwnerPermissionsUpdate
 
         override fun equals(other: Any?) = other is OwnerPermissionsUpdate
+    }
+
+    object PhotoNotPresentInAlbum : ErrorDto() {
+        override val code = Code.PhotoNotPresentInAlbum
+
+        override fun equals(other: Any?) = other is PhotoNotPresentInAlbum
     }
 
     data class ResourcesNotFound(

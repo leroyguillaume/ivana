@@ -13,3 +13,7 @@ databaseChangeLog:
             path: 002-album-permission-update.sql
             splitStatements: false
             relativeToChangelogFile: true
+        - sqlFile:
+            path: 003-user-can-read.sql
+            splitStatements: false
+            relativeToChangelogFile: true

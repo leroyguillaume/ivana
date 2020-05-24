@@ -232,7 +232,7 @@ internal class UserPhotoAuthorizationRepositoryImplTest : AbstractAuthorizationR
                 source = source
             )
             albumEventRepo.saveUpdateEvent(
-                id = albumCreationEvent.subjectId,
+                albumId = albumCreationEvent.subjectId,
                 content = AlbumEvent.Update.Content(
                     name = albumCreationEvent.albumName,
                     photosToAdd = listOf(photoInAlbumUploadEvent.subjectId),

@@ -40,23 +40,6 @@ class PhotoRepositoryImpl(
         MapSqlParameterSource(mapOf("owner_id" to ownerId))
     ) { rs, _ -> rs.getInt(1) }
 
-    override fun countOfAlbum(albumId: UUID, userId: UUID) = jdbc.queryForObject(
-        """
-        SELECT COUNT($PhotoIdColumnName)
-        FROM $AlbumPhotoTableName
-        JOIN $tableName
-        ON $IdColumnName = $PhotoIdColumnName
-        WHERE $AlbumIdColumnName = :album_id
-        AND (
-            SELECT ${AbstractAuthorizationRepository.CanReadColumnName}
-            FROM ${UserPhotoAuthorizationRepositoryImpl.TableName}
-            WHERE ${UserPhotoAuthorizationRepositoryImpl.PhotoIdColumnName} = $tableName.$IdColumnName
-                AND ${UserPhotoAuthorizationRepositoryImpl.UserIdColumnName} = :user_id
-        ) IS NOT FALSE
-        """,
-        MapSqlParameterSource(mapOf("album_id" to albumId, "user_id" to userId))
-    ) { rs, _ -> rs.getInt(1) }
-
     override fun fetchAll(ownerId: UUID, offset: Int, limit: Int) = jdbc.query(
         """
         SELECT *
@@ -94,43 +77,113 @@ class PhotoRepositoryImpl(
         Column(HashColumnName, hash)
     )
 
-    override fun fetchNextOf(photo: Photo) = try {
+    override fun fetchNextOf(no: Int) = try {
         jdbc.queryForObject(
             """
             SELECT *
             FROM $tableName
             WHERE $NoColumnName > :no 
-                AND $OwnerIdColumnName = :owner_id
+                AND $OwnerIdColumnName = (SELECT $OwnerIdColumnName FROM $tableName WHERE $NoColumnName = :no)
             ORDER BY $NoColumnName
             LIMIT 1
             """,
-            MapSqlParameterSource(
-                mapOf(
-                    "no" to photo.no,
-                    "owner_id" to photo.ownerId
-                )
-            )
+            MapSqlParameterSource(mapOf("no" to no))
         ) { rs, _ -> rs.toEntity() }
     } catch (exception: EmptyResultDataAccessException) {
         null
     }
 
-    override fun fetchPreviousOf(photo: Photo) = try {
+    override fun fetchNextOf(no: Int, userId: UUID) = try {
+        jdbc.queryForObject(
+            """
+            SELECT *
+            FROM $tableName p
+            WHERE p.$NoColumnName > :no AND user_can_read(p.id, :user_id)
+            ORDER BY p.$NoColumnName
+            LIMIT 1
+            """,
+            MapSqlParameterSource(mapOf("no" to no, "user_id" to userId))
+        ) { rs, _ -> rs.toEntity() }
+    } catch (exception: EmptyResultDataAccessException) {
+        null
+    }
+
+    override fun fetchNextOf(order: Int, userId: UUID, albumId: UUID) = try {
+        jdbc.queryForObject(
+            """
+            SELECT *
+            FROM $tableName p
+            JOIN $AlbumPhotoTableName ap
+            ON ap.$PhotoIdColumnName = p.$IdColumnName
+            JOIN ${AlbumRepositoryImpl.TableName} a
+            ON a.$IdColumnName = ap.$AlbumIdColumnName
+            WHERE ap.$OrderColumnName > :order
+                AND (
+                    SELECT upa.${AbstractAuthorizationRepository.CanReadColumnName}
+                    FROM ${UserPhotoAuthorizationRepositoryImpl.TableName} upa
+                    WHERE upa.${UserPhotoAuthorizationRepositoryImpl.PhotoIdColumnName} = p.$IdColumnName
+                        AND upa.${UserPhotoAuthorizationRepositoryImpl.UserIdColumnName} = :user_id
+                ) IS NOT FALSE
+            ORDER BY ap.$OrderColumnName
+            LIMIT 1
+            """,
+            MapSqlParameterSource(mapOf("order" to order, "user_id" to userId))
+        ) { rs, _ -> rs.toEntity() }
+    } catch (exception: EmptyResultDataAccessException) {
+        null
+    }
+
+    override fun fetchPreviousOf(no: Int) = try {
         jdbc.queryForObject(
             """
             SELECT *
             FROM $tableName
             WHERE $NoColumnName < :no 
-                AND $OwnerIdColumnName = :owner_id
+                AND $OwnerIdColumnName = (SELECT $OwnerIdColumnName FROM $tableName WHERE $NoColumnName = :no)
             ORDER BY $NoColumnName DESC
             LIMIT 1
             """,
-            MapSqlParameterSource(
-                mapOf(
-                    "no" to photo.no,
-                    "owner_id" to photo.ownerId
-                )
-            )
+            MapSqlParameterSource(mapOf("no" to no))
+        ) { rs, _ -> rs.toEntity() }
+    } catch (exception: EmptyResultDataAccessException) {
+        null
+    }
+
+    override fun fetchPreviousOf(no: Int, userId: UUID) = try {
+        jdbc.queryForObject(
+            """
+            SELECT *
+            FROM $tableName p
+            WHERE p.$NoColumnName < :no AND user_can_read(p.id, :user_id)
+            ORDER BY p.$NoColumnName DESC
+            LIMIT 1
+            """,
+            MapSqlParameterSource(mapOf("no" to no, "user_id" to userId))
+        ) { rs, _ -> rs.toEntity() }
+    } catch (exception: EmptyResultDataAccessException) {
+        null
+    }
+
+    override fun fetchPreviousOf(order: Int, userId: UUID, albumId: UUID) = try {
+        jdbc.queryForObject(
+            """
+            SELECT *
+            FROM $tableName p
+            JOIN $AlbumPhotoTableName ap
+            ON ap.$PhotoIdColumnName = p.$IdColumnName
+            JOIN ${AlbumRepositoryImpl.TableName} a
+            ON a.$IdColumnName = ap.$AlbumIdColumnName
+            WHERE ap.$OrderColumnName < :order
+                AND (
+                    SELECT upa.${AbstractAuthorizationRepository.CanReadColumnName}
+                    FROM ${UserPhotoAuthorizationRepositoryImpl.TableName} upa
+                    WHERE upa.${UserPhotoAuthorizationRepositoryImpl.PhotoIdColumnName} = p.$IdColumnName
+                        AND upa.${UserPhotoAuthorizationRepositoryImpl.UserIdColumnName} = :user_id
+                ) IS NOT FALSE
+            ORDER BY ap.$OrderColumnName DESC
+            LIMIT 1
+            """,
+            MapSqlParameterSource(mapOf("order" to order, "user_id" to userId))
         ) { rs, _ -> rs.toEntity() }
     } catch (exception: EmptyResultDataAccessException) {
         null

@@ -2,7 +2,7 @@
 
 package io.ivana.api.impl
 
-import io.ivana.core.*
+import io.ivana.core.Album
 import io.kotlintest.matchers.boolean.shouldBeFalse
 import io.kotlintest.matchers.boolean.shouldBeTrue
 import io.kotlintest.matchers.collections.shouldBeEmpty
@@ -12,71 +12,17 @@ import io.kotlintest.shouldBe
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
-import java.net.InetAddress
 import java.util.*
 
 @SpringBootTest
-internal class AlbumRepositoryImplTest {
-    private val pwdEncoder = BCryptPasswordEncoder()
-    private val initData = listOf(
-        InitDataEntry(
-            userCreationContent = UserEvent.Creation.Content(
-                name = "admin",
-                hashedPwd = pwdEncoder.encode("changeit"),
-                role = Role.SuperAdmin
-            ),
-            albumNames = listOf("album1", "album2", "album3")
-        ),
-        InitDataEntry(
-            userCreationContent = UserEvent.Creation.Content(
-                name = "gleroy",
-                hashedPwd = pwdEncoder.encode("changeit"),
-                role = Role.User
-            ),
-            albumNames = listOf("album1", "album2", "album3")
-        )
-    )
-
-    @Autowired
-    private lateinit var jdbc: NamedParameterJdbcTemplate
-
-    @Autowired
-    private lateinit var repo: AlbumRepositoryImpl
-
-    @Autowired
-    private lateinit var eventRepo: AlbumEventRepository
-
-    @Autowired
-    private lateinit var userEventRepo: UserEventRepository
-
-    private lateinit var createdAlbums: List<Album>
-
-    @BeforeEach
-    fun beforeEach() {
-        cleanDb(jdbc)
-        createdAlbums = initData
-            .map { entry ->
-                val user = userEventRepo.saveCreationEvent(entry.userCreationContent, EventSource.System).toUser()
-                entry.albumNames.map { name ->
-                    eventRepo.saveCreationEvent(
-                        name = name,
-                        source = EventSource.User(user.id, InetAddress.getByName("127.0.0.1"))
-                    ).toAlbum()
-                }
-            }
-            .flatten()
-    }
-
+internal class AlbumRepositoryImplTest : AbstractRepositoryTest() {
     @Nested
     inner class count {
         @Test
-        fun `should return count of albums of user`() {
-            val count = repo.count()
-            count shouldBe createdAlbums.size
+        fun `should return count of albums`() {
+            val count = albumRepo.count()
+            count shouldBe albumCreationEvents.size
         }
     }
 
@@ -86,97 +32,143 @@ internal class AlbumRepositoryImplTest {
 
         @BeforeEach
         fun beforeEach() {
-            ownerId = createdAlbums[0].ownerId
+            ownerId = albumCreationEvents[0].source.id
         }
 
         @Test
         fun `should return count of photos of user`() {
-            val count = repo.count(ownerId)
+            val count = albumRepo.count(ownerId)
             count shouldBe 3
         }
     }
 
     @Nested
     inner class existsById {
-        private lateinit var album: Album
+        private lateinit var albumId: UUID
 
         @BeforeEach
         fun beforeEach() {
-            album = createdAlbums[0]
+            albumId = albumCreationEvents[0].subjectId
         }
 
         @Test
         fun `should return false if album does not exist`() {
-            val exists = repo.existsById(UUID.randomUUID())
+            val exists = albumRepo.existsById(UUID.randomUUID())
             exists.shouldBeFalse()
         }
 
         @Test
         fun `should return true if album exists`() {
-            val exists = repo.existsById(album.id)
+            val exists = albumRepo.existsById(albumId)
             exists.shouldBeTrue()
         }
     }
 
     @Nested
     inner class fetchAll {
+        private lateinit var createdAlbums: List<Album>
+
+        @BeforeEach
+        fun beforeEach() {
+            createdAlbums = albumCreationEvents
+                .map { it.toAlbum() }
+                .sortedBy { it.id.toString() }
+        }
+
         @Test
         fun `should return all albums in interval`() {
-            val albums = repo.fetchAll(1, 10)
-            albums shouldBe createdAlbums.sortedBy { it.id.toString() }.subList(1, createdAlbums.size)
+            val albums = albumRepo.fetchAll(1, 10)
+            albums shouldBe createdAlbums.subList(1, createdAlbums.size)
         }
     }
 
     @Nested
     inner class `fetchAll with owner id` {
+        private lateinit var createdAlbums: List<Album>
         private lateinit var ownerId: UUID
 
         @BeforeEach
         fun beforeEach() {
+            createdAlbums = albumCreationEvents
+                .filter { it.source.id == userCreationEvents[0].subjectId }
+                .map { it.toAlbum() }
+                .sortedBy { it.name }
             ownerId = createdAlbums[0].ownerId
         }
 
         @Test
-        fun `should return all photos in interval`() {
-            val photos = repo.fetchAll(ownerId, 1, 10)
+        fun `should return all albums in interval`() {
+            val photos = albumRepo.fetchAll(ownerId, 1, 10)
             photos shouldBe createdAlbums.subList(1, 3)
         }
     }
 
     @Nested
     inner class fetchAllByIds {
+        private lateinit var createdAlbums: List<Album>
+
+        @BeforeEach
+        fun beforeEach() {
+            createdAlbums = albumCreationEvents.map { it.toAlbum() }
+        }
+
         @Test
         fun `should return empty set if ids is empty`() {
-            val albums = repo.fetchAllByIds(emptySet())
+            val albums = albumRepo.fetchAllByIds(emptySet())
             albums.shouldBeEmpty()
         }
 
         @Test
         fun `should return all albums`() {
-            val albums = repo.fetchAllByIds(createdAlbums.map { it.id }.toSet())
+            val albums = albumRepo.fetchAllByIds(createdAlbums.map { it.id }.toSet())
             albums shouldContainExactlyInAnyOrder createdAlbums
         }
     }
 
     @Nested
     inner class fetchById {
-        private lateinit var album: Album
+        private lateinit var createdAlbum: Album
 
         @BeforeEach
         fun beforeEach() {
-            album = createdAlbums[0]
+            createdAlbum = albumCreationEvents[0].toAlbum()
         }
 
         @Test
         fun `should return null if album does not exist`() {
-            val album = repo.fetchById(UUID.randomUUID())
+            val album = albumRepo.fetchById(UUID.randomUUID())
             album.shouldBeNull()
         }
 
         @Test
         fun `should return album with id`() {
-            val album = repo.fetchById(album.id)
-            album shouldBe album
+            val album = albumRepo.fetchById(createdAlbum.id)
+            album shouldBe createdAlbum
+        }
+    }
+
+    @Nested
+    inner class fetchDuplicateIds {
+        private lateinit var albumId: UUID
+        private lateinit var expectedDuplicateIds: Set<UUID>
+
+        @BeforeEach
+        fun beforeEach() {
+            val albumUpdateEvent = albumUpdateEvents[0]
+            albumId = albumUpdateEvent.subjectId
+            expectedDuplicateIds = albumUpdateEvent.content.photosToAdd.toSet()
+        }
+
+        @Test
+        fun `should return empty set if album does not exist`() {
+            val duplicateIds = albumRepo.fetchDuplicateIds(UUID.randomUUID(), expectedDuplicateIds)
+            duplicateIds.shouldBeEmpty()
+        }
+
+        @Test
+        fun `should return ids if album contains photos`() {
+            val duplicateIds = albumRepo.fetchDuplicateIds(albumId, expectedDuplicateIds)
+            duplicateIds shouldBe expectedDuplicateIds
         }
     }
 
@@ -186,25 +178,66 @@ internal class AlbumRepositoryImplTest {
 
         @BeforeEach
         fun beforeEach() {
-            expectedExistingIds = createdAlbums.map { it.id }.toSet()
+            expectedExistingIds = albumCreationEvents.map { it.subjectId }.toSet()
         }
 
         @Test
         fun `should return existing ids`() {
-            val existingIds = repo.fetchExistingIds(expectedExistingIds + setOf(UUID.randomUUID()))
+            val existingIds = albumRepo.fetchExistingIds(expectedExistingIds + setOf(UUID.randomUUID()))
             existingIds shouldBe expectedExistingIds
         }
     }
 
-    private fun AlbumEvent.Creation.toAlbum() = Album(
-        id = subjectId,
-        ownerId = source.id,
-        name = albumName,
-        creationDate = date
-    )
+    @Nested
+    inner class fetchOrder {
+        private lateinit var albumId: UUID
 
-    private data class InitDataEntry(
-        val userCreationContent: UserEvent.Creation.Content,
-        val albumNames: List<String>
-    )
+        @BeforeEach
+        fun beforeEach() {
+            albumId = albumCreationEvents[0].subjectId
+        }
+
+        @Test
+        fun `should return null if album does not exist`() {
+            val order = albumRepo.fetchOrder(UUID.randomUUID(), UUID.randomUUID())
+            order.shouldBeNull()
+        }
+
+        @Test
+        fun `should return null if photo is not in album`() {
+            val order = albumRepo.fetchOrder(albumId, photoUploadEvents[3].subjectId)
+            order.shouldBeNull()
+        }
+
+        @Test
+        fun `should return order of photo in album`() {
+            val order = albumRepo.fetchOrder(albumId, photoUploadEvents[1].subjectId)
+            order shouldBe 2
+        }
+    }
+
+    @Nested
+    inner class fetchSize {
+        private lateinit var albumId: UUID
+        private lateinit var ownerId: UUID
+
+        @BeforeEach
+        fun beforeEach() {
+            val albumCreationEvent = albumCreationEvents[0]
+            albumId = albumCreationEvent.subjectId
+            ownerId = albumCreationEvent.source.id
+        }
+
+        @Test
+        fun `should return count of photos of album (owner)`() {
+            val count = albumRepo.fetchSize(albumId, ownerId)
+            count shouldBe 3
+        }
+
+        @Test
+        fun `should return count of photos of album (other user)`() {
+            val count = albumRepo.fetchSize(albumId, userCreationEvents[1].subjectId)
+            count shouldBe 2
+        }
+    }
 }

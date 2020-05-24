@@ -71,6 +71,13 @@ class ErrorController(
         return ErrorDto.InternalError
     }
 
+    @ExceptionHandler(ForbiddenException::class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    fun handleForbidden(exception: Exception): ErrorDto {
+        Logger.warn(exception.message, exception)
+        return ErrorDto.Forbidden
+    }
+
     @ExceptionHandler(value = [HttpMessageNotReadableException::class, MultipartException::class])
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     fun handleMalformedRequest(exception: Exception): ErrorDto {
@@ -117,7 +124,7 @@ class ErrorController(
 
     @ExceptionHandler(OwnerPermissionsUpdateException::class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    fun handlePhotoOwnerPermissionsUpdate(exception: OwnerPermissionsUpdateException): ErrorDto {
+    fun handleOwnerPermissionsUpdate(exception: OwnerPermissionsUpdateException): ErrorDto {
         Logger.debug(exception.message, exception)
         return ErrorDto.OwnerPermissionsUpdate
     }
@@ -132,6 +139,13 @@ class ErrorController(
             is ResourcesNotFoundException.User -> ErrorDto.ResourcesNotFound.Type.User
         }
         return ErrorDto.ResourcesNotFound(type, exception.ids)
+    }
+
+    @ExceptionHandler(PhotoNotPresentInAlbumException::class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    fun handlePhotoNotPresentInAlbum(exception: PhotoNotPresentInAlbumException): ErrorDto {
+        Logger.debug(exception.message, exception)
+        return ErrorDto.PhotoNotPresentInAlbum
     }
 
     @ExceptionHandler(value = [BadCredentialsException::class, BadJwtException::class])
