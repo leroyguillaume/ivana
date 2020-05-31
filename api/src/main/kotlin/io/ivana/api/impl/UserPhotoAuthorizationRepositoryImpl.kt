@@ -39,4 +39,17 @@ class UserPhotoAuthorizationRepositoryImpl(
     } catch (exception: EmptyResultDataAccessException) {
         false
     }
+
+    override fun userCanReadAll(photosIds: Set<UUID>, userId: UUID) = try {
+        jdbc.queryForObject(
+            """
+            SELECT bool_and(user_can_read(${AbstractEntityRepository.IdColumnName}, :user_id))
+            FROM ${PhotoRepositoryImpl.TableName}
+            WHERE ${AbstractEntityRepository.IdColumnName} IN (:photos_ids)
+            """,
+            MapSqlParameterSource(mapOf("user_id" to userId, "photos_ids" to photosIds))
+        ) { rs, _ -> rs.getBoolean(1) }
+    } catch (exception: EmptyResultDataAccessException) {
+        false
+    }
 }

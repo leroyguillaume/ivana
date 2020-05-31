@@ -1,10 +1,13 @@
 package io.ivana.api.web.v1
 
+import io.ivana.api.impl.ForbiddenException
 import io.ivana.api.security.AlbumTargetType
 import io.ivana.api.security.UserPrincipal
+import io.ivana.api.web.remoteHost
 import io.ivana.api.web.source
 import io.ivana.core.AlbumEvent
 import io.ivana.core.AlbumService
+import io.ivana.core.PhotoService
 import io.ivana.core.UserService
 import io.ivana.dto.*
 import org.springframework.http.HttpStatus
@@ -23,7 +26,8 @@ import javax.validation.constraints.Min
 @Validated
 class AlbumController(
     private val albumService: AlbumService,
-    private val userService: UserService
+    private val userService: UserService,
+    private val photoService: PhotoService
 ) {
     @Transactional
     @PostMapping
@@ -109,6 +113,11 @@ class AlbumController(
         req: HttpServletRequest
     ): AlbumDto {
         val principal = auth.principal as UserPrincipal
+        val user = principal.user
+        if (!photoService.userCanReadAll(updateDto.photosToAdd.toSet(), user.id)) {
+            val remoteAddr = req.remoteHost()
+            throw ForbiddenException("User '${user.name}' ($remoteAddr) attempted to add photos without read permission in album $id")
+        }
         return albumService.update(id, updateDto.toUpdateContent(), req.source(principal)).toLightDto()
     }
 

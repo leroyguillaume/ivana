@@ -4,6 +4,8 @@ package io.ivana.api.impl
 
 import io.ivana.api.config.IvanaProperties
 import io.ivana.core.*
+import io.kotlintest.matchers.boolean.shouldBeFalse
+import io.kotlintest.matchers.boolean.shouldBeTrue
 import io.kotlintest.matchers.collections.shouldBeEmpty
 import io.kotlintest.matchers.file.shouldExist
 import io.kotlintest.matchers.file.shouldNotExist
@@ -990,6 +992,28 @@ internal class PhotoServiceImplTest {
             verify { photoRepo.fetchByHash(pngEvent.source.id, pngEvent.content.hash) }
             verify { photoRepo.fetchById(pngEvent.subjectId) }
             confirmVerified(photoEventRepo, photoRepo)
+        }
+    }
+
+    @Nested
+    inner class userCanReadAll {
+        private val photoIds = setOf(UUID.randomUUID())
+        private val userId = UUID.randomUUID()
+
+        @Test
+        fun `should return false if user does not have permission to read all photos`() {
+            every { authzRepo.userCanReadAll(photoIds, userId) } returns false
+            service.userCanReadAll(photoIds, userId).shouldBeFalse()
+            verify { authzRepo.userCanReadAll(photoIds, userId) }
+            confirmVerified(authzRepo)
+        }
+
+        @Test
+        fun `should return true if user have permission to read all photos`() {
+            every { authzRepo.userCanReadAll(photoIds, userId) } returns true
+            service.userCanReadAll(photoIds, userId).shouldBeTrue()
+            verify { authzRepo.userCanReadAll(photoIds, userId) }
+            confirmVerified(authzRepo)
         }
     }
 

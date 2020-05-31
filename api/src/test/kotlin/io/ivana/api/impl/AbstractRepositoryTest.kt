@@ -53,6 +53,7 @@ internal abstract class AbstractRepositoryTest {
     // 9 albums (3 by user)
     // Album 1 contains all photos of user 1
     // User 2 can read album 1
+    // User 3 can't read album 1
     protected lateinit var albumCreationEvents: List<AlbumEvent.Creation>
     protected lateinit var albumUpdateEvents: List<AlbumEvent.Update>
     protected lateinit var albumUpdatePermissionsEvents: List<AlbumEvent.UpdatePermissions>
@@ -157,12 +158,17 @@ internal abstract class AbstractRepositoryTest {
         }
         albumUpdateEvents = listOf(album1UpdateEvent)
 
-        val album1UpdatePermissionsEvent = addPermissionsOnAlbum(
+        val album1UpdatePermissionsEvent1 = addPermissionsOnAlbum(
             albumCreationEvent = albumCreationEvents[0],
             userId = userCreationEvents[1].subjectId,
             permissions = *arrayOf(Permission.Read)
         )
-        albumUpdatePermissionsEvents = listOf(album1UpdatePermissionsEvent)
+        val album1UpdatePermissionsEvent2 = removePermissionsOnAlbum(
+            albumCreationEvent = albumCreationEvents[0],
+            userId = userCreationEvents[2].subjectId,
+            permissions = *arrayOf(Permission.Read)
+        )
+        albumUpdatePermissionsEvents = listOf(album1UpdatePermissionsEvent1, album1UpdatePermissionsEvent2)
     }
 
     private fun initPhotos() {
@@ -215,6 +221,24 @@ internal abstract class AbstractRepositoryTest {
         "SELECT currval('${tableName}_${AbstractEventRepository.NumberColumnName}_seq')",
         MapSqlParameterSource()
     ) { rs, _ -> rs.getLong(1) + 1 }!!
+
+    private fun removePermissionsOnAlbum(
+        albumCreationEvent: AlbumEvent.Creation,
+        userId: UUID,
+        vararg permissions: Permission
+    ) = albumEventRepo.saveUpdatePermissionsEvent(
+        albumId = albumCreationEvent.subjectId,
+        content = AlbumEvent.UpdatePermissions.Content(
+            permissionsToAdd = emptySet(),
+            permissionsToRemove = setOf(
+                SubjectPermissions(
+                    subjectId = userId,
+                    permissions = permissions.toSet()
+                )
+            )
+        ),
+        source = albumCreationEvent.source
+    )
 
     private fun removePermissionsOnPhoto(
         photoUploadEvent: PhotoEvent.Upload,

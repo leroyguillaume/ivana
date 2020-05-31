@@ -55,11 +55,6 @@ class AlbumServiceImpl(
         }
         val photosToAddIds = content.photosToAdd.toSet()
         if (photosToAddIds.isNotEmpty()) {
-            val existingIds = photoRepo.fetchExistingIds(photosToAddIds)
-            val notFoundIds = photosToAddIds - existingIds
-            if (notFoundIds.isNotEmpty()) {
-                throw ResourcesNotFoundException.Photo(notFoundIds)
-            }
             val duplicateIds = repo.fetchDuplicateIds(id, photosToAddIds)
             if (duplicateIds.isNotEmpty()) {
                 throw AlbumAlreadyContainsPhotosException(duplicateIds)

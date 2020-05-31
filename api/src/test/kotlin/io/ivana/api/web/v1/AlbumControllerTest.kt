@@ -6,7 +6,6 @@ import com.nhaarman.mockitokotlin2.verify
 import com.nhaarman.mockitokotlin2.whenever
 import io.ivana.api.impl.AlbumAlreadyContainsPhotosException
 import io.ivana.api.impl.OwnerPermissionsUpdateException
-import io.ivana.api.impl.ResourcesNotFoundException
 import io.ivana.api.web.AbstractControllerTest
 import io.ivana.core.*
 import io.ivana.dto.*
@@ -516,6 +515,22 @@ internal class AlbumControllerTest : AbstractControllerTest() {
         }
 
         @Test
+        fun `should return 403 if user does not have permission on photo`() = authenticated {
+            whenever(userAlbumAuthzRepo.fetch(principal.user.id, album.id)).thenReturn(setOf(Permission.Update))
+            whenever(photoService.userCanReadAll(updateDto.photosToAdd.toSet(), principal.user.id)).thenReturn(false)
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                reqCookies = listOf(accessTokenCookie()),
+                reqContent = mapper.writeValueAsString(updateDto),
+                status = HttpStatus.FORBIDDEN,
+                respDto = ErrorDto.Forbidden
+            )
+            verify(userAlbumAuthzRepo).fetch(principal.user.id, album.id)
+            verify(photoService).userCanReadAll(updateDto.photosToAdd.toSet(), principal.user.id)
+        }
+
+        @Test
         fun `should return 400 if params are too short`() = authenticated {
             callAndExpectDto(
                 method = method,
@@ -542,26 +557,9 @@ internal class AlbumControllerTest : AbstractControllerTest() {
         }
 
         @Test
-        fun `should return 400 if photos does not exist`() = authenticated {
-            whenever(userAlbumAuthzRepo.fetch(principal.user.id, album.id)).thenReturn(setOf(Permission.Update))
-            whenever(albumService.update(album.id, updateContent, source)).thenAnswer {
-                throw ResourcesNotFoundException.Photo(duplicateIds)
-            }
-            callAndExpectDto(
-                method = method,
-                uri = uri,
-                reqCookies = listOf(accessTokenCookie()),
-                reqContent = mapper.writeValueAsString(updateDto),
-                status = HttpStatus.BAD_REQUEST,
-                respDto = ErrorDto.ResourcesNotFound(ErrorDto.ResourcesNotFound.Type.Photo, duplicateIds)
-            )
-            verify(userAlbumAuthzRepo).fetch(principal.user.id, album.id)
-            verify(albumService).update(album.id, updateContent, source)
-        }
-
-        @Test
         fun `should return 409 if album already contains photos`() = authenticated {
             whenever(userAlbumAuthzRepo.fetch(principal.user.id, album.id)).thenReturn(setOf(Permission.Update))
+            whenever(photoService.userCanReadAll(updateDto.photosToAdd.toSet(), principal.user.id)).thenReturn(true)
             whenever(albumService.update(album.id, updateContent, source)).thenAnswer {
                 throw AlbumAlreadyContainsPhotosException(duplicateIds)
             }
@@ -574,12 +572,14 @@ internal class AlbumControllerTest : AbstractControllerTest() {
                 respDto = ErrorDto.AlbumAlreadyContainsPhotos(duplicateIds)
             )
             verify(userAlbumAuthzRepo).fetch(principal.user.id, album.id)
+            verify(photoService).userCanReadAll(updateDto.photosToAdd.toSet(), principal.user.id)
             verify(albumService).update(album.id, updateContent, source)
         }
 
         @Test
         fun `should return 200`() = authenticated {
             whenever(userAlbumAuthzRepo.fetch(principal.user.id, album.id)).thenReturn(setOf(Permission.Update))
+            whenever(photoService.userCanReadAll(updateDto.photosToAdd.toSet(), principal.user.id)).thenReturn(true)
             whenever(albumService.update(album.id, updateContent, source)).thenReturn(album)
             callAndExpectDto(
                 method = method,
@@ -590,6 +590,7 @@ internal class AlbumControllerTest : AbstractControllerTest() {
                 respDto = albumDto
             )
             verify(userAlbumAuthzRepo).fetch(principal.user.id, album.id)
+            verify(photoService).userCanReadAll(updateDto.photosToAdd.toSet(), principal.user.id)
             verify(albumService).update(album.id, updateContent, source)
         }
     }
