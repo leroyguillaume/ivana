@@ -151,6 +151,8 @@ class PhotoServiceImpl(
         }
     }
 
+    override fun userCanReadAll(ids: Set<UUID>, userId: UUID) = authzRepo.userCanReadAll(ids, userId)
+
     override fun throwResourcesNotFoundException(ids: Set<UUID>) {
         throw ResourcesNotFoundException.Photo(ids)
     }

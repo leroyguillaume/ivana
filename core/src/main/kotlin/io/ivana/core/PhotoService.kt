@@ -27,4 +27,6 @@ interface PhotoService : OwnableEntityService<Photo> {
     )
 
     fun upload(input: InputStream, type: Photo.Type, source: EventSource.User): Photo
+
+    fun userCanReadAll(ids: Set<UUID>, userId: UUID): Boolean
 }
