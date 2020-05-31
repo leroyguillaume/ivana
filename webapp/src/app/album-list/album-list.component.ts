@@ -74,8 +74,7 @@ export class AlbumListComponent implements OnInit {
   openAlbumModal(): void {
     this.modalService.open(AlbumModalComponent).result.then(
       () => this.fetchPage(this.page.no),
-      () => {
-      }
+      () => this.fetchPage(this.page.no)
     )
   }
 }

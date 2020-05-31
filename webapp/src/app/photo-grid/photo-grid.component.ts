@@ -96,7 +96,14 @@ export class PhotoGridComponent implements OnInit {
   openPhoto(id: string): void {
     this.stateService.startPhotoNavIndex = this.page.content.findIndex(photo => photo.id === id)
     // noinspection JSIgnoredPromiseFromCall
-    this.router.navigate(['/photo', id])
+    this.router.navigate(
+      ['/photo', id],
+      {
+        queryParams: {
+          album: this.currentAlbum?.id
+        }
+      }
+    )
   }
 
   photoIsSelected(photo: Photo): boolean {

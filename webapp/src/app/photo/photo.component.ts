@@ -36,7 +36,7 @@ export class PhotoComponent implements OnDestroy, OnInit {
   settingsPanelOpened: boolean = false
 
   photo: NavigablePhoto
-  currentAlbum: Album
+  currentAlbumId: string
 
   rotationDegrees: number = 0
   rotationDegreesOffset: number = 0
@@ -64,7 +64,7 @@ export class PhotoComponent implements OnDestroy, OnInit {
     const offset = this.stateService.startPhotoNavIndex > -1
       ? Math.floor((this.stateService.startPhotoNavIndex + this.stateService.currentPhotoNavOffset) / PhotoPageSize)
       : 0
-    const route = this.currentAlbum ? ['/album', this.currentAlbum.id] : ['/home']
+    const route = this.currentAlbumId ? ['/album', this.currentAlbumId] : ['/home']
     // noinspection JSIgnoredPromiseFromCall
     this.router.navigate(route, {
       queryParams: {
@@ -91,9 +91,9 @@ export class PhotoComponent implements OnDestroy, OnInit {
     }
   }
 
-  fetchPhoto(id: string): void {
+  fetchPhoto(id: string, albumId: string): void {
     this.loading = true
-    this.photoService.get(id)
+    this.photoService.get(id, albumId)
       .pipe(finalize(() => this.loading = false))
       .subscribe(
         photo => this.photo = photo,
@@ -120,7 +120,14 @@ export class PhotoComponent implements OnDestroy, OnInit {
     if (this.photo.next) {
       this.stateService.currentPhotoNavOffset++
       // noinspection JSIgnoredPromiseFromCall
-      this.router.navigate(['photo', this.photo.next.id])
+      this.router.navigate(
+        ['photo', this.photo.next.id],
+        {
+          queryParams: {
+            album: this.currentAlbumId
+          }
+        }
+      )
     }
   }
 
@@ -133,8 +140,12 @@ export class PhotoComponent implements OnDestroy, OnInit {
 
   ngOnInit(): void {
     this.stateService.currentPhotoNavOffset = 0
-    this.route.paramMap.subscribe(params => this.fetchPhoto(params.get('id')))
-    this.stateService.currentAlbum.subscribe(album => this.currentAlbum = album)
+    this.route.queryParamMap.subscribe(queryParams => {
+      this.currentAlbumId = queryParams.get('album')
+      this.route.paramMap.subscribe(params => {
+        this.fetchPhoto(params.get('id'), this.currentAlbumId)
+      })
+    })
   }
 
   openAlbumSelectionModal(): void {
@@ -151,7 +162,14 @@ export class PhotoComponent implements OnDestroy, OnInit {
     if (this.photo.previous) {
       this.stateService.currentPhotoNavOffset--
       // noinspection JSIgnoredPromiseFromCall
-      this.router.navigate(['photo', this.photo.previous.id])
+      this.router.navigate(
+        ['photo', this.photo.previous.id],
+        {
+          queryParams: {
+            album: this.currentAlbumId
+          }
+        }
+      )
     }
   }
 

@@ -24,14 +24,23 @@ export class PhotoService {
     return this.http.delete<void>(`${this.baseUrl}/${id}`, {withCredentials: true})
   }
 
-  get(id: string): Observable<NavigablePhoto> {
+  get(id: string, albumId: string = null): Observable<NavigablePhoto> {
+    let params = {
+      navigable: 'true'
+    }
+    if (albumId != null) {
+      params = {
+        ...params,
+        ...{
+          album: albumId
+        }
+      }
+    }
     return this.http.get<NavigablePhoto>(
       `${this.baseUrl}/${id}`,
       {
         withCredentials: true,
-        params: {
-          navigable: 'true'
-        }
+        params
       }
     )
   }
