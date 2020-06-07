@@ -49,6 +49,7 @@ fun LinkedPhotos.toNavigableDto(permissions: Set<Permission>) = PhotoDto.Complet
     ownerId = current.ownerId,
     rawUri = rawUri(current.id),
     compressedUri = compressedUri(current.id),
+    shootingDate = current.shootingDate,
     permissions = permissions.map { it.toDto() }.toSet(),
     previous = previous?.toLightDto(),
     next = next?.toLightDto()
@@ -87,6 +88,7 @@ fun Photo.toSimpleDto(permissions: Set<Permission>) = PhotoDto.Complete.Simple(
     ownerId = ownerId,
     rawUri = rawUri(id),
     compressedUri = compressedUri(id),
+    shootingDate = shootingDate,
     permissions = permissions.map { it.toDto() }.toSet()
 )
 

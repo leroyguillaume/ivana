@@ -1,6 +1,7 @@
 package io.ivana.dto
 
 import java.net.URI
+import java.time.LocalDate
 import java.util.*
 
 sealed class PhotoDto : EntityDto {
@@ -10,6 +11,7 @@ sealed class PhotoDto : EntityDto {
             override val ownerId: UUID,
             override val rawUri: URI,
             override val compressedUri: URI,
+            override val shootingDate: LocalDate? = null,
             override val permissions: Set<PermissionDto>,
             val previous: Light? = null,
             val next: Light? = null
@@ -20,9 +22,11 @@ sealed class PhotoDto : EntityDto {
             override val ownerId: UUID,
             override val rawUri: URI,
             override val compressedUri: URI,
+            override val shootingDate: LocalDate? = null,
             override val permissions: Set<PermissionDto>
         ) : Complete()
 
+        abstract val shootingDate: LocalDate?
         abstract val permissions: Set<PermissionDto>
     }
 

@@ -2,11 +2,19 @@
 
 package io.ivana.api.impl
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.junit.jupiter.api.Nested
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.context.SpringBootTest
 import java.net.InetAddress
+import java.time.LocalDate
 import java.util.*
 
+@SpringBootTest
 internal class PhotoEventDataTest {
+    @Autowired
+    private lateinit var mapper: ObjectMapper
+
     @Nested
     inner class Deletion : JsonTest(
         filename = "event-data/photo/deletion.json",
@@ -16,7 +24,8 @@ internal class PhotoEventDataTest {
                 ip = InetAddress.getByName("127.0.0.1")
             )
         ),
-        deserializeAs = typeOf<PhotoEventData.Deletion>()
+        deserializeAs = typeOf<PhotoEventData.Deletion>(),
+        mapper = mapper
     )
 
     @Nested
@@ -31,7 +40,41 @@ internal class PhotoEventDataTest {
                 ),
                 content = PhotoEventData.Transform.Content.Rotation(90.0)
             ),
-            deserializeAs = typeOf<PhotoEventData.Transform>()
+            deserializeAs = typeOf<PhotoEventData.Transform>(),
+            mapper = mapper
+        )
+    }
+
+    @Nested
+    inner class Update {
+        @Nested
+        inner class Default : JsonTest(
+            filename = "event-data/photo/update_default.json",
+            expectedValue = PhotoEventData.Update(
+                source = EventSourceData.User(
+                    id = UUID.fromString("644465bf-a2d5-43aa-b79d-84b9aa543bad"),
+                    ip = InetAddress.getByName("127.0.0.1")
+                ),
+                content = PhotoEventData.Update.Content()
+            ),
+            deserializeAs = typeOf<PhotoEventData.Update>(),
+            mapper = mapper
+        )
+
+        @Nested
+        inner class Complete : JsonTest(
+            filename = "event-data/photo/update_complete.json",
+            expectedValue = PhotoEventData.Update(
+                source = EventSourceData.User(
+                    id = UUID.fromString("644465bf-a2d5-43aa-b79d-84b9aa543bad"),
+                    ip = InetAddress.getByName("127.0.0.1")
+                ),
+                content = PhotoEventData.Update.Content(
+                    shootingDate = LocalDate.parse("2020-06-07")
+                )
+            ),
+            deserializeAs = typeOf<PhotoEventData.Update>(),
+            mapper = mapper
         )
     }
 
@@ -58,7 +101,8 @@ internal class PhotoEventDataTest {
                 )
             )
         ),
-        deserializeAs = typeOf<PhotoEventData.UpdatePermissions>()
+        deserializeAs = typeOf<PhotoEventData.UpdatePermissions>(),
+        mapper = mapper
     )
 
     @Nested
@@ -74,6 +118,7 @@ internal class PhotoEventDataTest {
                 hash = "hash"
             )
         ),
-        deserializeAs = typeOf<PhotoEventData.Upload>()
+        deserializeAs = typeOf<PhotoEventData.Upload>(),
+        mapper = mapper
     )
 }

@@ -40,6 +40,21 @@ class PhotoEventRepositoryImpl(
             )
         )
 
+    override fun saveUpdateEvent(
+        photoId: UUID,
+        content: PhotoEvent.Update.Content,
+        source: EventSource.User
+    ) = insert<PhotoEvent.Update>(
+        subjectId = photoId,
+        type = PhotoEventType.Update,
+        data = PhotoEventData.Update(
+            source = source.toData() as EventSourceData.User,
+            content = PhotoEventData.Update.Content(
+                shootingDate = content.shootingDate
+            )
+        )
+    )
+
     override fun saveUpdatePermissionsEvent(
         photoId: UUID,
         content: PhotoEvent.UpdatePermissions.Content,
@@ -72,6 +87,7 @@ class PhotoEventRepositoryImpl(
     override fun RawEvent<PhotoEventType>.toEvent() = when (type) {
         PhotoEventType.Deletion -> toDeletionEvent()
         PhotoEventType.Transform -> toTransformEvent()
+        PhotoEventType.Update -> toUpdateEvent()
         PhotoEventType.UpdatePermissions -> toUpdatePermissionsEvent()
         PhotoEventType.Upload -> toUploadEvent()
     }
@@ -98,6 +114,19 @@ class PhotoEventRepositoryImpl(
                 number = number,
                 source = data.source.toSource(),
                 transform = data.toTransform()
+            )
+        }
+
+    private fun RawEvent<PhotoEventType>.toUpdateEvent() =
+        mapper.readValue<PhotoEventData.Update>(jsonData).let { data ->
+            PhotoEvent.Update(
+                date = date,
+                subjectId = subjectId,
+                number = number,
+                source = data.source.toSource(),
+                content = PhotoEvent.Update.Content(
+                    shootingDate = data.content.shootingDate
+                )
             )
         }
 

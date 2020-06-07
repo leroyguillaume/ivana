@@ -2,6 +2,7 @@ package io.ivana.core
 
 import java.io.File
 import java.io.InputStream
+import java.time.LocalDate
 import java.util.*
 
 interface PhotoService : OwnableEntityService<Photo> {
@@ -18,6 +19,8 @@ interface PhotoService : OwnableEntityService<Photo> {
     fun getRawFile(photo: Photo): File
 
     fun transform(id: UUID, transform: Transform, source: EventSource.User)
+
+    fun update(id: UUID, shootingDate: LocalDate?, source: EventSource.User): Photo
 
     fun updatePermissions(
         id: UUID,

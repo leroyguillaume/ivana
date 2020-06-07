@@ -140,7 +140,7 @@ internal class ErrorControllerTest : AbstractControllerTest() {
             )
         )
         val usersIds = (dto.permissionsToAdd + dto.permissionsToRemove).map { it.subjectId }.toSet()
-        whenever(userPhotoAuthzRepo.fetch(principal.user.id, photoId)).thenReturn(setOf(Permission.Update))
+        whenever(userPhotoAuthzRepo.fetch(principal.user.id, photoId)).thenReturn(setOf(Permission.UpdatePermissions))
         whenever(userService.getAllByIds(usersIds)).thenAnswer { throw ResourcesNotFoundException.User(usersIds) }
         callAndExpectDto(
             method = HttpMethod.PUT,
