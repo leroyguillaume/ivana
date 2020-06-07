@@ -1001,6 +1001,11 @@ internal class PhotoServiceImplTest {
         private val userId = UUID.randomUUID()
 
         @Test
+        fun `should return true if set of ids is empty`() {
+            service.userCanReadAll(emptySet(), userId).shouldBeTrue()
+        }
+
+        @Test
         fun `should return false if user does not have permission to read all photos`() {
             every { authzRepo.userCanReadAll(photoIds, userId) } returns false
             service.userCanReadAll(photoIds, userId).shouldBeFalse()
