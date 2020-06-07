@@ -60,6 +60,7 @@ export class PhotoGridComponent implements OnInit {
 
   get albumUpdateAllowed(): boolean {
     return this.currentAlbum?.permissions.indexOf(Permission.Update) > -1
+      || this.currentAlbum?.permissions.indexOf(Permission.UpdatePermissions) > -1
   }
 
   emitAlbumDelete(): void {

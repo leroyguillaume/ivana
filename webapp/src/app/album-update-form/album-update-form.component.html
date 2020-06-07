@@ -1,0 +1,20 @@
+<form [formGroup]="albumForm" (ngSubmit)="update()" novalidate>
+  <div class="form-group">
+    <label for="name">Nom</label>
+    <input id="name"
+           type="text"
+           class="form-control"
+           formControlName="name"
+           required
+           [ngClass]="{'is-invalid': name.invalid && (name.dirty || name.touched)}">
+  </div>
+
+  <button type="submit"
+          class="btn btn-primary"
+          [disabled]="albumForm.invalid || updating"
+          [ngClass]="{'cursor-forbidden': albumForm.invalid || updating}">
+    <span *ngIf="!updating"> Sauvegarder</span>
+    <fa-icon *ngIf="updating" [icon]="spinnerIcon" spin="true"></fa-icon>
+    <span *ngIf="updating"> Sauvegarde en cours...</span>
+  </button>
+</form>
