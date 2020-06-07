@@ -10,6 +10,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.springframework.boot.test.context.SpringBootTest
+import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -116,6 +117,54 @@ internal class PhotoEventRepositoryImplTest : AbstractRepositoryTest() {
             )
             event shouldBe expectedEvent.copy(date = event.date)
             photoRepo.fetchById(expectedPhoto.id) shouldBe expectedPhoto
+        }
+    }
+
+    @Nested
+    inner class saveUpdateEvent {
+        private lateinit var photoUploadEvent: PhotoEvent.Upload
+        private lateinit var expectedDefaultEvent: PhotoEvent.Update
+        private lateinit var expectedCompleteEvent: PhotoEvent.Update
+
+        @BeforeEach
+        fun beforeEach() {
+            photoUploadEvent = photoUploadEvents[1]
+            expectedDefaultEvent = PhotoEvent.Update(
+                date = OffsetDateTime.now(),
+                subjectId = photoUploadEvent.subjectId,
+                number = nextPhotoEventNumber(),
+                source = photoUploadEvent.source,
+                content = PhotoEvent.Update.Content()
+            )
+            expectedCompleteEvent = expectedDefaultEvent.copy(
+                content = expectedDefaultEvent.content.copy(
+                    shootingDate = LocalDate.parse("2020-06-07")
+                )
+            )
+        }
+
+        @Test
+        fun `should return created event (default)`() {
+            val expectedPhoto = photoUploadEvent.toPhoto().copy(shootingDate = null)
+            test(expectedDefaultEvent, expectedPhoto)
+        }
+
+        @Test
+        fun `should return created event (complete)`() {
+            val expectedPhoto = photoUploadEvent.toPhoto().copy(
+                shootingDate = expectedCompleteEvent.content.shootingDate
+            )
+            test(expectedCompleteEvent, expectedPhoto)
+        }
+
+        private fun test(expectedEvent: PhotoEvent.Update, expectedPhoto: Photo) {
+            val event = photoEventRepo.saveUpdateEvent(
+                photoId = expectedEvent.subjectId,
+                content = expectedEvent.content,
+                source = expectedEvent.source
+            )
+            event shouldBe expectedEvent.copy(date = event.date)
+            photoRepo.fetchById(expectedEvent.subjectId) shouldBe expectedPhoto
         }
     }
 

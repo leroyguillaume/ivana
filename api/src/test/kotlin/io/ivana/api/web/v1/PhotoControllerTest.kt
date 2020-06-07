@@ -19,6 +19,7 @@ import org.springframework.http.MediaType
 import org.springframework.mock.web.MockMultipartFile
 import java.io.File
 import java.net.URI
+import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -698,6 +699,83 @@ internal class PhotoControllerTest : AbstractControllerTest() {
     }
 
     @Nested
+    inner class update {
+        private val defaultPhoto = Photo(
+            id = UUID.randomUUID(),
+            ownerId = userPrincipal.user.id,
+            uploadDate = OffsetDateTime.now(),
+            type = Photo.Type.Jpg,
+            hash = "hash1",
+            no = 1,
+            version = 1
+        )
+        private val completePhoto = defaultPhoto.copy(
+            shootingDate = LocalDate.parse("2020-06-07")
+        )
+        private val defaultDto = PhotoUpdateDto()
+        private val completeDto = defaultDto.copy(
+            shootingDate = completePhoto.shootingDate
+        )
+        private val perms = setOf(Permission.Read, Permission.Update)
+        private val defaultRespDto = defaultPhoto.toSimpleDto(perms)
+        private val completeRespDto = completePhoto.toSimpleDto(perms)
+        private val method = HttpMethod.PUT
+        private val uri = "$PhotoApiEndpoint/${defaultPhoto.id}"
+
+        @Test
+        fun `should return 401 if user is anonymous`() {
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                status = HttpStatus.UNAUTHORIZED,
+                respDto = ErrorDto.Unauthorized
+            )
+        }
+
+        @Test
+        fun `should return 403 if user does not have permission`() = authenticated {
+            whenever(userPhotoAuthzRepo.fetch(principal.user.id, defaultPhoto.id))
+                .thenReturn(EnumSet.complementOf(EnumSet.of(Permission.Update)))
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                reqCookies = listOf(accessTokenCookie()),
+                reqContent = mapper.writeValueAsString(completeDto),
+                status = HttpStatus.FORBIDDEN,
+                respDto = ErrorDto.Forbidden
+            )
+            verify(userPhotoAuthzRepo).fetch(principal.user.id, defaultPhoto.id)
+        }
+
+        @Test
+        fun `should return 204 (default)`() {
+            test(defaultDto, defaultPhoto, defaultRespDto)
+        }
+
+        @Test
+        fun `should return 204 (complete)`() {
+            test(completeDto, completePhoto, completeRespDto)
+        }
+
+        private fun test(dto: PhotoUpdateDto, photo: Photo, respDto: PhotoDto) = authenticated {
+            whenever(userPhotoAuthzRepo.fetch(principal.user.id, photo.id)).thenReturn(setOf(Permission.Update))
+            whenever(photoService.update(photo.id, dto.shootingDate, source)).thenReturn(photo)
+            whenever(photoService.getPermissions(photo.id, principal.user.id)).thenReturn(perms)
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                reqCookies = listOf(accessTokenCookie()),
+                reqContent = mapper.writeValueAsString(dto),
+                status = HttpStatus.OK,
+                respDto = respDto
+            )
+            verify(userPhotoAuthzRepo).fetch(principal.user.id, photo.id)
+            verify(photoService).update(photo.id, dto.shootingDate, source)
+            verify(photoService).getPermissions(photo.id, principal.user.id)
+        }
+    }
+
+    @Nested
     inner class updatePermissions {
         private val permissionToAdd = SubjectPermissionsUpdateDto(
             subjectId = userPrincipal.user.id,
@@ -750,7 +828,7 @@ internal class PhotoControllerTest : AbstractControllerTest() {
         @Test
         fun `should return 403 if user does not have permission`() = authenticated {
             whenever(userPhotoAuthzRepo.fetch(principal.user.id, photo.id))
-                .thenReturn(EnumSet.complementOf(EnumSet.of(Permission.Update)))
+                .thenReturn(EnumSet.complementOf(EnumSet.of(Permission.UpdatePermissions)))
             callAndExpectDto(
                 method = method,
                 uri = uri,
@@ -764,7 +842,8 @@ internal class PhotoControllerTest : AbstractControllerTest() {
 
         @Test
         fun `should return 400 if owner permissions are update`() = authenticated {
-            whenever(userPhotoAuthzRepo.fetch(principal.user.id, photo.id)).thenReturn(setOf(Permission.Update))
+            whenever(userPhotoAuthzRepo.fetch(principal.user.id, photo.id))
+                .thenReturn(setOf(Permission.UpdatePermissions))
             whenever(userService.getAllByIds(usersIds)).thenReturn(users)
             whenever(photoService.updatePermissions(photo.id, permissionsToAdd, permissionsToRemove, source))
                 .thenAnswer { throw OwnerPermissionsUpdateException() }
@@ -783,7 +862,8 @@ internal class PhotoControllerTest : AbstractControllerTest() {
 
         @Test
         fun `should return 204`() = authenticated {
-            whenever(userPhotoAuthzRepo.fetch(principal.user.id, photo.id)).thenReturn(setOf(Permission.Update))
+            whenever(userPhotoAuthzRepo.fetch(principal.user.id, photo.id))
+                .thenReturn(setOf(Permission.UpdatePermissions))
             whenever(userService.getAllByIds(usersIds)).thenReturn(users)
             callAndExpectDto(
                 method = method,

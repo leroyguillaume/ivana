@@ -5,6 +5,7 @@ enum class PhotoEventType(
 ) : EventType {
     Deletion("deletion"),
     Transform("transform"),
+    Update("update"),
     UpdatePermissions("update_permissions"),
     Upload("upload");
 

@@ -8,6 +8,7 @@ import io.kotlintest.shouldBe
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import java.net.URI
+import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -112,6 +113,7 @@ internal class ExtensionsTest {
                 id = UUID.randomUUID(),
                 ownerId = UUID.randomUUID(),
                 uploadDate = OffsetDateTime.now(),
+                shootingDate = LocalDate.now(),
                 type = Photo.Type.Jpg,
                 hash = "hash2",
                 no = 2,
@@ -141,6 +143,7 @@ internal class ExtensionsTest {
             ownerId = linkedPhotos.current.ownerId,
             rawUri = rawUri(linkedPhotos.current.id),
             compressedUri = compressedUri(linkedPhotos.current.id),
+            shootingDate = linkedPhotos.current.shootingDate,
             permissions = perms.map { it.toDto() }.toSet(),
             previous = PhotoDto.Light(
                 id = linkedPhotos.previous!!.id,
@@ -165,6 +168,7 @@ internal class ExtensionsTest {
             id = UUID.randomUUID(),
             ownerId = UUID.randomUUID(),
             uploadDate = OffsetDateTime.now(),
+            shootingDate = LocalDate.now(),
             type = Photo.Type.Jpg,
             hash = "hash",
             no = 1,
@@ -175,6 +179,7 @@ internal class ExtensionsTest {
             ownerId = photo.ownerId,
             rawUri = rawUri(photo.id),
             compressedUri = compressedUri(photo.id),
+            shootingDate = photo.shootingDate,
             permissions = perms.map { it.toDto() }.toSet()
         )
         photo.toSimpleDto(perms) shouldBe dto

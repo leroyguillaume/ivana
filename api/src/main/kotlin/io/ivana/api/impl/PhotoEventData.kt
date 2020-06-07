@@ -3,6 +3,7 @@ package io.ivana.api.impl
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
+import java.time.LocalDate
 
 private const val RotationTransformTypeValue = "rotation"
 
@@ -37,6 +38,15 @@ internal sealed class PhotoEventData : EventData {
 
             abstract val type: Type
         }
+    }
+
+    data class Update(
+        override val source: EventSourceData.User,
+        val content: Content
+    ) : PhotoEventData() {
+        data class Content(
+            val shootingDate: LocalDate? = null
+        )
     }
 
     data class UpdatePermissions(

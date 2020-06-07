@@ -1,0 +1,11 @@
+databaseChangeLog:
+  - logicalFilePath: v1.2/changelog.yml
+  - changeSet:
+      id: v1.3.0
+      author: Guillaume 'Francis' Leroy
+      runInTransaction: false
+      changes:
+        - sqlFile:
+            path: 001-photo-update.sql
+            splitStatements: false
+            relativeToChangelogFile: true

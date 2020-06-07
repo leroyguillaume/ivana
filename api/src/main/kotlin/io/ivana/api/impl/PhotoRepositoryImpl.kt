@@ -7,6 +7,7 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Repository
 import java.sql.ResultSet
+import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -18,6 +19,7 @@ class PhotoRepositoryImpl(
         const val TableName = "photo"
         const val OwnerIdColumnName = "owner_id"
         const val UploadedDateColumnName = "upload_date"
+        const val ShootingDateColumnName = "shooting_date"
         const val TypeColumnName = "type"
         const val HashColumnName = "hash"
         const val NoColumnName = "no"
@@ -193,6 +195,7 @@ class PhotoRepositoryImpl(
         id = getObject(IdColumnName, UUID::class.java),
         ownerId = getObject(OwnerIdColumnName, UUID::class.java),
         uploadDate = getObject(UploadedDateColumnName, OffsetDateTime::class.java),
+        shootingDate = getObject(ShootingDateColumnName, LocalDate::class.java),
         type = getPhotoType(),
         hash = getString(HashColumnName),
         no = getInt(NoColumnName),

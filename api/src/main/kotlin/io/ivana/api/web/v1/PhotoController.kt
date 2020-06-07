@@ -129,8 +129,25 @@ class PhotoController(
     }
 
     @Transactional
-    @PutMapping("/{id:$UuidRegex}$PermissionsEndpoint")
+    @PutMapping("/{id:$UuidRegex}")
     @PreAuthorize("hasPermission(#id, '$PhotoTargetType', 'update')")
+    @ResponseStatus(HttpStatus.OK)
+    @Suppress("MVCPathVariableInspection", "RegExpUnexpectedAnchor")
+    fun update(
+        @PathVariable id: UUID,
+        @RequestBody @Valid dto: PhotoUpdateDto,
+        auth: Authentication,
+        req: HttpServletRequest
+    ): PhotoDto {
+        val principal = auth.principal as UserPrincipal
+        val photo = photoService.update(id, dto.shootingDate, req.source(principal))
+        val perms = photoService.getPermissions(id, principal.user.id)
+        return photo.toSimpleDto(perms)
+    }
+
+    @Transactional
+    @PutMapping("/{id:$UuidRegex}$PermissionsEndpoint")
+    @PreAuthorize("hasPermission(#id, '$PhotoTargetType', 'update_permissions')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Suppress("MVCPathVariableInspection", "RegExpUnexpectedAnchor")
     fun updatePermissions(

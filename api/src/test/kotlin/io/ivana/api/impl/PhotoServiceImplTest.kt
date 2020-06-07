@@ -811,6 +811,49 @@ internal class PhotoServiceImplTest {
     }
 
     @Nested
+    inner class update {
+        private val event = PhotoEvent.Update(
+            date = OffsetDateTime.now(),
+            subjectId = UUID.randomUUID(),
+            number = 1,
+            source = EventSource.User(UUID.randomUUID(), InetAddress.getByName("127.0.0.1")),
+            content = PhotoEvent.Update.Content()
+        )
+        private val photo = Photo(
+            id = event.subjectId,
+            ownerId = event.source.id,
+            uploadDate = OffsetDateTime.now(),
+            type = Photo.Type.Jpg,
+            hash = "hash",
+            no = 1,
+            version = 1
+        )
+
+        @Test
+        fun `should throw exception if photo does not exist`() {
+            every { photoRepo.existsById(event.subjectId) } returns false
+            val exception = assertThrows<EntityNotFoundException> {
+                service.update(event.subjectId, event.content.shootingDate, event.source)
+            }
+            exception shouldHaveMessage "Photo ${event.subjectId} does not exist"
+            verify { photoRepo.existsById(event.subjectId) }
+            confirmVerified(photoRepo)
+        }
+
+        @Test
+        fun `should update photo`() {
+            every { photoRepo.existsById(event.subjectId) } returns true
+            every { photoEventRepo.saveUpdateEvent(event.subjectId, event.content, event.source) } returns event
+            every { photoRepo.fetchById(event.subjectId) } returns photo
+            service.update(event.subjectId, event.content.shootingDate, event.source)
+            verify { photoRepo.existsById(event.subjectId) }
+            verify { photoEventRepo.saveUpdateEvent(event.subjectId, event.content, event.source) }
+            verify { photoRepo.fetchById(event.subjectId) }
+            confirmVerified(photoRepo, photoEventRepo)
+        }
+    }
+
+    @Nested
     inner class updatePermissions {
         private val owner = User(
             id = UUID.randomUUID(),

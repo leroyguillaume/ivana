@@ -13,6 +13,7 @@ import java.io.File
 import java.io.InputStream
 import java.security.DigestInputStream
 import java.security.MessageDigest
+import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.util.*
 import javax.imageio.IIOImage
@@ -95,6 +96,17 @@ class PhotoServiceImpl(
         ) // Trick here is to save event before to fetch it to get the correct version number
         transform.perform(getById(id))
         Logger.info("User ${source.id} (${source.ip}) transformed photo $id")
+    }
+
+    @Transactional
+    override fun update(id: UUID, shootingDate: LocalDate?, source: EventSource.User): Photo {
+        checkPhotoExists(id)
+        val content = PhotoEvent.Update.Content(
+            shootingDate = shootingDate
+        )
+        eventRepo.saveUpdateEvent(id, content, source)
+        Logger.info("User ${source.id} (${source.ip}) updated photo $id")
+        return getById(id)
     }
 
     @Transactional

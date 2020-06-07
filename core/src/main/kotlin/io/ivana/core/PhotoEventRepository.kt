@@ -7,6 +7,12 @@ interface PhotoEventRepository : EventRepository<PhotoEvent> {
 
     fun saveTransformEvent(photoId: UUID, transform: Transform, source: EventSource.User): PhotoEvent.Transform
 
+    fun saveUpdateEvent(
+        photoId: UUID,
+        content: PhotoEvent.Update.Content,
+        source: EventSource.User
+    ): PhotoEvent.Update
+
     fun saveUpdatePermissionsEvent(
         photoId: UUID,
         content: PhotoEvent.UpdatePermissions.Content,
