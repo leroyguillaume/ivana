@@ -28,6 +28,7 @@ import {NewPermissionsModalComponent} from './new-permissions-modal/new-permissi
 import {PermissionsTableComponent} from './permissions-table/permissions-table.component'
 import {AlbumUpdateComponent} from './album-update/album-update.component'
 import {AlbumUpdateFormComponent} from './album-update-form/album-update-form.component'
+import {PhotoUpdateFormComponent} from './photo-update-form/photo-update-form.component'
 
 @NgModule({
   declarations: [
@@ -52,7 +53,8 @@ import {AlbumUpdateFormComponent} from './album-update-form/album-update-form.co
     NewPermissionsModalComponent,
     PermissionsTableComponent,
     AlbumUpdateComponent,
-    AlbumUpdateFormComponent
+    AlbumUpdateFormComponent,
+    PhotoUpdateFormComponent
   ],
   imports: [
     BrowserModule,
