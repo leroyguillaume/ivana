@@ -79,6 +79,13 @@ export class PhotoService {
     return this.http.put<void>(`${this.baseUrl}/${id}/transform`, dto, {withCredentials: true})
   }
 
+  update(id: string, shootingDate: Date): Observable<Photo> {
+    const dto = {
+      shootingDate
+    }
+    return this.http.put<Photo>(`${this.baseUrl}/${id}`, dto, {withCredentials: true})
+  }
+
   updatePermissions(
     id: string,
     permissionsToAdd: SubjectPermissionsUpdate[],

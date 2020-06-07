@@ -1,0 +1,21 @@
+<form [formGroup]="photoForm" (ngSubmit)="update()" novalidate>
+  <div class="form-group">
+    <label for="shootingDate">Date de prise de vue</label>
+    <input id="shootingDate"
+           type="date"
+           class="form-control"
+           formControlName="shootingDate"
+           [ngClass]="{'is-invalid': shootingDate.invalid && (shootingDate.dirty || shootingDate.touched)}">
+  </div>
+
+  <div class="text-right">
+    <button type="submit"
+            class="btn btn-primary"
+            [disabled]="photoForm.invalid || updating"
+            [ngClass]="{'cursor-forbidden': photoForm.invalid || updating}">
+      <span *ngIf="!updating"> Sauvegarder</span>
+      <fa-icon *ngIf="updating" [icon]="spinnerIcon" spin="true"></fa-icon>
+      <span *ngIf="updating"> Sauvegarde en cours...</span>
+    </button>
+  </div>
+</form>

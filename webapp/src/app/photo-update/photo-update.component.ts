@@ -11,8 +11,14 @@ import {SubjectPermissions} from '../subject-permissions'
 import {Page} from '../page'
 import {SubjectPermissionsUpdateEvent} from '../subject-permissions-update-event'
 import {Permission} from '../permission'
+import {NgbNavChangeEvent} from '@ng-bootstrap/ng-bootstrap/nav/nav'
 
 export const PhotoPermissionsPageSize = 10
+
+enum Tab {
+  Info = 'info',
+  Permissions = 'perms'
+}
 
 @Component({
   selector: 'app-photo-edition',
@@ -29,12 +35,19 @@ export class PhotoUpdateComponent implements OnInit {
   photo: Photo
   permsPage: Page<SubjectPermissions>
 
+  Tab: typeof Tab = Tab
+  currentTab: Tab
+
   constructor(
     private photoService: PhotoService,
     private stateService: StateService,
     private route: ActivatedRoute,
     private router: Router
   ) {
+  }
+
+  get updateAllowed(): boolean {
+    return this.photo.permissions.indexOf(Permission.Update) > -1
   }
 
   get updatePermissionsAllowed(): boolean {
@@ -72,10 +85,26 @@ export class PhotoUpdateComponent implements OnInit {
       .subscribe(
         photo => {
           this.photo = photo
-          this.fetchPermissionsPage(1)
+          if (this.updateAllowed) {
+            this.currentTab = Tab.Info
+          } else {
+            this.currentTab = Tab.Permissions
+            this.fetchPermissionsPage(1)
+          }
         },
         error => handleError(error, this.stateService, this.router)
       )
+  }
+
+  loadTab(event: NgbNavChangeEvent): void {
+    this.currentTab = event.nextId
+    switch (event.nextId) {
+      case Tab.Permissions:
+        if (!this.permsPage) {
+          this.fetchPermissionsPage(1)
+        }
+        break
+    }
   }
 
   ngOnInit(): void {
