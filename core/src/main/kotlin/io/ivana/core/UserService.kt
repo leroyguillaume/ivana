@@ -9,5 +9,7 @@ interface UserService : EntityService<User> {
 
     fun getByName(username: String): User
 
+    fun suggest(username: String, count: Int): List<User>
+
     fun updatePassword(id: UUID, newHashedPwd: String, source: EventSource)
 }

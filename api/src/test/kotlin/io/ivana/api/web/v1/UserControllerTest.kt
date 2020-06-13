@@ -456,6 +456,91 @@ internal class UserControllerTest : AbstractControllerTest() {
     }
 
     @Nested
+    inner class suggest {
+        private val users = listOf(
+            User(
+                id = UUID.randomUUID(),
+                name = "user1",
+                hashedPwd = "hashedPwd",
+                role = Role.User,
+                creationDate = OffsetDateTime.now()
+            ),
+            User(
+                id = UUID.randomUUID(),
+                name = "user2",
+                hashedPwd = "hashedPwd",
+                role = Role.User,
+                creationDate = OffsetDateTime.now()
+            )
+        )
+        private val q = " user "
+        private val count = 10
+        private val dto = users.map { it.toDto() }
+        private val method = HttpMethod.GET
+        private val uri = "$UserApiEndpoint$SuggestEndpoint"
+
+        @Test
+        fun `should return 401 if user is anonymous`() {
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                status = HttpStatus.UNAUTHORIZED,
+                respDto = ErrorDto.Unauthorized
+            )
+        }
+
+        @Test
+        fun `should return 400 if parameters are blank`() = authenticated(userPrincipal) {
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                params = mapOf(
+                    QParamName to listOf(" ")
+                ),
+                reqCookies = listOf(accessTokenCookie()),
+                status = HttpStatus.BAD_REQUEST,
+                respDto = ErrorDto.ValidationError(
+                    errors = listOf(blankErrorDto(QParamName))
+                )
+            )
+        }
+
+        @Test
+        fun `should return 400 if parameters are lower than 1`() = authenticated(userPrincipal) {
+            callAndExpectDto(
+                method = method,
+                params = mapOf(
+                    QParamName to listOf(q),
+                    CountParamName to listOf("0")
+                ),
+                uri = uri,
+                reqCookies = listOf(accessTokenCookie()),
+                status = HttpStatus.BAD_REQUEST,
+                respDto = ErrorDto.ValidationError(
+                    errors = listOf(minErrorDto(CountParamName, 1))
+                )
+            )
+        }
+
+        @Test
+        fun `should return 200`() = authenticated(userPrincipal) {
+            whenever(userService.suggest(q.trim(), count)).thenReturn(users)
+            callAndExpectDto(
+                method = method,
+                params = mapOf(
+                    QParamName to listOf(q),
+                    CountParamName to listOf(count.toString())
+                ),
+                uri = uri,
+                reqCookies = listOf(accessTokenCookie()),
+                status = HttpStatus.OK,
+                respDto = dto
+            )
+            verify(userService).suggest(q.trim(), count)
+        }
+    }
+
+    @Nested
     inner class updatePassword {
         private val method = HttpMethod.PUT
         private val uri = "$UserApiEndpoint$PasswordUpdateEndpoint"

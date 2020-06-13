@@ -6,6 +6,7 @@ import io.ivana.core.User
 import io.kotlintest.matchers.boolean.shouldBeFalse
 import io.kotlintest.matchers.boolean.shouldBeTrue
 import io.kotlintest.matchers.collections.shouldBeEmpty
+import io.kotlintest.matchers.collections.shouldContainExactly
 import io.kotlintest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotlintest.matchers.types.shouldBeNull
 import io.kotlintest.shouldBe
@@ -145,6 +146,27 @@ internal class UserRepositoryImplTest : AbstractRepositoryTest() {
         fun `should return existing ids`() {
             val existingIds = userRepo.fetchExistingIds(expectedExistingIds + setOf(UUID.randomUUID()))
             existingIds shouldBe expectedExistingIds
+        }
+    }
+
+    @Nested
+    inner class suggest {
+        @Test
+        fun `should return empty list`() {
+            userRepo.suggest("toto", 10).shouldBeEmpty()
+        }
+
+        @Test
+        fun `should return user1`() {
+            userRepo.suggest("user1", 10) shouldContainExactly listOf(userCreationEvents[0].toUser())
+        }
+
+        @Test
+        fun `should return user1 and user2`() {
+            userRepo.suggest("user", 2) shouldContainExactly listOf(
+                userCreationEvents[0].toUser(),
+                userCreationEvents[1].toUser()
+            )
         }
     }
 }

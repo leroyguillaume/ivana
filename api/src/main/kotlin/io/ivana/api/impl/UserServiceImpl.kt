@@ -48,6 +48,8 @@ class UserServiceImpl(
     override fun getByName(username: String) = repo.fetchByName(username)
         ?: throw EntityNotFoundException("User '$username' does not exist")
 
+    override fun suggest(username: String, count: Int) = repo.suggest(username, count)
+
     @Transactional
     override fun updatePassword(id: UUID, newHashedPwd: String, source: EventSource) {
         if (!repo.existsById(id)) {

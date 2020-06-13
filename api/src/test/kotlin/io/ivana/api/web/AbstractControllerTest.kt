@@ -125,6 +125,11 @@ abstract class AbstractControllerTest {
         }
     }
 
+    protected fun blankErrorDto(parameter: String) = ErrorDto.ValidationError.Error(
+        parameter = parameter,
+        reason = "must not be blank"
+    )
+
     protected fun callAndExpectDto(
         method: HttpMethod,
         uri: String,

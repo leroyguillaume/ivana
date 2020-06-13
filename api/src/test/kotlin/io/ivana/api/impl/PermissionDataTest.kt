@@ -16,16 +16,10 @@ internal class PermissionDataTest {
     ) {
         private val typeData = PermissionData.Read
         private val type = Permission.Read
-        private val sqlValue = "read"
 
         @Test
         fun type() {
             typeData.permission shouldBe type
-        }
-
-        @Test
-        fun sqlValue() {
-            typeData.sqlValue shouldBe sqlValue
         }
     }
 
@@ -37,16 +31,10 @@ internal class PermissionDataTest {
     ) {
         private val typeData = PermissionData.Update
         private val type = Permission.Update
-        private val sqlValue = "update"
 
         @Test
         fun type() {
             typeData.permission shouldBe type
-        }
-
-        @Test
-        fun sqlValue() {
-            typeData.sqlValue shouldBe sqlValue
         }
     }
 
@@ -58,16 +46,10 @@ internal class PermissionDataTest {
     ) {
         private val typeData = PermissionData.Delete
         private val type = Permission.Delete
-        private val sqlValue = "delete"
 
         @Test
         fun type() {
             typeData.permission shouldBe type
-        }
-
-        @Test
-        fun sqlValue() {
-            typeData.sqlValue shouldBe sqlValue
         }
     }
 
@@ -79,16 +61,10 @@ internal class PermissionDataTest {
     ) {
         private val typeData = PermissionData.UpdatePermissions
         private val type = Permission.UpdatePermissions
-        private val sqlValue = "update_permissions"
 
         @Test
         fun type() {
             typeData.permission shouldBe type
-        }
-
-        @Test
-        fun sqlValue() {
-            typeData.sqlValue shouldBe sqlValue
         }
     }
 

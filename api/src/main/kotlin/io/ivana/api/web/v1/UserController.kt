@@ -18,6 +18,7 @@ import java.util.*
 import javax.servlet.http.HttpServletRequest
 import javax.validation.Valid
 import javax.validation.constraints.Min
+import javax.validation.constraints.NotBlank
 
 @RestController
 @RequestMapping(UserApiEndpoint)
@@ -69,6 +70,13 @@ class UserController(
     @GetMapping(MeEndpoint)
     @ResponseStatus(HttpStatus.OK)
     fun me(auth: Authentication) = (auth.principal as UserPrincipal).user.toDto()
+
+    @GetMapping(SuggestEndpoint)
+    @ResponseStatus(HttpStatus.OK)
+    fun suggest(
+        @RequestParam(name = QParamName) @NotBlank q: String,
+        @RequestParam(name = CountParamName, required = false, defaultValue = "5") @Min(1) count: Int
+    ) = userService.suggest(q.trim(), count).map { it.toDto() }
 
     @Transactional
     @PutMapping(PasswordUpdateEndpoint)

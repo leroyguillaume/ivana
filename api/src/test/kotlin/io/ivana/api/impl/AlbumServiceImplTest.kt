@@ -376,6 +376,37 @@ internal class AlbumServiceImplTest {
     }
 
     @Nested
+    inner class suggest {
+        private val expectedAlbums = listOf(
+            Album(
+                id = UUID.randomUUID(),
+                ownerId = UUID.randomUUID(),
+                name = "album1",
+                creationDate = OffsetDateTime.now()
+            ),
+            Album(
+                id = UUID.randomUUID(),
+                ownerId = UUID.randomUUID(),
+                name = "album2",
+                creationDate = OffsetDateTime.now()
+            )
+        )
+        private val name = "album"
+        private val count = 2
+        private val userId = UUID.randomUUID()
+        private val perm = Permission.Read
+
+        @Test
+        fun `should return suggested albums`() {
+            every { albumRepo.suggest(name, count, userId, perm) } returns expectedAlbums
+            val albums = service.suggest(name, count, userId, perm)
+            albums shouldBe expectedAlbums
+            verify { albumRepo.suggest(name, count, userId, perm) }
+            confirmVerified(albumRepo)
+        }
+    }
+
+    @Nested
     inner class update {
         private val event = AlbumEvent.Update(
             date = OffsetDateTime.now(),

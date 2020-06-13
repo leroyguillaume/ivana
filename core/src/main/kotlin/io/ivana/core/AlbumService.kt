@@ -9,6 +9,8 @@ interface AlbumService : OwnableEntityService<Album> {
 
     fun getAllPhotos(id: UUID, userId: UUID, pageNo: Int, pageSize: Int): Page<Photo>
 
+    fun suggest(name: String, count: Int, userId: UUID, perm: Permission): List<Album>
+
     fun update(id: UUID, content: AlbumEvent.Update.Content, source: EventSource.User): Album
 
     fun updatePermissions(

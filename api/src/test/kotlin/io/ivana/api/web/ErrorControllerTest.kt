@@ -153,4 +153,34 @@ internal class ErrorControllerTest : AbstractControllerTest() {
         verify(userPhotoAuthzRepo).fetch(principal.user.id, photoId)
         verify(userService).getAllByIds(usersIds)
     }
+
+    @Test
+    fun `should return 400 if parameters are missing`() = authenticated(userPrincipal) {
+        callAndExpectDto(
+            method = HttpMethod.GET,
+            uri = "$UserApiEndpoint$SuggestEndpoint",
+            reqCookies = listOf(accessTokenCookie()),
+            status = HttpStatus.BAD_REQUEST,
+            respDto = ErrorDto.MissingParameter(QParamName)
+        )
+    }
+
+    @Test
+    fun `should return 400 if perm parameters are invalid`() = authenticated(userPrincipal) {
+        val permLabel = "perm"
+        callAndExpectDto(
+            method = HttpMethod.GET,
+            params = mapOf(
+                QParamName to listOf("album"),
+                PermParamName to listOf(permLabel)
+            ),
+            uri = "$AlbumApiEndpoint/$SuggestEndpoint",
+            reqCookies = listOf(accessTokenCookie()),
+            status = HttpStatus.BAD_REQUEST,
+            respDto = ErrorDto.InvalidParameter(
+                parameter = PermParamName,
+                reason = "must be one of [read, update, delete, update_permissions]"
+            )
+        )
+    }
 }

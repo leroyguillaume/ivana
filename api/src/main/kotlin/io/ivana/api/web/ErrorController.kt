@@ -7,7 +7,9 @@ import io.ivana.api.impl.*
 import io.ivana.api.security.BadCredentialsException
 import io.ivana.api.security.BadJwtException
 import io.ivana.api.security.CustomAccessDeniedHandler
+import io.ivana.api.web.v1.PermParamName
 import io.ivana.api.web.v1.UserApiEndpoint
+import io.ivana.core.Permission
 import io.ivana.dto.ErrorDto
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
@@ -18,6 +20,7 @@ import org.springframework.security.access.AccessDeniedException
 import org.springframework.web.HttpMediaTypeNotSupportedException
 import org.springframework.web.HttpRequestMethodNotSupportedException
 import org.springframework.web.bind.MethodArgumentNotValidException
+import org.springframework.web.bind.MissingServletRequestParameterException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestControllerAdvice
@@ -129,6 +132,13 @@ class ErrorController(
         return ErrorDto.OwnerPermissionsUpdate
     }
 
+    @ExceptionHandler(MissingServletRequestParameterException::class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    fun handleMissingServletRequestParameter(exception: MissingServletRequestParameterException): ErrorDto {
+        Logger.debug(exception.message, exception)
+        return ErrorDto.MissingParameter(exception.parameterName)
+    }
+
     @ExceptionHandler(ResourcesNotFoundException::class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     fun handlePhotosNotFound(exception: ResourcesNotFoundException): ErrorDto {
@@ -153,6 +163,17 @@ class ErrorController(
     fun handleUnauthorized(exception: Exception): ErrorDto {
         Logger.debug(exception.message, exception)
         return ErrorDto.Unauthorized
+    }
+
+    @ExceptionHandler(UnknownPermissionException::class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    fun handleUnknownPermission(exception: UnknownPermissionException): ErrorDto {
+        Logger.debug(exception.message, exception)
+        val permLabels = Permission.values().map { it.label }.reduce { acc, label -> "$acc, $label" }
+        return ErrorDto.InvalidParameter(
+            parameter = PermParamName,
+            reason = "must be one of [$permLabels]"
+        )
     }
 
     @ExceptionHandler(HttpMediaTypeNotSupportedException::class)
