@@ -241,6 +241,37 @@ internal class UserServiceImplTest {
     }
 
     @Nested
+    inner class suggest {
+        private val expectedUsers = listOf(
+            User(
+                id = UUID.randomUUID(),
+                name = "user1",
+                hashedPwd = "hashedPwd",
+                role = Role.User,
+                creationDate = OffsetDateTime.now()
+            ),
+            User(
+                id = UUID.randomUUID(),
+                name = "user2",
+                hashedPwd = "hashedPwd",
+                role = Role.User,
+                creationDate = OffsetDateTime.now()
+            )
+        )
+        private val name = "user"
+        private val count = 2
+
+        @Test
+        fun `should return suggested users`() {
+            every { userRepo.suggest(name, count) } returns expectedUsers
+            val users = service.suggest(name, count)
+            users shouldBe expectedUsers
+            verify { userRepo.suggest(name, count) }
+            confirmVerified(userRepo)
+        }
+    }
+
+    @Nested
     inner class updatePassword {
         private val event = UserEvent.PasswordUpdate(
             date = OffsetDateTime.now(),

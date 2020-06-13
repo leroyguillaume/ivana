@@ -2,6 +2,7 @@ package io.ivana.api.impl
 
 import io.ivana.core.User
 import io.ivana.core.UserRepository
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Repository
 import java.sql.ResultSet
@@ -23,6 +24,17 @@ class UserRepositoryImpl(
     override val tableName = TableName
 
     override fun fetchByName(username: String) = fetchBy(NameColumnName, username)
+
+    override fun suggest(username: String, count: Int) = jdbc.query(
+        """
+        SELECT *
+        FROM $TableName
+        WHERE LOWER($NameColumnName) LIKE LOWER('%' || :username || '%')
+        ORDER BY $NameColumnName
+        LIMIT :limit
+        """,
+        MapSqlParameterSource(mapOf("username" to username, "limit" to count))
+    ) { rs, _ -> rs.toEntity() }
 
     override fun ResultSet.toEntity() = User(
         id = getObject(IdColumnName, UUID::class.java),

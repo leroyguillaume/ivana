@@ -53,6 +53,9 @@ internal abstract class AbstractRepositoryTest {
     // 9 albums (3 by user)
     // Album 1 contains all photos of user 1
     // User 2 can read album 1
+    // User 2 can update album 2
+    // User 2 can delete album 3
+    // User 2 can update permissions of album 7
     // User 3 can't read album 1
     protected lateinit var albumCreationEvents: List<AlbumEvent.Creation>
     protected lateinit var albumUpdateEvents: List<AlbumEvent.Update>
@@ -157,18 +160,33 @@ internal abstract class AbstractRepositoryTest {
             )
         }
         albumUpdateEvents = listOf(album1UpdateEvent)
-
-        val album1UpdatePermissionsEvent1 = addPermissionsOnAlbum(
-            albumCreationEvent = albumCreationEvents[0],
-            userId = userCreationEvents[1].subjectId,
-            permissions = *arrayOf(Permission.Read)
+        albumUpdatePermissionsEvents = listOf(
+            addPermissionsOnAlbum(
+                albumCreationEvent = albumCreationEvents[0],
+                userId = userCreationEvents[1].subjectId,
+                permissions = *arrayOf(Permission.Read)
+            ),
+            removePermissionsOnAlbum(
+                albumCreationEvent = albumCreationEvents[0],
+                userId = userCreationEvents[2].subjectId,
+                permissions = *arrayOf(Permission.Read)
+            ),
+            addPermissionsOnAlbum(
+                albumCreationEvent = albumCreationEvents[1],
+                userId = userCreationEvents[1].subjectId,
+                permissions = *arrayOf(Permission.Update)
+            ),
+            addPermissionsOnAlbum(
+                albumCreationEvent = albumCreationEvents[2],
+                userId = userCreationEvents[1].subjectId,
+                permissions = *arrayOf(Permission.Delete)
+            ),
+            addPermissionsOnAlbum(
+                albumCreationEvent = albumCreationEvents[6],
+                userId = userCreationEvents[1].subjectId,
+                permissions = *arrayOf(Permission.UpdatePermissions)
+            )
         )
-        val album1UpdatePermissionsEvent2 = removePermissionsOnAlbum(
-            albumCreationEvent = albumCreationEvents[0],
-            userId = userCreationEvents[2].subjectId,
-            permissions = *arrayOf(Permission.Read)
-        )
-        albumUpdatePermissionsEvents = listOf(album1UpdatePermissionsEvent1, album1UpdatePermissionsEvent2)
     }
 
     private fun initPhotos() {

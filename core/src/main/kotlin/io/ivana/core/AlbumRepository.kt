@@ -8,4 +8,6 @@ interface AlbumRepository : OwnableEntityRepository<Album> {
     fun fetchOrder(id: UUID, photoId: UUID): Int?
 
     fun fetchSize(id: UUID, userId: UUID): Int?
+
+    fun suggest(name: String, count: Int, userId: UUID, perm: Permission): List<Album>
 }

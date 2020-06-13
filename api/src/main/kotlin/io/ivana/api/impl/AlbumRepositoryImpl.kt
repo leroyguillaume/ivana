@@ -2,6 +2,7 @@ package io.ivana.api.impl
 
 import io.ivana.core.Album
 import io.ivana.core.AlbumRepository
+import io.ivana.core.Permission
 import org.springframework.dao.EmptyResultDataAccessException
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
@@ -82,6 +83,29 @@ class AlbumRepositoryImpl(
         """,
         MapSqlParameterSource(mapOf("album_id" to id, "user_id" to userId))
     ) { rs, _ -> rs.getInt(1) }
+
+    override fun suggest(name: String, count: Int, userId: UUID, perm: Permission): List<Album> {
+        val permColumnName = when (perm) {
+            Permission.Read -> AbstractAuthorizationRepository.CanReadColumnName
+            Permission.Update -> AbstractAuthorizationRepository.CanUpdateColumnName
+            Permission.Delete -> AbstractAuthorizationRepository.CanDeleteColumnName
+            Permission.UpdatePermissions -> AbstractAuthorizationRepository.CanUpdatePermissionsColumnName
+        }
+        return jdbc.query(
+            """
+        SELECT a.*
+        FROM $TableName a
+        JOIN ${UserAlbumAuthorizationRepositoryImpl.TableName} uaa 
+        ON uaa.${UserAlbumAuthorizationRepositoryImpl.AlbumIdColumnName} = a.$IdColumnName
+        WHERE uaa.${UserAlbumAuthorizationRepositoryImpl.UserIdColumnName} = :user_id 
+            AND uaa.$permColumnName IS TRUE
+            AND LOWER(a.$NameColumnName) LIKE LOWER('%' || :name || '%')
+        ORDER BY a.$NameColumnName
+        LIMIT :limit
+        """,
+            MapSqlParameterSource(mapOf("user_id" to userId, "name" to name, "limit" to count))
+        ) { rs, _ -> rs.toEntity() }
+    }
 
     override fun ResultSet.toEntity() = Album(
         id = getObject(IdColumnName, UUID::class.java),

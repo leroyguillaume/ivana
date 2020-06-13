@@ -467,6 +467,91 @@ internal class AlbumControllerTest : AbstractControllerTest() {
     }
 
     @Nested
+    inner class suggest {
+        private val albums = listOf(
+            Album(
+                id = UUID.randomUUID(),
+                ownerId = userPrincipal.user.id,
+                name = "album1",
+                creationDate = OffsetDateTime.now()
+            ),
+            Album(
+                id = UUID.randomUUID(),
+                ownerId = userPrincipal.user.id,
+                name = "album2",
+                creationDate = OffsetDateTime.now()
+            )
+        )
+        private val q = " album "
+        private val count = 10
+        private val perm = Permission.UpdatePermissions
+        private val dto = albums.map { it.toLightDto() }
+        private val method = HttpMethod.GET
+        private val uri = "$AlbumApiEndpoint$SuggestEndpoint"
+
+        @Test
+        fun `should return 401 if album is anonymous`() {
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                status = HttpStatus.UNAUTHORIZED,
+                respDto = ErrorDto.Unauthorized
+            )
+        }
+
+        @Test
+        fun `should return 400 if parameters are blank`() = authenticated(userPrincipal) {
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                params = mapOf(
+                    QParamName to listOf(" ")
+                ),
+                reqCookies = listOf(accessTokenCookie()),
+                status = HttpStatus.BAD_REQUEST,
+                respDto = ErrorDto.ValidationError(
+                    errors = listOf(blankErrorDto(QParamName))
+                )
+            )
+        }
+
+        @Test
+        fun `should return 400 if parameters are lower than 1`() = authenticated(userPrincipal) {
+            callAndExpectDto(
+                method = method,
+                params = mapOf(
+                    QParamName to listOf(q),
+                    CountParamName to listOf("0")
+                ),
+                uri = uri,
+                reqCookies = listOf(accessTokenCookie()),
+                status = HttpStatus.BAD_REQUEST,
+                respDto = ErrorDto.ValidationError(
+                    errors = listOf(minErrorDto(CountParamName, 1))
+                )
+            )
+        }
+
+        @Test
+        fun `should return 200`() = authenticated(userPrincipal) {
+            whenever(albumService.suggest(q.trim(), count, source.id, perm)).thenReturn(albums)
+            callAndExpectDto(
+                method = method,
+                params = mapOf(
+                    QParamName to listOf(q),
+                    CountParamName to listOf(count.toString()),
+                    PermParamName to listOf(perm.label)
+                ),
+                uri = uri,
+                reqCookies = listOf(accessTokenCookie()),
+                status = HttpStatus.OK,
+                respDto = dto
+            )
+            verify(albumService).suggest(q.trim(), count, source.id, perm)
+        }
+    }
+
+    @Nested
     inner class update {
         private val updateDto = AlbumUpdateDto(
             name = "album",

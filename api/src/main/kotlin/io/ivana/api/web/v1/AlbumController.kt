@@ -1,14 +1,12 @@
 package io.ivana.api.web.v1
 
 import io.ivana.api.impl.ForbiddenException
+import io.ivana.api.impl.UnknownPermissionException
 import io.ivana.api.security.AlbumTargetType
 import io.ivana.api.security.UserPrincipal
 import io.ivana.api.web.remoteHost
 import io.ivana.api.web.source
-import io.ivana.core.AlbumEvent
-import io.ivana.core.AlbumService
-import io.ivana.core.PhotoService
-import io.ivana.core.UserService
+import io.ivana.core.*
 import io.ivana.dto.*
 import org.springframework.http.HttpStatus
 import org.springframework.security.access.prepost.PreAuthorize
@@ -20,6 +18,7 @@ import java.util.*
 import javax.servlet.http.HttpServletRequest
 import javax.validation.Valid
 import javax.validation.constraints.Min
+import javax.validation.constraints.NotBlank
 
 @RestController
 @RequestMapping(AlbumApiEndpoint)
@@ -99,6 +98,23 @@ class AlbumController(
         val usersIds = subjPerms.content.map { it.subjectId }.toSet()
         val users = userService.getAllByIds(usersIds).map { it.id to it }.toMap()
         return subjPerms.toDto { it.toDto(users.getValue(it.subjectId).name) }
+    }
+
+    @GetMapping(SuggestEndpoint)
+    @ResponseStatus(HttpStatus.OK)
+    fun suggest(
+        @RequestParam(name = QParamName) @NotBlank q: String,
+        @RequestParam(name = PermParamName, required = false, defaultValue = "read") @NotBlank permLabel: String,
+        @RequestParam(name = CountParamName, required = false, defaultValue = "5") @Min(1) count: Int,
+        auth: Authentication
+    ): List<AlbumDto.Light> {
+        val principal = auth.principal as UserPrincipal
+        try {
+            val perm = Permission.fromLabel(permLabel)
+            return albumService.suggest(q.trim(), count, principal.user.id, perm).map { it.toLightDto() }
+        } catch (exception: IllegalArgumentException) {
+            throw UnknownPermissionException(permLabel)
+        }
     }
 
     @Transactional

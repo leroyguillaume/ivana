@@ -28,6 +28,15 @@ class AlbumServiceImpl(
         return repo.fetchById(event.subjectId)!!
     }
 
+    @Transactional
+    override fun delete(id: UUID, source: EventSource.User) {
+        if (!repo.existsById(id)) {
+            throw EntityNotFoundException("$entityName $id does not exist")
+        }
+        eventRepo.saveDeletionEvent(id, source)
+        Logger.info("User ${source.id} (${source.ip}) deleted album $id")
+    }
+
     override fun getAllPhotos(id: UUID, userId: UUID, pageNo: Int, pageSize: Int): Page<Photo> {
         val itemsNb = repo.fetchSize(id, userId) ?: throw EntityNotFoundException("Album $id does not exist")
         val content = photoRepo.fetchAllOfAlbum(id, userId, (pageNo - 1) * pageSize, pageSize)
@@ -39,14 +48,8 @@ class AlbumServiceImpl(
         )
     }
 
-    @Transactional
-    override fun delete(id: UUID, source: EventSource.User) {
-        if (!repo.existsById(id)) {
-            throw EntityNotFoundException("$entityName $id does not exist")
-        }
-        eventRepo.saveDeletionEvent(id, source)
-        Logger.info("User ${source.id} (${source.ip}) deleted album $id")
-    }
+    override fun suggest(name: String, count: Int, userId: UUID, perm: Permission) =
+        repo.suggest(name, count, userId, perm)
 
     @Transactional
     override fun update(id: UUID, content: AlbumEvent.Update.Content, source: EventSource.User): Album {

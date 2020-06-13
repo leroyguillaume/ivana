@@ -3,9 +3,11 @@
 package io.ivana.api.impl
 
 import io.ivana.core.Album
+import io.ivana.core.Permission
 import io.kotlintest.matchers.boolean.shouldBeFalse
 import io.kotlintest.matchers.boolean.shouldBeTrue
 import io.kotlintest.matchers.collections.shouldBeEmpty
+import io.kotlintest.matchers.collections.shouldContainExactly
 import io.kotlintest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotlintest.matchers.types.shouldBeNull
 import io.kotlintest.shouldBe
@@ -238,6 +240,57 @@ internal class AlbumRepositoryImplTest : AbstractRepositoryTest() {
         fun `should return count of photos of album (other user)`() {
             val count = albumRepo.fetchSize(albumId, userCreationEvents[1].subjectId)
             count shouldBe 2
+        }
+    }
+
+    @Nested
+    inner class suggest {
+        private lateinit var userId: UUID
+
+        @BeforeEach
+        fun beforeEach() {
+            userId = userCreationEvents[1].subjectId
+        }
+
+        @Test
+        fun `should return empty list`() {
+            albumRepo.suggest("album2", 10, userId, Permission.Read).shouldBeEmpty()
+        }
+
+        @Test
+        fun `should return album1`() {
+            albumRepo.suggest("album1", 10, userId, Permission.Read) shouldContainExactly listOf(
+                albumCreationEvents[0].toAlbum()
+            )
+        }
+
+        @Test
+        fun `should return album2`() {
+            albumRepo.suggest("album2", 10, userId, Permission.Update) shouldContainExactly listOf(
+                albumCreationEvents[1].toAlbum()
+            )
+        }
+
+        @Test
+        fun `should return album3`() {
+            albumRepo.suggest("album3", 10, userId, Permission.Delete) shouldContainExactly listOf(
+                albumCreationEvents[2].toAlbum()
+            )
+        }
+
+        @Test
+        fun `should return album7`() {
+            albumRepo.suggest("album7", 10, userId, Permission.UpdatePermissions) shouldContainExactly listOf(
+                albumCreationEvents[6].toAlbum()
+            )
+        }
+
+        @Test
+        fun `should return album1 and album4`() {
+            albumRepo.suggest("album", 2, userId, Permission.Read) shouldContainExactly listOf(
+                albumCreationEvents[0].toAlbum(),
+                albumCreationEvents[3].toAlbum()
+            )
         }
     }
 }
