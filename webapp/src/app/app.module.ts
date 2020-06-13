@@ -1,5 +1,6 @@
 import {BrowserModule, HammerModule} from '@angular/platform-browser'
-import {NgModule} from '@angular/core'
+import {LOCALE_ID, NgModule} from '@angular/core'
+import fr from '@angular/common/locales/fr'
 
 import {AppRoutingModule} from './app-routing.module'
 import {AppComponent} from './app.component'
@@ -29,6 +30,9 @@ import {PermissionsTableComponent} from './permissions-table/permissions-table.c
 import {AlbumUpdateComponent} from './album-update/album-update.component'
 import {AlbumUpdateFormComponent} from './album-update-form/album-update-form.component'
 import {PhotoUpdateFormComponent} from './photo-update-form/photo-update-form.component'
+import {registerLocaleData} from '@angular/common'
+
+registerLocaleData(fr)
 
 @NgModule({
   declarations: [
@@ -65,7 +69,12 @@ import {PhotoUpdateFormComponent} from './photo-update-form/photo-update-form.co
     NgbModule,
     HammerModule
   ],
-  providers: [],
+  providers: [
+    {
+      provide: LOCALE_ID,
+      useValue: 'fr-FR'
+    }
+  ],
   bootstrap: [AppComponent]
 })
 export class AppModule {
