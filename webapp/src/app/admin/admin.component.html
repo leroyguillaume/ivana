@@ -43,7 +43,7 @@
         <tbody>
         <tr *ngFor="let user of page.content">
           <td>{{user.name}}</td>
-          <td>{{user.creationDate | date: 'long'}}</td>
+          <td>{{user.creationDate | date: 'short'}}</td>
           <td>{{roleLabels.get(user.role)}}</td>
           <td>
             <button
