@@ -21,7 +21,7 @@
           </div>
         </ng-template>
       </li>
-      <li ngbNavItem domId="permissions" *ngIf="updatePermissionsAllowed">
+      <li ngbNavItem [domId]="Tab.Permissions" *ngIf="updatePermissionsAllowed">
         <a ngbNavLink>Permissions</a>
         <ng-template ngbNavContent>
           <div class="mt-3">
