@@ -1,16 +1,15 @@
 import {Component, OnInit} from '@angular/core'
 import {IconDefinition} from '@fortawesome/fontawesome-common-types'
 import {faSpinner, faTimes} from '@fortawesome/free-solid-svg-icons'
-import {AbstractControl, FormControl, FormGroup} from '@angular/forms'
-import {StateService} from '../state.service'
+import {FormControl, FormGroup} from '@angular/forms'
 import {NgbActiveModal} from '@ng-bootstrap/ng-bootstrap'
-import {Router} from '@angular/router'
-import {finalize} from 'rxjs/operators'
-import {handleError} from '../util'
+import {debounceTime, distinctUntilChanged, flatMap} from 'rxjs/operators'
 import {UserService} from '../user.service'
 import {User} from '../user'
 import {Permission} from '../permission'
 import {SubjectPermissions} from '../subject-permissions'
+import {NgbTypeaheadSelectItemEvent} from '@ng-bootstrap/ng-bootstrap/typeahead/typeahead'
+import {Observable, of} from 'rxjs'
 
 @Component({
   selector: 'app-new-permissions-modal',
@@ -21,11 +20,9 @@ export class NewPermissionsModalComponent implements OnInit {
   spinnerIcon: IconDefinition = faSpinner
   closeIcon: IconDefinition = faTimes
 
-  loading: boolean = true
-
-  users: User[]
+  selectedUser: User
   permsForm: FormGroup = new FormGroup({
-    userId: new FormControl(''),
+    username: new FormControl(''),
     canRead: new FormControl(false),
     canUpdate: new FormControl(false),
     canDelete: new FormControl(false),
@@ -34,27 +31,31 @@ export class NewPermissionsModalComponent implements OnInit {
 
   usersIdsBlacklist: Set<string> = new Set()
 
+  suggest = (obs: Observable<string>) => obs.pipe(
+    debounceTime(200),
+    distinctUntilChanged(),
+    flatMap(q => {
+      if (q.trim() === '') {
+        return of([])
+      } else {
+        return this.userService.suggest(q)
+      }
+    })
+  )
+
+  format = (user: User) => user.name
+
   constructor(
     private userService: UserService,
-    private stateService: StateService,
-    public activeModal: NgbActiveModal,
-    private router: Router
+    public activeModal: NgbActiveModal
   ) {
   }
 
-  get userId(): AbstractControl {
-    return this.permsForm.get('userId')
+  ngOnInit(): void {
   }
 
-  ngOnInit(): void {
-    this.loading = true
-    // TODO: it won't work when there are too many users
-    this.userService.getAll(1, 100)
-      .pipe(finalize(() => this.loading = false))
-      .subscribe(
-        page => this.users = page.content.filter(user => !this.usersIdsBlacklist.has(user.id)),
-        error => handleError(error, this.stateService, this.router)
-      )
+  selectUser(event: NgbTypeaheadSelectItemEvent): void {
+    this.selectedUser = event.item
   }
 
   submit(): void {
@@ -71,8 +72,7 @@ export class NewPermissionsModalComponent implements OnInit {
     if (this.permsForm.get('canUpdatePermissions').value) {
       perms.push(Permission.UpdatePermissions)
     }
-    const subj = this.users.find(user => user.id === this.userId.value)
-    const subjPerms = new SubjectPermissions(subj.id, subj.name, perms)
+    const subjPerms = new SubjectPermissions(this.selectedUser.id, this.selectedUser.name, perms)
     this.activeModal.close(subjPerms)
   }
 }

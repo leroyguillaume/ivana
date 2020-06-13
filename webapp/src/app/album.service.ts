@@ -7,6 +7,7 @@ import {Album} from './album'
 import {Photo} from './photo'
 import {SubjectPermissions} from './subject-permissions'
 import {SubjectPermissionsUpdate} from './subject-permissions-update'
+import {Permission} from './permission'
 
 @Injectable({
   providedIn: 'root'
@@ -66,6 +67,20 @@ export class AlbumService {
         params: {
           page: page.toString(),
           size: size.toString()
+        }
+      }
+    )
+  }
+
+  suggest(name: string, perm: Permission = Permission.Read, count: number = 5): Observable<Album[]> {
+    return this.http.get<Album[]>(
+      `${this.baseUrl}/suggest`,
+      {
+        withCredentials: true,
+        params: {
+          q: name,
+          perm,
+          count: count.toString()
         }
       }
     )

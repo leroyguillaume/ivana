@@ -43,6 +43,19 @@ export class UserService {
     return this.http.get<User>(`${this.baseUrl}/me`, {withCredentials: true})
   }
 
+  suggest(name: string, count: number = 5): Observable<User[]> {
+    return this.http.get<User[]>(
+      `${this.baseUrl}/suggest`,
+      {
+        withCredentials: true,
+        params: {
+          q: name,
+          count: count.toString()
+        }
+      }
+    )
+  }
+
   updatePassword(newPwd: string): Observable<void> {
     const body = {newPwd}
     return this.http.put<void>(`${this.baseUrl}/password`, body, {withCredentials: true})
