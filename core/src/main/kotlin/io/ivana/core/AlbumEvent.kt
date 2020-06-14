@@ -9,8 +9,12 @@ sealed class AlbumEvent : Event {
         override val subjectId: UUID,
         override val number: Long,
         override val source: EventSource.User,
-        val albumName: String
-    ) : AlbumEvent()
+        val content: Content
+    ) : AlbumEvent() {
+        data class Content(
+            val name: String
+        )
+    }
 
     data class Deletion(
         override val date: OffsetDateTime,
