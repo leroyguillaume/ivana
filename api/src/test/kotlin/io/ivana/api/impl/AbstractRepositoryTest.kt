@@ -40,6 +40,12 @@ internal abstract class AbstractRepositoryTest {
     @Autowired
     protected lateinit var userAlbumAuthzRepo: UserAlbumAuthorizationRepository
 
+    @Autowired
+    protected lateinit var personEventRepo: PersonEventRepository
+
+    @Autowired
+    protected lateinit var personRepo: PersonRepository
+
     // 3 users
     protected lateinit var userCreationEvents: List<UserEvent.Creation>
 
@@ -61,15 +67,21 @@ internal abstract class AbstractRepositoryTest {
     protected lateinit var albumUpdateEvents: List<AlbumEvent.Update>
     protected lateinit var albumUpdatePermissionsEvents: List<AlbumEvent.UpdatePermissions>
 
+    // 3 people
+    protected lateinit var personCreationEvents: List<PersonEvent.Creation>
+
     @BeforeEach
     fun beforeEach() {
         cleanDb()
         initUsers()
         initPhotos()
         initAlbums()
+        initPeople()
     }
 
     protected fun nextAlbumEventNumber() = nextEventNumber(AlbumEventRepositoryImpl.TableName)
+
+    protected fun nextPersonEventNumber() = nextEventNumber(PersonEventRepositoryImpl.TableName)
 
     protected fun nextPhotoEventNumber() = nextEventNumber(PhotoEventRepositoryImpl.TableName)
 
@@ -82,13 +94,17 @@ internal abstract class AbstractRepositoryTest {
             UserEventRepositoryImpl.TableName,
             PhotoEventRepositoryImpl.TableName,
             AlbumEventRepositoryImpl.TableName,
-            UserRepositoryImpl.TableName
+            PersonEventRepositoryImpl.TableName,
+            UserRepositoryImpl.TableName,
+            PersonRepositoryImpl.TableName
         )
         jdbc.resetEventNumberSequence(
             UserEventRepositoryImpl.TableName,
             PhotoEventRepositoryImpl.TableName,
-            AlbumEventRepositoryImpl.TableName
+            AlbumEventRepositoryImpl.TableName,
+            PersonEventRepositoryImpl.TableName
         )
+        @Suppress("SqlResolve")
         jdbc.update(
             "ALTER SEQUENCE ${PhotoRepositoryImpl.TableName}_${PhotoRepositoryImpl.NoColumnName}_seq RESTART",
             MapSqlParameterSource()
@@ -151,15 +167,16 @@ internal abstract class AbstractRepositoryTest {
                 }
             }
             .flatten()
-        val album1UpdateEvent = albumCreationEvents[0].let { albumCreationEvent ->
-            addPhotosToAlbum(
-                albumCreationEvent = albumCreationEvent,
-                photosIds = photoUploadEvents
-                    .filter { it.source.id == albumCreationEvent.source.id }
-                    .map { it.subjectId }
-            )
-        }
-        albumUpdateEvents = listOf(album1UpdateEvent)
+        albumUpdateEvents = listOf(
+            albumCreationEvents[0].let { albumCreationEvent ->
+                addPhotosToAlbum(
+                    albumCreationEvent = albumCreationEvent,
+                    photosIds = photoUploadEvents
+                        .filter { it.source.id == albumCreationEvent.source.id }
+                        .map { it.subjectId }
+                )
+            }
+        )
         albumUpdatePermissionsEvents = listOf(
             addPermissionsOnAlbum(
                 albumCreationEvent = albumCreationEvents[0],
@@ -189,6 +206,25 @@ internal abstract class AbstractRepositoryTest {
         )
     }
 
+    private fun initPeople() {
+        personCreationEvents = listOf(
+            PersonEvent.Creation.Content(
+                lastName = "Leroy",
+                firstName = "Guillaume"
+            ),
+            PersonEvent.Creation.Content(
+                lastName = "Leroy",
+                firstName = "Annie"
+            ),
+            PersonEvent.Creation.Content(
+                lastName = "Godin",
+                firstName = "Anthony"
+            )
+        ).mapIndexed { i, content ->
+            personEventRepo.saveCreationEvent(content, userLocalSource(userCreationEvents[i].subjectId))
+        }
+    }
+
     private fun initPhotos() {
         var i = 1
         photoUploadEvents = userCreationEvents
@@ -205,25 +241,22 @@ internal abstract class AbstractRepositoryTest {
             }
             .flatten()
 
-        val photo1UpdatePermissionsEvent = addPermissionsOnPhoto(
-            photoUploadEvent = photoUploadEvents[0],
-            userId = userCreationEvents[1].subjectId,
-            permissions = *arrayOf(Permission.Read)
-        )
-        val photo2UpdatePermissionsEvent = removePermissionsOnPhoto(
-            photoUploadEvent = photoUploadEvents[1],
-            userId = userCreationEvents[1].subjectId,
-            permissions = *arrayOf(Permission.Read)
-        )
-        val photo8UpdatePermissionsEvent = addPermissionsOnPhoto(
-            photoUploadEvent = photoUploadEvents[7],
-            userId = userCreationEvents[0].subjectId,
-            permissions = *arrayOf(Permission.Read)
-        )
         photoUpdatePermissionsEvents = listOf(
-            photo1UpdatePermissionsEvent,
-            photo2UpdatePermissionsEvent,
-            photo8UpdatePermissionsEvent
+            addPermissionsOnPhoto(
+                photoUploadEvent = photoUploadEvents[0],
+                userId = userCreationEvents[1].subjectId,
+                permissions = *arrayOf(Permission.Read)
+            ),
+            removePermissionsOnPhoto(
+                photoUploadEvent = photoUploadEvents[1],
+                userId = userCreationEvents[1].subjectId,
+                permissions = *arrayOf(Permission.Read)
+            ),
+            addPermissionsOnPhoto(
+                photoUploadEvent = photoUploadEvents[7],
+                userId = userCreationEvents[0].subjectId,
+                permissions = *arrayOf(Permission.Read)
+            )
         )
     }
 
@@ -281,6 +314,12 @@ internal abstract class AbstractRepositoryTest {
         ownerId = source.id,
         name = content.name,
         creationDate = date
+    )
+
+    protected fun PersonEvent.Creation.toPerson() = Person(
+        id = subjectId,
+        lastName = content.lastName,
+        firstName = content.firstName
     )
 
     protected fun PhotoEvent.Upload.toPhoto(version: Int = 1) = Photo(

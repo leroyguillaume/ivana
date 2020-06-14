@@ -500,7 +500,7 @@ internal class AlbumControllerTest : AbstractControllerTest() {
         }
 
         @Test
-        fun `should return 400 if parameters are blank`() = authenticated(userPrincipal) {
+        fun `should return 400 if parameters are blank`() = authenticated {
             callAndExpectDto(
                 method = method,
                 uri = uri,
@@ -516,7 +516,7 @@ internal class AlbumControllerTest : AbstractControllerTest() {
         }
 
         @Test
-        fun `should return 400 if parameters are lower than 1`() = authenticated(userPrincipal) {
+        fun `should return 400 if parameters are lower than 1`() = authenticated {
             callAndExpectDto(
                 method = method,
                 params = mapOf(
@@ -533,7 +533,7 @@ internal class AlbumControllerTest : AbstractControllerTest() {
         }
 
         @Test
-        fun `should return 200`() = authenticated(userPrincipal) {
+        fun `should return 200`() = authenticated {
             whenever(albumService.suggest(q.trim(), count, source.id, perm)).thenReturn(albums)
             callAndExpectDto(
                 method = method,

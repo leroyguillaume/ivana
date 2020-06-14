@@ -2,15 +2,13 @@
 
 package io.ivana.api.web.v1
 
-import com.nhaarman.mockitokotlin2.never
 import com.nhaarman.mockitokotlin2.verify
 import com.nhaarman.mockitokotlin2.whenever
-import io.ivana.api.impl.UserAlreadyExistsException
+import io.ivana.api.impl.PersonAlreadyExistsException
 import io.ivana.api.web.AbstractControllerTest
 import io.ivana.core.Page
-import io.ivana.core.Role
-import io.ivana.core.User
-import io.ivana.core.UserEvent
+import io.ivana.core.Person
+import io.ivana.core.PersonEvent
 import io.ivana.dto.*
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -19,34 +17,29 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
 import java.net.URI
-import java.time.OffsetDateTime
 import java.util.*
 
 @SpringBootTest
 @AutoConfigureMockMvc
-internal class UserControllerTest : AbstractControllerTest() {
+internal class PersonControllerTest : AbstractControllerTest() {
     @Nested
     inner class create {
         private val method = HttpMethod.POST
-        private val uri = UserApiEndpoint
-        private val creationDto = UserCreationDto(
-            name = "user",
-            pwd = "changeit",
-            role = RoleDto.User
+        private val uri = PersonApiEndpoint
+        private val creationDto = PersonCreationDto(
+            lastName = "Leroy",
+            firstName = "Guillaume"
         )
-        private val eventContent = UserEvent.Creation.Content(
-            name = creationDto.name,
-            hashedPwd = "hashedPwd",
-            role = Role.User
+        private val eventContent = PersonEvent.Creation.Content(
+            lastName = creationDto.lastName,
+            firstName = creationDto.firstName
         )
-        private val user = User(
+        private val person = Person(
             id = UUID.randomUUID(),
-            name = creationDto.name,
-            hashedPwd = eventContent.hashedPwd,
-            role = eventContent.role,
-            creationDate = OffsetDateTime.now()
+            lastName = creationDto.lastName,
+            firstName = creationDto.firstName
         )
-        private val userDto = user.toDto()
+        private val personDto = person.toDto()
 
         @Test
         fun `should return 401 if user is anonymous`() {
@@ -59,22 +52,22 @@ internal class UserControllerTest : AbstractControllerTest() {
         }
 
         @Test
-        fun `should return 400 if params are too short`() = authenticated {
+        fun `should return 400 if params are too short`() = authenticated(adminPrincipal) {
             callAndExpectDto(
                 method = method,
                 uri = uri,
                 reqCookies = listOf(accessTokenCookie()),
                 reqContent = mapper.writeValueAsString(
                     creationDto.copy(
-                        name = "a",
-                        pwd = "change"
+                        lastName = "",
+                        firstName = ""
                     )
                 ),
                 status = HttpStatus.BAD_REQUEST,
                 respDto = ErrorDto.ValidationError(
                     errors = listOf(
-                        sizeErrorDto("name", UserNameMinSize, UserNameMaxSize),
-                        sizeErrorDto("pwd", UserPasswordMinSize)
+                        sizeErrorDto("lastName", PersonLastNameMinSize, PersonLastNameMaxSize),
+                        sizeErrorDto("firstName", PersonFirstNameMinSize, PersonFirstNameMaxSize)
                     )
                 )
             )
@@ -87,20 +80,25 @@ internal class UserControllerTest : AbstractControllerTest() {
                 uri = uri,
                 reqCookies = listOf(accessTokenCookie()),
                 reqContent = mapper.writeValueAsString(
-                    creationDto.copy(name = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+                    creationDto.copy(
+                        lastName = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                        firstName = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                    )
                 ),
                 status = HttpStatus.BAD_REQUEST,
                 respDto = ErrorDto.ValidationError(
-                    errors = listOf(sizeErrorDto("name", UserNameMinSize, UserNameMaxSize))
+                    errors = listOf(
+                        sizeErrorDto("lastName", PersonLastNameMinSize, PersonLastNameMaxSize),
+                        sizeErrorDto("firstName", PersonFirstNameMinSize, PersonFirstNameMaxSize)
+                    )
                 )
             )
         }
 
         @Test
-        fun `should return 409 if user already exists`() = authenticated(adminPrincipal) {
-            whenever(pwdEncoder.encode(creationDto.pwd)).thenReturn(user.hashedPwd)
-            whenever(userService.create(eventContent, source)).thenAnswer {
-                throw UserAlreadyExistsException(user)
+        fun `should return 409 if person already exists`() = authenticated(adminPrincipal) {
+            whenever(personService.create(eventContent, source)).thenAnswer {
+                throw PersonAlreadyExistsException(person)
             }
             callAndExpectDto(
                 method = method,
@@ -108,14 +106,13 @@ internal class UserControllerTest : AbstractControllerTest() {
                 reqCookies = listOf(accessTokenCookie()),
                 reqContent = mapper.writeValueAsString(creationDto),
                 status = HttpStatus.CONFLICT,
-                respDto = ErrorDto.DuplicateResource(URI("$UserApiEndpoint/${user.id}"))
+                respDto = ErrorDto.DuplicateResource(URI("$PersonApiEndpoint/${person.id}"))
             )
-            verify(pwdEncoder).encode(creationDto.pwd)
-            verify(userService).create(eventContent, source)
+            verify(personService).create(eventContent, source)
         }
 
         @Test
-        fun `should return 403 if user is not admin or super admin`() = authenticated {
+        fun `should return 403 if person is not admin or super admin`() = authenticated {
             callAndExpectDto(
                 method = method,
                 uri = uri,
@@ -128,45 +125,41 @@ internal class UserControllerTest : AbstractControllerTest() {
 
         @Test
         fun `should return 201 (admin)`() = authenticated(adminPrincipal) {
-            whenever(pwdEncoder.encode(creationDto.pwd)).thenReturn(user.hashedPwd)
-            whenever(userService.create(eventContent, source)).thenReturn(user)
+            whenever(personService.create(eventContent, source)).thenReturn(person)
             callAndExpectDto(
                 method = method,
                 uri = uri,
                 reqCookies = listOf(accessTokenCookie()),
                 reqContent = mapper.writeValueAsString(creationDto),
                 status = HttpStatus.CREATED,
-                respDto = userDto
+                respDto = personDto
             )
-            verify(pwdEncoder).encode(creationDto.pwd)
-            verify(userService).create(eventContent, source)
+            verify(personService).create(eventContent, source)
         }
 
         @Test
         fun `should return 201 (super_admin)`() = authenticated(superAdminPrincipal) {
-            whenever(pwdEncoder.encode(creationDto.pwd)).thenReturn(user.hashedPwd)
-            whenever(userService.create(eventContent, source)).thenReturn(user)
+            whenever(personService.create(eventContent, source)).thenReturn(person)
             callAndExpectDto(
                 method = method,
                 uri = uri,
                 reqCookies = listOf(accessTokenCookie()),
                 reqContent = mapper.writeValueAsString(creationDto),
                 status = HttpStatus.CREATED,
-                respDto = userDto
+                respDto = personDto
             )
-            verify(pwdEncoder).encode(creationDto.pwd)
-            verify(userService).create(eventContent, source)
+            verify(personService).create(eventContent, source)
         }
     }
 
     @Nested
     inner class delete {
-        private val userId = UUID.randomUUID()
+        private val personId = UUID.randomUUID()
         private val method = HttpMethod.DELETE
-        private val uri = "$UserApiEndpoint/$userId"
+        private val uri = "$PersonApiEndpoint/$personId"
 
         @Test
-        fun `should return 401 if user is anonymous`() {
+        fun `should return 401 if person is anonymous`() {
             callAndExpectDto(
                 method = method,
                 uri = uri,
@@ -176,8 +169,7 @@ internal class UserControllerTest : AbstractControllerTest() {
         }
 
         @Test
-        fun `should return 403 if user does not exist`() = authenticated {
-            whenever(userRepo.fetchById(userId)).thenReturn(null)
+        fun `should return 403 if person does not exist`() = authenticated {
             callAndExpectDto(
                 method = method,
                 uri = uri,
@@ -185,12 +177,10 @@ internal class UserControllerTest : AbstractControllerTest() {
                 status = HttpStatus.FORBIDDEN,
                 respDto = ErrorDto.Forbidden
             )
-            verify(userRepo).fetchById(userId)
         }
 
         @Test
-        fun `should return 403 if user tries to delete user`() = authenticated {
-            whenever(userRepo.fetchById(userId)).thenReturn(userPrincipal.user) // Trick here: userId != userPrincipal.user.id
+        fun `should return 403 if user tries to delete person`() = authenticated {
             callAndExpectDto(
                 method = method,
                 uri = uri,
@@ -198,130 +188,63 @@ internal class UserControllerTest : AbstractControllerTest() {
                 status = HttpStatus.FORBIDDEN,
                 respDto = ErrorDto.Forbidden
             )
-            verify(userRepo).fetchById(userId)
         }
 
         @Test
-        fun `should return 403 if user tries to delete admin`() = authenticated {
-            whenever(userRepo.fetchById(userId)).thenReturn(adminPrincipal.user)
-            callAndExpectDto(
-                method = method,
-                uri = uri,
-                reqCookies = listOf(accessTokenCookie()),
-                status = HttpStatus.FORBIDDEN,
-                respDto = ErrorDto.Forbidden
-            )
-            verify(userRepo).fetchById(userId)
-        }
-
-        @Test
-        fun `should return 403 if user tries to delete super admin`() = authenticated {
-            whenever(userRepo.fetchById(userId)).thenReturn(superAdminPrincipal.user)
-            callAndExpectDto(
-                method = method,
-                uri = uri,
-                reqCookies = listOf(accessTokenCookie()),
-                status = HttpStatus.FORBIDDEN,
-                respDto = ErrorDto.Forbidden
-            )
-            verify(userRepo).fetchById(userId)
-        }
-
-        @Test
-        fun `should return 403 if admin tries to delete admin`() = authenticated(adminPrincipal) {
-            whenever(userRepo.fetchById(userId)).thenReturn(adminPrincipal.user)
-            callAndExpectDto(
-                method = method,
-                uri = uri,
-                reqCookies = listOf(accessTokenCookie()),
-                status = HttpStatus.FORBIDDEN,
-                respDto = ErrorDto.Forbidden
-            )
-            verify(userRepo).fetchById(userId)
-        }
-
-        @Test
-        fun `should return 403 if admin tries to delete super admin`() = authenticated(adminPrincipal) {
-            whenever(userRepo.fetchById(userId)).thenReturn(superAdminPrincipal.user)
-            callAndExpectDto(
-                method = method,
-                uri = uri,
-                reqCookies = listOf(accessTokenCookie()),
-                status = HttpStatus.FORBIDDEN,
-                respDto = ErrorDto.Forbidden
-            )
-            verify(userRepo).fetchById(userId)
-        }
-
-        @Test
-        fun `should return 403 if admin tries to delete itself`() = authenticated(adminPrincipal) {
-            callAndExpectDto(
-                method = method,
-                uri = "$UserApiEndpoint/${principal.user.id}",
-                reqCookies = listOf(accessTokenCookie()),
-                status = HttpStatus.FORBIDDEN,
-                respDto = ErrorDto.Forbidden
-            )
-        }
-
-        @Test
-        fun `should return 403 if super admin tries to delete itself`() = authenticated(superAdminPrincipal) {
-            callAndExpectDto(
-                method = method,
-                uri = "$UserApiEndpoint/${principal.user.id}",
-                reqCookies = listOf(accessTokenCookie()),
-                status = HttpStatus.FORBIDDEN,
-                respDto = ErrorDto.Forbidden
-            )
-        }
-
-        @Test
-        fun `should return 204 if admin deleted user`() = authenticated(adminPrincipal) {
-            whenever(userRepo.fetchById(userId)).thenReturn(userPrincipal.user)
+        fun `should return 204 if admin deleted person`() = authenticated(adminPrincipal) {
             callAndExpectDto(
                 method = method,
                 uri = uri,
                 reqCookies = listOf(accessTokenCookie()),
                 status = HttpStatus.NO_CONTENT
             )
-            verify(userRepo).fetchById(userId)
-            verify(userService).delete(userId, source)
+            verify(personService).delete(personId, source)
         }
 
         @Test
-        fun `should return 204 if super admin deleted user`() = authenticated(superAdminPrincipal) {
+        fun `should return 204 if super admin deleted person`() = authenticated(superAdminPrincipal) {
             callAndExpectDto(
                 method = method,
                 uri = uri,
                 reqCookies = listOf(accessTokenCookie()),
                 status = HttpStatus.NO_CONTENT
             )
-            verify(userRepo, never()).fetchById(userId)
-            verify(userService).delete(userId, source)
+            verify(personService).delete(personId, source)
+        }
+    }
+
+    @Nested
+    inner class getById {
+        private val person = Person(
+            id = UUID.randomUUID(),
+            lastName = "Leroy",
+            firstName = "Guillaume"
+        )
+        private val dto = person.toDto()
+        private val method = HttpMethod.GET
+        private val uri = "$PersonApiEndpoint/${person.id}"
+
+        @Test
+        fun `should return 401 if person is anonymous`() {
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                status = HttpStatus.UNAUTHORIZED,
+                respDto = ErrorDto.Unauthorized
+            )
         }
 
         @Test
-        fun `should return 204 if super admin deleted admin`() = authenticated(superAdminPrincipal) {
+        fun `should return 200`() = authenticated {
+            whenever(personService.getById(person.id)).thenReturn(person)
             callAndExpectDto(
                 method = method,
                 uri = uri,
                 reqCookies = listOf(accessTokenCookie()),
-                status = HttpStatus.NO_CONTENT
+                status = HttpStatus.OK,
+                respDto = dto
             )
-            verify(userRepo, never()).fetchById(userId)
-            verify(userService).delete(userId, source)
-        }
-
-        @Test
-        fun `should return 204 if super admin deleted super admin`() = authenticated(superAdminPrincipal) {
-            callAndExpectDto(
-                method = method,
-                uri = uri,
-                reqCookies = listOf(accessTokenCookie()),
-                status = HttpStatus.NO_CONTENT
-            )
-            verify(userRepo, never()).fetchById(userId)
-            verify(userService).delete(userId, source)
+            verify(personService).getById(person.id)
         }
     }
 
@@ -331,19 +254,15 @@ internal class UserControllerTest : AbstractControllerTest() {
         private val pageSize = 3
         private val page = Page(
             content = listOf(
-                User(
+                Person(
                     id = UUID.randomUUID(),
-                    name = "user1",
-                    hashedPwd = "hashedPwd",
-                    role = Role.User,
-                    creationDate = OffsetDateTime.now()
+                    lastName = "Leroy",
+                    firstName = "Guillaume"
                 ),
-                User(
+                Person(
                     id = UUID.randomUUID(),
-                    name = "user2",
-                    hashedPwd = "hashedPwd",
-                    role = Role.User,
-                    creationDate = OffsetDateTime.now()
+                    lastName = "Leroy",
+                    firstName = "Annie"
                 )
             ),
             no = pageNo,
@@ -352,10 +271,10 @@ internal class UserControllerTest : AbstractControllerTest() {
         )
         private val pageDto = page.toDto { it.toDto() }
         private val method = HttpMethod.GET
-        private val uri = UserApiEndpoint
+        private val uri = PersonApiEndpoint
 
         @Test
-        fun `should return 401 if user is anonymous`() {
+        fun `should return 401 if person is anonymous`() {
             callAndExpectDto(
                 method = method,
                 uri = uri,
@@ -382,7 +301,7 @@ internal class UserControllerTest : AbstractControllerTest() {
         }
 
         @Test
-        fun `should return 403 if user is not admin or super admin`() = authenticated {
+        fun `should return 403 if person is not admin or super admin`() = authenticated {
             callAndExpectDto(
                 method = method,
                 uri = uri,
@@ -394,7 +313,7 @@ internal class UserControllerTest : AbstractControllerTest() {
 
         @Test
         fun `should return 200 (admin)`() = authenticated(adminPrincipal) {
-            whenever(userService.getAll(pageNo, pageSize)).thenReturn(page)
+            whenever(personService.getAll(pageNo, pageSize)).thenReturn(page)
             callAndExpectDto(
                 method = method,
                 params = mapOf(
@@ -406,12 +325,12 @@ internal class UserControllerTest : AbstractControllerTest() {
                 status = HttpStatus.OK,
                 respDto = pageDto
             )
-            verify(userService).getAll(pageNo, pageSize)
+            verify(personService).getAll(pageNo, pageSize)
         }
 
         @Test
         fun `should return 200 (super admin)`() = authenticated(superAdminPrincipal) {
-            whenever(userService.getAll(pageNo, pageSize)).thenReturn(page)
+            whenever(personService.getAll(pageNo, pageSize)).thenReturn(page)
             callAndExpectDto(
                 method = method,
                 params = mapOf(
@@ -423,64 +342,32 @@ internal class UserControllerTest : AbstractControllerTest() {
                 status = HttpStatus.OK,
                 respDto = pageDto
             )
-            verify(userService).getAll(pageNo, pageSize)
-        }
-    }
-
-    @Nested
-    inner class me {
-        private val method = HttpMethod.GET
-        private val uri = "$UserApiEndpoint$MeEndpoint"
-        private val dto = userPrincipal.user.toDto()
-
-        @Test
-        fun `should return 401 if user is anonymous`() {
-            callAndExpectDto(
-                method = method,
-                uri = uri,
-                status = HttpStatus.UNAUTHORIZED,
-                respDto = ErrorDto.Unauthorized
-            )
-        }
-
-        @Test
-        fun `should return 200`() = authenticated {
-            callAndExpectDto(
-                method = method,
-                uri = uri,
-                reqCookies = listOf(accessTokenCookie()),
-                status = HttpStatus.OK,
-                respDto = dto
-            )
+            verify(personService).getAll(pageNo, pageSize)
         }
     }
 
     @Nested
     inner class suggest {
-        private val users = listOf(
-            User(
+        private val people = listOf(
+            Person(
                 id = UUID.randomUUID(),
-                name = "user1",
-                hashedPwd = "hashedPwd",
-                role = Role.User,
-                creationDate = OffsetDateTime.now()
+                lastName = "Leroy",
+                firstName = "Guillaume"
             ),
-            User(
+            Person(
                 id = UUID.randomUUID(),
-                name = "user2",
-                hashedPwd = "hashedPwd",
-                role = Role.User,
-                creationDate = OffsetDateTime.now()
+                lastName = "Leroy",
+                firstName = "Annie"
             )
         )
-        private val q = " user "
+        private val q = " ero "
         private val count = 10
-        private val dto = users.map { it.toDto() }
+        private val dto = people.map { it.toDto() }
         private val method = HttpMethod.GET
-        private val uri = "$UserApiEndpoint$SuggestEndpoint"
+        private val uri = "$PersonApiEndpoint$SuggestEndpoint"
 
         @Test
-        fun `should return 401 if user is anonymous`() {
+        fun `should return 401 if person is anonymous`() {
             callAndExpectDto(
                 method = method,
                 uri = uri,
@@ -524,7 +411,7 @@ internal class UserControllerTest : AbstractControllerTest() {
 
         @Test
         fun `should return 200`() = authenticated {
-            whenever(userService.suggest(q.trim(), count)).thenReturn(users)
+            whenever(personService.suggest(q.trim(), count)).thenReturn(people)
             callAndExpectDto(
                 method = method,
                 params = mapOf(
@@ -536,16 +423,28 @@ internal class UserControllerTest : AbstractControllerTest() {
                 status = HttpStatus.OK,
                 respDto = dto
             )
-            verify(userService).suggest(q.trim(), count)
+            verify(personService).suggest(q.trim(), count)
         }
     }
 
     @Nested
-    inner class updatePassword {
+    inner class update {
+        private val updateDto = PersonUpdateDto(
+            lastName = "Leroy",
+            firstName = "Guillaume"
+        )
+        private val eventContent = PersonEvent.Update.Content(
+            lastName = updateDto.lastName,
+            firstName = updateDto.firstName
+        )
+        private val person = Person(
+            id = UUID.randomUUID(),
+            lastName = updateDto.lastName,
+            firstName = updateDto.firstName
+        )
+        private val personDto = person.toDto()
         private val method = HttpMethod.PUT
-        private val uri = "$UserApiEndpoint$PasswordUpdateEndpoint"
-        private val dto = PasswordUpdateDto("changeit")
-        private val hashedPwd = "hashedPwd"
+        private val uri = "$PersonApiEndpoint/${person.id}"
 
         @Test
         fun `should return 401 if user is anonymous`() {
@@ -558,31 +457,103 @@ internal class UserControllerTest : AbstractControllerTest() {
         }
 
         @Test
-        fun `should return 400 if password is too short`() = authenticated {
+        fun `should return 400 if params are too short`() = authenticated(adminPrincipal) {
             callAndExpectDto(
                 method = method,
                 uri = uri,
                 reqCookies = listOf(accessTokenCookie()),
-                reqContent = mapper.writeValueAsString(dto.copy("change")),
+                reqContent = mapper.writeValueAsString(
+                    updateDto.copy(
+                        lastName = "",
+                        firstName = ""
+                    )
+                ),
                 status = HttpStatus.BAD_REQUEST,
                 respDto = ErrorDto.ValidationError(
-                    errors = listOf(sizeErrorDto("newPwd", UserPasswordMinSize))
+                    errors = listOf(
+                        sizeErrorDto("lastName", PersonLastNameMinSize, PersonLastNameMaxSize),
+                        sizeErrorDto("firstName", PersonFirstNameMinSize, PersonFirstNameMaxSize)
+                    )
                 )
             )
         }
 
         @Test
-        fun `should return 204`() = authenticated {
-            whenever(pwdEncoder.encode(dto.newPwd)).thenReturn(hashedPwd)
+        fun `should return 400 if name is too long`() = authenticated {
             callAndExpectDto(
                 method = method,
                 uri = uri,
                 reqCookies = listOf(accessTokenCookie()),
-                reqContent = mapper.writeValueAsString(dto),
-                status = HttpStatus.NO_CONTENT
+                reqContent = mapper.writeValueAsString(
+                    updateDto.copy(
+                        lastName = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                        firstName = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                    )
+                ),
+                status = HttpStatus.BAD_REQUEST,
+                respDto = ErrorDto.ValidationError(
+                    errors = listOf(
+                        sizeErrorDto("lastName", PersonLastNameMinSize, PersonLastNameMaxSize),
+                        sizeErrorDto("firstName", PersonFirstNameMinSize, PersonFirstNameMaxSize)
+                    )
+                )
             )
-            verify(pwdEncoder).encode(dto.newPwd)
-            verify(userService).updatePassword(principal.user.id, hashedPwd, source)
+        }
+
+        @Test
+        fun `should return 409 if person already exists`() = authenticated(adminPrincipal) {
+            whenever(personService.update(person.id, eventContent, source)).thenAnswer {
+                throw PersonAlreadyExistsException(person)
+            }
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                reqCookies = listOf(accessTokenCookie()),
+                reqContent = mapper.writeValueAsString(updateDto),
+                status = HttpStatus.CONFLICT,
+                respDto = ErrorDto.DuplicateResource(URI("$PersonApiEndpoint/${person.id}"))
+            )
+            verify(personService).update(person.id, eventContent, source)
+        }
+
+        @Test
+        fun `should return 403 if person is not admin or super admin`() = authenticated {
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                reqCookies = listOf(accessTokenCookie()),
+                reqContent = mapper.writeValueAsString(updateDto),
+                status = HttpStatus.FORBIDDEN,
+                respDto = ErrorDto.Forbidden
+            )
+        }
+
+        @Test
+        fun `should return 200 (admin)`() = authenticated(adminPrincipal) {
+            whenever(personService.update(person.id, eventContent, source)).thenReturn(person)
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                reqCookies = listOf(accessTokenCookie()),
+                reqContent = mapper.writeValueAsString(updateDto),
+                status = HttpStatus.OK,
+                respDto = personDto
+            )
+            verify(personService).update(person.id, eventContent, source)
+        }
+
+        @Test
+        fun `should return 200 (super_admin)`() = authenticated(superAdminPrincipal) {
+            whenever(personService.update(person.id, eventContent, source)).thenReturn(person)
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                reqCookies = listOf(accessTokenCookie()),
+                reqContent = mapper.writeValueAsString(updateDto),
+                status = HttpStatus.OK,
+                respDto = personDto
+            )
+            verify(personService).update(person.id, eventContent, source)
         }
     }
 }
