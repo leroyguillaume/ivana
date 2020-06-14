@@ -21,6 +21,7 @@ const val AlbumApiEndpoint = "$RootEndpoint/album"
 const val ContentEndpoint = "/content"
 const val PermissionsEndpoint = "/permissions"
 const val SuggestEndpoint = "/suggest"
+const val PersonApiEndpoint = "$RootEndpoint/person"
 
 const val FilesParamName = "files"
 const val NavigableParamName = "navigable"
@@ -79,6 +80,12 @@ fun PermissionDto.toPermission() = when (this) {
     PermissionDto.Delete -> Permission.Delete
     PermissionDto.UpdatePermissions -> Permission.UpdatePermissions
 }
+
+fun Person.toDto() = PersonDto(
+    id = id,
+    lastName = lastName,
+    firstName = firstName
+)
 
 fun Photo.toLightDto() = PhotoDto.Light(
     id = id,

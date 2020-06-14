@@ -167,6 +167,9 @@ sealed class ErrorDto {
             @JsonProperty("album")
             Album,
 
+            @JsonProperty("person")
+            Person,
+
             @JsonProperty("photo")
             Photo,
 

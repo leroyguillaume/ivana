@@ -2,7 +2,9 @@
 
 package io.ivana.api.impl
 
+import io.ivana.api.web.v1.toDto
 import io.ivana.core.*
+import io.ivana.dto.PersonDto
 import io.kotlintest.shouldBe
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -47,6 +49,21 @@ internal class ExtensionsTest {
         fun updatePermissions() {
             Permission.UpdatePermissions.toData() shouldBe PermissionData.UpdatePermissions
         }
+    }
+
+    @Test
+    fun personToPersonDto() {
+        val person = Person(
+            id = UUID.randomUUID(),
+            lastName = "Leroy",
+            firstName = "Guillaume"
+        )
+        val dto = PersonDto(
+            id = person.id,
+            lastName = person.lastName,
+            firstName = person.firstName
+        )
+        person.toDto() shouldBe dto
     }
 
     @Nested

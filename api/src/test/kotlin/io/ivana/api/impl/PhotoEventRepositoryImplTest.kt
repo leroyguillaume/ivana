@@ -53,6 +53,19 @@ internal class PhotoEventRepositoryImplTest : AbstractRepositoryTest() {
         }
 
         @Test
+        fun `should return update event with number`() {
+            val expectedEvent = photoEventRepo.saveUpdateEvent(
+                photoId = photoId,
+                content = PhotoEvent.Update.Content(
+                    shootingDate = LocalDate.now()
+                ),
+                source = source
+            )
+            val event = photoEventRepo.fetch(expectedEvent.number)
+            event shouldBe expectedEvent
+        }
+
+        @Test
         fun `should return update permissions event with number`() {
             val expectedEvent = photoUpdatePermissionsEvents[0]
             val event = photoEventRepo.fetch(expectedEvent.number)

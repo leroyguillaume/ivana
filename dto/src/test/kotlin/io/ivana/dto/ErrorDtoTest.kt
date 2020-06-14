@@ -100,6 +100,16 @@ internal class ErrorDtoTest {
         )
 
         @Nested
+        inner class Person : JsonTest(
+            filename = "error/resources-not-found/person.json",
+            expectedValue = ErrorDto.ResourcesNotFound(
+                type = ErrorDto.ResourcesNotFound.Type.Person,
+                ids = setOf(UUID.fromString("61f11547-a340-441c-bce7-551234d5d361"))
+            ),
+            deserializeAs = typeOf<ErrorDto>()
+        )
+
+        @Nested
         inner class Photo : JsonTest(
             filename = "error/resources-not-found/photo.json",
             expectedValue = ErrorDto.ResourcesNotFound(

@@ -102,11 +102,14 @@ abstract class AbstractControllerTest {
     protected lateinit var albumService: AlbumService
 
     @MockBean
+    protected lateinit var personService: PersonService
+
+    @MockBean
     protected lateinit var pwdEncoder: BCryptPasswordEncoder
 
     @BeforeEach
     fun beforeEach() {
-        reset(authService, photoService, userService, pwdEncoder)
+        reset(authService, photoService, userService, albumService, personService, pwdEncoder)
     }
 
     protected fun accessTokenCookie() = Cookie(AccessTokenCookieName, jwt).apply {

@@ -7,6 +7,10 @@ sealed class ResourcesNotFoundException : RuntimeException() {
         override val ids: Set<UUID>
     ) : ResourcesNotFoundException()
 
+    class Person(
+        override val ids: Set<UUID>
+    ) : ResourcesNotFoundException()
+
     class Photo(
         override val ids: Set<UUID>
     ) : ResourcesNotFoundException()

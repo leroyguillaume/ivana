@@ -8,6 +8,7 @@ import io.ivana.api.security.BadCredentialsException
 import io.ivana.api.security.BadJwtException
 import io.ivana.api.security.CustomAccessDeniedHandler
 import io.ivana.api.web.v1.PermParamName
+import io.ivana.api.web.v1.PersonApiEndpoint
 import io.ivana.api.web.v1.UserApiEndpoint
 import io.ivana.core.Permission
 import io.ivana.dto.ErrorDto
@@ -145,6 +146,7 @@ class ErrorController(
         Logger.debug(exception.message, exception)
         val type = when (exception) {
             is ResourcesNotFoundException.Album -> ErrorDto.ResourcesNotFound.Type.Album
+            is ResourcesNotFoundException.Person -> ErrorDto.ResourcesNotFound.Type.Person
             is ResourcesNotFoundException.Photo -> ErrorDto.ResourcesNotFound.Type.Photo
             is ResourcesNotFoundException.User -> ErrorDto.ResourcesNotFound.Type.User
         }
@@ -181,6 +183,13 @@ class ErrorController(
     fun handleUnsupportedMediaType(exception: HttpMediaTypeNotSupportedException): ErrorDto {
         Logger.debug(exception.message, exception)
         return ErrorDto.UnsupportedMediaType(setOf(MediaType.APPLICATION_JSON_VALUE))
+    }
+
+    @ExceptionHandler(PersonAlreadyExistsException::class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    fun handlePersonAlreadyExists(exception: PersonAlreadyExistsException): ErrorDto {
+        Logger.debug(exception.message, exception)
+        return ErrorDto.DuplicateResource(URI("$PersonApiEndpoint/${exception.person.id}"))
     }
 
     @ExceptionHandler(UserAlreadyExistsException::class)
