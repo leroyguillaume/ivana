@@ -135,7 +135,7 @@ internal abstract class AbstractRepositoryTest {
         albumEventRepo.saveUpdateEvent(
             albumId = albumCreationEvent.subjectId,
             content = AlbumEvent.Update.Content(
-                name = albumCreationEvent.albumName,
+                name = albumCreationEvent.content.name,
                 photosToAdd = photosIds,
                 photosToRemove = emptyList()
             ),
@@ -279,7 +279,7 @@ internal abstract class AbstractRepositoryTest {
     protected fun AlbumEvent.Creation.toAlbum() = Album(
         id = subjectId,
         ownerId = source.id,
-        name = albumName,
+        name = content.name,
         creationDate = date
     )
 

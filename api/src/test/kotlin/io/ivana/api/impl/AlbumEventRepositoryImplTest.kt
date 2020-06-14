@@ -117,12 +117,14 @@ internal class AlbumEventRepositoryImplTest : AbstractRepositoryTest() {
                 number = nextAlbumEventNumber(),
                 source = albumCreationEvent.source,
                 content = AlbumEvent.Update.Content(
-                    name = "new${albumCreationEvent.albumName}",
+                    name = "new${albumCreationEvent.content.name}",
                     photosToAdd = listOf(photoUploadEvents[3].subjectId),
                     photosToRemove = listOf(photoUploadEvents[0].subjectId)
                 )
             )
-            expectedAlbum = albumCreationEvent.copy(albumName = expectedEvent.content.name).toAlbum()
+            expectedAlbum = albumCreationEvent.copy(
+                content = AlbumEvent.Creation.Content(name = expectedEvent.content.name)
+            ).toAlbum()
         }
 
         @Test

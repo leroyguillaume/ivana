@@ -44,24 +44,24 @@ internal class AlbumServiceImplTest {
             subjectId = UUID.randomUUID(),
             number = 1,
             source = EventSource.User(UUID.randomUUID(), InetAddress.getByName("127.0.0.1")),
-            albumName = "album"
+            content = AlbumEvent.Creation.Content(name = "album")
         )
         private val expectedAlbum = Album(
             id = creationEvent.subjectId,
             ownerId = creationEvent.source.id,
-            name = creationEvent.albumName,
+            name = creationEvent.content.name,
             creationDate = creationEvent.date
         )
 
         @Test
         fun `should save creation event`() {
             every {
-                albumEventRepo.saveCreationEvent(creationEvent.albumName, creationEvent.source)
+                albumEventRepo.saveCreationEvent(creationEvent.content.name, creationEvent.source)
             } returns creationEvent
             every { albumRepo.fetchById(expectedAlbum.id) } returns expectedAlbum
-            val album = service.create(creationEvent.albumName, creationEvent.source)
+            val album = service.create(creationEvent.content.name, creationEvent.source)
             album shouldBe expectedAlbum
-            verify { albumEventRepo.saveCreationEvent(creationEvent.albumName, creationEvent.source) }
+            verify { albumEventRepo.saveCreationEvent(creationEvent.content.name, creationEvent.source) }
             verify { albumRepo.fetchById(expectedAlbum.id) }
             confirmVerified(albumRepo, albumEventRepo)
         }
