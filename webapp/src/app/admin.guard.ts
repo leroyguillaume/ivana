@@ -24,7 +24,7 @@ export class AdminGuard implements CanActivate {
       tap(userIsAdmin => {
         if (!userIsAdmin) {
           // noinspection JSIgnoredPromiseFromCall
-          this.router.navigate(['home'])
+          this.router.navigate(['/forbidden'])
         }
       })
     )

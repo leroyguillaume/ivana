@@ -70,7 +70,8 @@ export class PhotoUpdateComponent implements OnInit {
           this.router.navigate([], {
             relativeTo: this.route,
             queryParams: {
-              page: page.no
+              page: page.no,
+              tab: Tab.Permissions
             }
           })
         },
@@ -85,12 +86,18 @@ export class PhotoUpdateComponent implements OnInit {
       .subscribe(
         photo => {
           this.photo = photo
-          if (this.updateAllowed) {
-            this.currentTab = Tab.Info
-          } else {
-            this.currentTab = Tab.Permissions
-            this.fetchPermissionsPage(1)
-          }
+          this.route.queryParamMap.subscribe(params => {
+            switch (params.get('tab')) {
+              case Tab.Permissions:
+                this.currentTab = Tab.Permissions
+                this.fetchPermissionsPage(1)
+                break
+              case Tab.Info:
+              default:
+                this.currentTab = Tab.Info
+                break
+            }
+          })
         },
         error => handleError(error, this.stateService, this.router)
       )
@@ -103,6 +110,16 @@ export class PhotoUpdateComponent implements OnInit {
         if (!this.permsPage) {
           this.fetchPermissionsPage(1)
         }
+        break
+      case Tab.Info:
+        // noinspection JSIgnoredPromiseFromCall
+        this.router.navigate([], {
+          relativeTo: this.route,
+          queryParams: {
+            page: this.permsPage?.no,
+            tab: Tab.Info
+          }
+        })
         break
     }
   }
