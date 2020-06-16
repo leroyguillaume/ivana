@@ -8,6 +8,7 @@ import {finalize} from 'rxjs/operators'
 import {handleError} from '../util'
 import {PersonService} from '../person.service'
 import {Person} from '../person'
+import {ApiError} from '../api-error'
 
 @Component({
   selector: 'app-person',
@@ -73,12 +74,20 @@ export class PersonComponent implements OnInit {
 
   submit(): void {
     this.loading = true
+    const onError = error => {
+      const dto: ApiError = error.error
+      if (dto.code === 'duplicate_resource') {
+        this.stateService.sendErrorEvent('Nom déjà utilisé !')
+      } else {
+        handleError(error, this.stateService, this.router)
+      }
+    }
     if (this.person) {
       this.personService.update(this.person.id, this.lastName.value, this.firstName.value)
         .pipe(finalize(() => this.loading = false))
         .subscribe(
           () => this.stateService.sendSuccessEvent('Personne mise à jour !'),
-          error => handleError(error, this.stateService, this.router)
+          onError
         )
     } else {
       this.personService.create(this.lastName.value, this.firstName.value)
@@ -88,7 +97,7 @@ export class PersonComponent implements OnInit {
             this.stateService.sendSuccessEvent('Personne créée !')
             this.person = person
           },
-          error => handleError(error, this.stateService, this.router)
+          onError
         )
     }
   }
