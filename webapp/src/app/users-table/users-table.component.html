@@ -1,0 +1,50 @@
+<div class="text-right mb-3">
+  <button type="button" class="btn btn-success mr-3" [routerLink]="['user']">
+    <fa-icon [icon]="plusIcon"></fa-icon>
+    <span class="d-none d-md-inline"> Créer</span>
+  </button>
+  <div class="btn-group">
+    <button type="button"
+            class="btn btn-secondary"
+            (click)="previousPage()"
+            [disabled]="page.no === 1"
+            [ngClass]="{'cursor-forbidden': page.no === 1}">
+      <fa-icon [icon]="previousIcon"></fa-icon>
+    </button>
+    <button type="button"
+            class="btn btn-secondary"
+            (click)="nextPage()"
+            [disabled]="page.no >= page.totalPages"
+            [ngClass]="{'cursor-forbidden': page.no === page.totalPages}">
+      <fa-icon [icon]="nextIcon"></fa-icon>
+    </button>
+  </div>
+</div>
+<div class="table-responsive">
+  <table class="table">
+    <thead>
+    <tr>
+      <th>Nom</th>
+      <th>Date de création</th>
+      <th>Role</th>
+      <th>Action</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr *ngFor="let user of page.content">
+      <td>{{user.name}}</td>
+      <td>{{user.creationDate | date: 'short'}}</td>
+      <td>{{roleLabels.get(user.role)}}</td>
+      <td>
+        <button
+          *ngIf="currentUser.id !== user.id && (currentUser.role === Role.SuperAdmin || currentUser.role > user.role)"
+          class="btn btn-danger"
+          (click)="emitUserDelete(user)">
+          <fa-icon [icon]="trashIcon"></fa-icon>
+          <span class="d-none d-md-inline"> Supprimer</span>
+        </button>
+      </td>
+    </tr>
+    </tbody>
+  </table>
+</div>

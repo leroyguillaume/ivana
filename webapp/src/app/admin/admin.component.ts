@@ -5,13 +5,20 @@ import {StateService} from '../state.service'
 import {finalize} from 'rxjs/operators'
 import {ActivatedRoute, Router} from '@angular/router'
 import {IconDefinition} from '@fortawesome/fontawesome-common-types'
-import {faArrowLeft, faArrowRight, faSpinner, faTrash, faUserPlus} from '@fortawesome/free-solid-svg-icons'
+import {faSpinner} from '@fortawesome/free-solid-svg-icons'
 import {User} from '../user'
-import {fetchPageFromQueryParam, handleError} from '../util'
-import {LoginService} from '../login.service'
-import {Role, RoleLabels} from '../role'
+import {handleError} from '../util'
+import {NgbNavChangeEvent} from '@ng-bootstrap/ng-bootstrap/nav/nav'
+import {Person} from '../person'
+import {PersonService} from '../person.service'
 
-export const UserPageSize: number = 10
+export const UsersPageSize: number = 10
+export const PeoplePageSize: number = 10
+
+enum Tab {
+  Users = 'users',
+  People = 'people'
+}
 
 @Component({
   selector: 'app-admin',
@@ -20,38 +27,46 @@ export const UserPageSize: number = 10
 })
 export class AdminComponent implements OnInit {
   spinnerIcon: IconDefinition = faSpinner
-  previousIcon: IconDefinition = faArrowLeft
-  nextIcon: IconDefinition = faArrowRight
-  plusIcon: IconDefinition = faUserPlus
-  trashIcon: IconDefinition = faTrash
 
-  Role: typeof Role = Role
-  roleLabels: Map<Role, string> = new Map(
-    RoleLabels
-      .map(roleLabel => [roleLabel.role, roleLabel.label])
-  )
-
-  page: Page<User> = null
+  usersPage: Page<User> = null
+  peoplePage: Page<Person> = null
   loading: boolean = true
-  currentUser: User
+
+  Tab: typeof Tab = Tab
+  currentTab: Tab
 
   constructor(
     private userService: UserService,
+    private personService: PersonService,
     private stateService: StateService,
-    private loginService: LoginService,
     private route: ActivatedRoute,
     private router: Router,
   ) {
   }
 
-  delete(user: User): void {
+  deletePerson(person: Person): void {
+    if (window.confirm(`Êtes-vous certain(e) de vouloir supprimer la personne '${person.firstName} ${person.lastName}' ?`)) {
+      this.loading = true
+      this.personService.delete(person.id)
+        .pipe(finalize(() => this.loading = false))
+        .subscribe(
+          () => {
+            this.fetchPeoplePage(this.peoplePage.no)
+            this.stateService.sendSuccessEvent(`La personne '${person.firstName} ${person.lastName}' a été supprimée !`)
+          },
+          error => handleError(error, this.stateService, this.router)
+        )
+    }
+  }
+
+  deleteUser(user: User): void {
     if (window.confirm(`Êtes-vous certain(e) de vouloir supprimer l'utilisateur '${user.name}' ?`)) {
       this.loading = true
       this.userService.delete(user.id)
         .pipe(finalize(() => this.loading = false))
         .subscribe(
           () => {
-            this.fetchPage(this.page.no)
+            this.fetchUsersPage(this.usersPage.no)
             this.stateService.sendSuccessEvent(`L'utilisateur '${user.name}' a été supprimé !`)
           },
           error => handleError(error, this.stateService, this.router)
@@ -59,18 +74,19 @@ export class AdminComponent implements OnInit {
     }
   }
 
-  fetchPage(no: number): void {
+  fetchPeoplePage(no: number): void {
     this.loading = true
-    this.userService.getAll(no, UserPageSize)
+    this.personService.getAll(no, PeoplePageSize)
       .pipe(finalize(() => this.loading = false))
       .subscribe(
         page => {
-          this.page = page
+          this.peoplePage = page
           // noinspection JSIgnoredPromiseFromCall
           this.router.navigate([], {
             relativeTo: this.route,
             queryParams: {
-              page: page.no
+              page: page.no,
+              tab: Tab.People
             }
           })
         },
@@ -78,17 +94,56 @@ export class AdminComponent implements OnInit {
       )
   }
 
-  nextPage(): void {
-    this.fetchPage(this.page.no + 1)
+  fetchUsersPage(no: number): void {
+    this.loading = true
+    this.userService.getAll(no, UsersPageSize)
+      .pipe(finalize(() => this.loading = false))
+      .subscribe(
+        page => {
+          this.usersPage = page
+          // noinspection JSIgnoredPromiseFromCall
+          this.router.navigate([], {
+            relativeTo: this.route,
+            queryParams: {
+              page: page.no,
+              tab: Tab.Users
+            }
+          })
+        },
+        error => handleError(error, this.stateService, this.router)
+      )
+  }
+
+  loadTab(event: NgbNavChangeEvent): void {
+    this.currentTab = event.nextId
+    switch (event.nextId) {
+      case Tab.People:
+        if (!this.peoplePage) {
+          this.fetchPeoplePage(1)
+        }
+        break
+      case Tab.Users:
+        if (!this.usersPage) {
+          this.fetchUsersPage(1)
+        }
+        break
+    }
   }
 
   ngOnInit(): void {
-    fetchPageFromQueryParam(this.route, (no: number) => this.fetchPage(no))
-    this.loginService.loggedUser().subscribe(user => this.currentUser = user)
-  }
-
-  previousPage(): void {
-    this.fetchPage(this.page.no - 1)
+    this.route.queryParamMap.subscribe(params => {
+      switch (params.get('tab')) {
+        case Tab.People:
+          this.currentTab = Tab.People
+          this.fetchPeoplePage(1)
+          break
+        case Tab.Users:
+        default:
+          this.currentTab = Tab.Users
+          this.fetchUsersPage(1)
+          break
+      }
+    })
   }
 
 }

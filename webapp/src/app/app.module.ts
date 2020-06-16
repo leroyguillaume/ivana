@@ -31,6 +31,9 @@ import {AlbumUpdateComponent} from './album-update/album-update.component'
 import {AlbumUpdateFormComponent} from './album-update-form/album-update-form.component'
 import {PhotoUpdateFormComponent} from './photo-update-form/photo-update-form.component'
 import {registerLocaleData} from '@angular/common'
+import {UsersTableComponent} from './users-table/users-table.component'
+import {PeopleTableComponent} from './people-table/people-table.component'
+import {PersonComponent} from './person/person.component'
 
 registerLocaleData(fr)
 
@@ -58,7 +61,10 @@ registerLocaleData(fr)
     PermissionsTableComponent,
     AlbumUpdateComponent,
     AlbumUpdateFormComponent,
-    PhotoUpdateFormComponent
+    PhotoUpdateFormComponent,
+    UsersTableComponent,
+    PeopleTableComponent,
+    PersonComponent
   ],
   imports: [
     BrowserModule,

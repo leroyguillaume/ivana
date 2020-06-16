@@ -1,0 +1,60 @@
+<app-navbar></app-navbar>
+
+<div class="container mt-5">
+  <app-error></app-error>
+
+  <button class="btn btn-secondary mb-2" (click)="back()">
+    <fa-icon [icon]="leftArrowIcon"></fa-icon>
+    Retour
+  </button>
+
+  <form [formGroup]="personForm" (ngSubmit)="submit()" novalidate>
+    <div class="form-group">
+      <label for="lastName">Nom de famille</label>
+      <input id="lastName"
+             type="text"
+             class="form-control"
+             formControlName="lastName"
+             required
+             minlength="1"
+             maxlength="50"
+             [ngClass]="{'is-invalid': lastName.invalid && (lastName.dirty || lastName.touched)}">
+      <div *ngIf="lastName.errors && lastName.errors.minlength" class="invalid-feedback">
+        Doit contenir au moins 1 caractère.
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="firstName">Prénom</label>
+      <input id="firstName"
+             type="text"
+             class="form-control"
+             formControlName="firstName"
+             required
+             minlength="1"
+             maxlength="50"
+             [ngClass]="{'is-invalid': firstName.invalid && (firstName.dirty || firstName.touched)}">
+      <div *ngIf="firstName.errors && firstName.errors.minlength" class="invalid-feedback">
+        Doit contenir au moins 1 caractère.
+      </div>
+    </div>
+
+    <div class="text-right">
+      <button type="submit"
+              class="btn btn-primary"
+              [disabled]="personForm.invalid || loading"
+              [ngClass]="{'cursor-forbidden': personForm.invalid || loading}">
+        <ng-container *ngIf="person; else creation">
+          <span *ngIf="!loading"> Mettre à jour</span>
+          <fa-icon *ngIf="loading" [icon]="spinnerIcon" spin="true"></fa-icon>
+          <span *ngIf="loading"> Mise à jour en cours...</span>
+        </ng-container>
+        <ng-template #creation>
+          <span *ngIf="!loading"> Créer</span>
+          <fa-icon *ngIf="loading" [icon]="spinnerIcon" spin="true"></fa-icon>
+          <span *ngIf="loading"> Création en cours...</span>
+        </ng-template>
+      </button>
+    </div>
+  </form>
+</div>
