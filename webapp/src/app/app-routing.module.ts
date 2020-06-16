@@ -14,6 +14,7 @@ import {AlbumComponent} from './album/album.component'
 import {ForbiddenComponent} from './forbidden/forbidden.component'
 import {PhotoUpdateComponent} from './photo-update/photo-update.component'
 import {AlbumUpdateComponent} from './album-update/album-update.component'
+import {PersonComponent} from './person/person.component'
 
 
 const routes: Routes = [
@@ -47,6 +48,18 @@ const routes: Routes = [
     path: 'admin/user',
     pathMatch: 'full',
     component: UserComponent,
+    canActivate: [AdminGuard]
+  },
+  {
+    path: 'admin/person',
+    pathMatch: 'full',
+    component: PersonComponent,
+    canActivate: [AdminGuard]
+  },
+  {
+    path: 'admin/person/:id',
+    pathMatch: 'full',
+    component: PersonComponent,
     canActivate: [AdminGuard]
   },
   {

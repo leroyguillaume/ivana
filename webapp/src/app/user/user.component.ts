@@ -46,6 +46,15 @@ export class UserComponent implements OnInit {
     return this.userForm.get('role')
   }
 
+  back(): void {
+    // noinspection JSIgnoredPromiseFromCall
+    this.router.navigate(['/admin'], {
+      queryParams: {
+        tab: 'users'
+      }
+    })
+  }
+
   ngOnInit(): void {
   }
 
