@@ -8,6 +8,7 @@ import {finalize} from 'rxjs/operators'
 import {StateService} from '../state.service'
 import {handleError} from '../util'
 import {Router} from '@angular/router'
+import {ApiError} from '../api-error'
 
 @Component({
   selector: 'app-user',
@@ -64,7 +65,14 @@ export class UserComponent implements OnInit {
       .pipe(finalize(() => this.loading = false))
       .subscribe(
         () => this.stateService.sendSuccessEvent('Utilisateur créé !'),
-        error => handleError(error, this.stateService, this.router)
+        error => {
+          const dto: ApiError = error.error
+          if (dto.code === 'duplicate_resource') {
+            this.stateService.sendErrorEvent('Nom déjà utilisé !')
+          } else {
+            handleError(error, this.stateService, this.router)
+          }
+        }
       )
   }
 }
