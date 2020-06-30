@@ -8,6 +8,7 @@ import {NavigablePhoto} from './navigable-photo'
 import {PhotoUploadResults} from './photo-upload-results'
 import {SubjectPermissions} from './subject-permissions'
 import {SubjectPermissionsUpdate} from './subject-permissions-update'
+import {Person} from './person'
 
 @Injectable({
   providedIn: 'root'
@@ -58,6 +59,10 @@ export class PhotoService {
     )
   }
 
+  getPeople(id: string): Observable<Person[]> {
+    return this.http.get<Person[]>(`${this.baseUrl}/${id}/people`, {withCredentials: true})
+  }
+
   getPermissions(id: string, page: number, size: number): Observable<Page<SubjectPermissions>> {
     return this.http.get<Page<SubjectPermissions>>(
       `${this.baseUrl}/${id}/permissions`,
@@ -84,6 +89,14 @@ export class PhotoService {
       shootingDate
     }
     return this.http.put<Photo>(`${this.baseUrl}/${id}`, dto, {withCredentials: true})
+  }
+
+  updatePeople(id: string, peopleToAdd: string[], peopleToRemove: string[] = []): Observable<void> {
+    const dto = {
+      peopleToAdd,
+      peopleToRemove
+    }
+    return this.http.put<void>(`${this.baseUrl}/${id}/people`, dto, {withCredentials: true})
   }
 
   updatePermissions(

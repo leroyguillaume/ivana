@@ -34,6 +34,7 @@ import {registerLocaleData} from '@angular/common'
 import {UsersTableComponent} from './users-table/users-table.component'
 import {PeopleTableComponent} from './people-table/people-table.component'
 import {PersonComponent} from './person/person.component'
+import {PersonSelectionModalComponent} from './person-selection-modal/person-selection-modal.component'
 
 registerLocaleData(fr)
 
@@ -64,7 +65,8 @@ registerLocaleData(fr)
     PhotoUpdateFormComponent,
     UsersTableComponent,
     PeopleTableComponent,
-    PersonComponent
+    PersonComponent,
+    PersonSelectionModalComponent
   ],
   imports: [
     BrowserModule,
