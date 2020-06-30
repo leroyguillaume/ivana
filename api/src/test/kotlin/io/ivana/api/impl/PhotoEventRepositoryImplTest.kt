@@ -66,6 +66,13 @@ internal class PhotoEventRepositoryImplTest : AbstractRepositoryTest() {
         }
 
         @Test
+        fun `should return update people event with number`() {
+            val expectedEvent = photoUpdatePeopleEvents[0]
+            val event = photoEventRepo.fetch(expectedEvent.number)
+            event shouldBe expectedEvent
+        }
+
+        @Test
         fun `should return update permissions event with number`() {
             val expectedEvent = photoUpdatePermissionsEvents[0]
             val event = photoEventRepo.fetch(expectedEvent.number)
@@ -178,6 +185,40 @@ internal class PhotoEventRepositoryImplTest : AbstractRepositoryTest() {
             )
             event shouldBe expectedEvent.copy(date = event.date)
             photoRepo.fetchById(expectedEvent.subjectId) shouldBe expectedPhoto
+        }
+    }
+
+    @Nested
+    inner class saveUpdatePeopleEvent {
+        private lateinit var expectedEvent: PhotoEvent.UpdatePeople
+
+        @BeforeEach
+        fun beforeEach() {
+            val photoUploadEvent = photoUploadEvents[0]
+            expectedEvent = PhotoEvent.UpdatePeople(
+                date = OffsetDateTime.now(),
+                subjectId = photoUploadEvent.subjectId,
+                number = nextPhotoEventNumber(),
+                source = photoUploadEvent.source,
+                content = PhotoEvent.UpdatePeople.Content(
+                    peopleToAdd = setOf(personCreationEvents[1].subjectId),
+                    peopleToRemove = setOf(personCreationEvents[0].subjectId)
+                )
+            )
+        }
+
+        @Test
+        fun `should return created event`() {
+            val event = photoEventRepo.saveUpdatePeopleEvent(
+                photoId = expectedEvent.subjectId,
+                content = expectedEvent.content,
+                source = expectedEvent.source
+            )
+            event shouldBe expectedEvent.copy(date = event.date)
+            personRepo.fetchOn(event.subjectId) shouldBe listOf(
+                personCreationEvents[2].toPerson(),
+                personCreationEvents[1].toPerson()
+            )
         }
     }
 

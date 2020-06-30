@@ -79,6 +79,23 @@ internal class PhotoEventDataTest {
     }
 
     @Nested
+    inner class UpdatePeople : JsonTest(
+        filename = "event-data/photo/update-people.json",
+        expectedValue = PhotoEventData.UpdatePeople(
+            source = EventSourceData.User(
+                id = UUID.fromString("644465bf-a2d5-43aa-b79d-84b9aa543bad"),
+                ip = InetAddress.getByName("127.0.0.1")
+            ),
+            content = PhotoEventData.UpdatePeople.Content(
+                peopleToAdd = setOf(UUID.fromString("a526a3f3-98dc-4cca-8d5b-43a20fe02963")),
+                peopleToRemove = setOf(UUID.fromString("faf7a32c-8211-4536-9a18-417a34aedf21"))
+            )
+        ),
+        deserializeAs = typeOf<PhotoEventData.UpdatePeople>(),
+        mapper = mapper
+    )
+
+    @Nested
     inner class UpdatePermissions : JsonTest(
         filename = "event-data/photo/update-permissions.json",
         expectedValue = PhotoEventData.UpdatePermissions(

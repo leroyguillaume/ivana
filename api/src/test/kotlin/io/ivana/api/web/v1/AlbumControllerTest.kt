@@ -4,8 +4,8 @@ package io.ivana.api.web.v1
 
 import com.nhaarman.mockitokotlin2.verify
 import com.nhaarman.mockitokotlin2.whenever
-import io.ivana.api.impl.AlbumAlreadyContainsPhotosException
 import io.ivana.api.impl.OwnerPermissionsUpdateException
+import io.ivana.api.impl.PhotosAlreadyInAlbumException
 import io.ivana.api.web.AbstractControllerTest
 import io.ivana.core.*
 import io.ivana.dto.*
@@ -646,7 +646,7 @@ internal class AlbumControllerTest : AbstractControllerTest() {
             whenever(userAlbumAuthzRepo.fetch(principal.user.id, album.id)).thenReturn(setOf(Permission.Update))
             whenever(photoService.userCanReadAll(updateDto.photosToAdd.toSet(), principal.user.id)).thenReturn(true)
             whenever(albumService.update(album.id, updateContent, source)).thenAnswer {
-                throw AlbumAlreadyContainsPhotosException(duplicateIds)
+                throw PhotosAlreadyInAlbumException(duplicateIds)
             }
             callAndExpectDto(
                 method = method,
@@ -654,7 +654,7 @@ internal class AlbumControllerTest : AbstractControllerTest() {
                 reqCookies = listOf(accessTokenCookie()),
                 reqContent = mapper.writeValueAsString(updateDto),
                 status = HttpStatus.CONFLICT,
-                respDto = ErrorDto.AlbumAlreadyContainsPhotos(duplicateIds)
+                respDto = ErrorDto.PhotosAlreadyInAlbum(duplicateIds)
             )
             verify(userAlbumAuthzRepo).fetch(principal.user.id, album.id)
             verify(photoService).userCanReadAll(updateDto.photosToAdd.toSet(), principal.user.id)

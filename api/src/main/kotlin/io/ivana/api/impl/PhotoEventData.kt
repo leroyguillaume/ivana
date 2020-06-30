@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import java.time.LocalDate
+import java.util.*
 
 private const val RotationTransformTypeValue = "rotation"
 
@@ -46,6 +47,16 @@ internal sealed class PhotoEventData : EventData {
     ) : PhotoEventData() {
         data class Content(
             val shootingDate: LocalDate? = null
+        )
+    }
+
+    data class UpdatePeople(
+        override val source: EventSourceData.User,
+        val content: Content
+    ) : PhotoEventData() {
+        data class Content(
+            val peopleToAdd: Set<UUID>,
+            val peopleToRemove: Set<UUID>
         )
     }
 

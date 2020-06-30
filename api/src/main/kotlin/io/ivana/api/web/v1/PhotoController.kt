@@ -33,7 +33,8 @@ import javax.validation.constraints.Min
 class PhotoController(
     private val photoService: PhotoService,
     private val userService: UserService,
-    private val albumService: AlbumService
+    private val albumService: AlbumService,
+    private val personService: PersonService
 ) {
     internal companion object {
         val MediaTypeToPhotoType = mapOf(
@@ -104,6 +105,15 @@ class PhotoController(
         photoFileResponseEntity(file, photo.type)
     }
 
+    @GetMapping("/{id:$UuidRegex}$PeopleEndpoint")
+    @PreAuthorize("hasPermission(#id, '$PhotoTargetType', 'read')")
+    @ResponseStatus(HttpStatus.OK)
+    @Suppress("MVCPathVariableInspection", "RegExpUnexpectedAnchor")
+    fun getPeople(@PathVariable id: UUID): List<PersonDto> {
+        val people = photoService.getPeople(id)
+        return people.map { it.toDto() }
+    }
+
     @GetMapping("/{id:$UuidRegex}$PermissionsEndpoint")
     @PreAuthorize("hasPermission(#id, '$PhotoTargetType', 'update_permissions')")
     @ResponseStatus(HttpStatus.OK)
@@ -143,6 +153,23 @@ class PhotoController(
         val photo = photoService.update(id, dto.shootingDate, req.source(principal))
         val perms = photoService.getPermissions(id, principal.user.id)
         return photo.toSimpleDto(perms)
+    }
+
+    @Transactional
+    @PutMapping("/{id:$UuidRegex}$PeopleEndpoint")
+    @PreAuthorize("hasPermission(#id, '$PhotoTargetType', 'update')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Suppress("MVCPathVariableInspection", "RegExpUnexpectedAnchor")
+    fun updatePeople(
+        @PathVariable id: UUID,
+        @RequestBody @Valid dto: PhotoPeopleUpdateDto,
+        auth: Authentication,
+        req: HttpServletRequest
+    ) {
+        val principal = auth.principal as UserPrincipal
+        val peopleToAdd = personService.getAllByIds(dto.peopleToAdd)
+        val peopleToRemove = personService.getAllByIds(dto.peopleToRemove)
+        photoService.updatePeople(id, peopleToAdd, peopleToRemove, req.source(principal))
     }
 
     @Transactional

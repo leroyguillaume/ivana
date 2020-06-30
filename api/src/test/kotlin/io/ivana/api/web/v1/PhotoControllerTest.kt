@@ -4,6 +4,7 @@ package io.ivana.api.web.v1
 
 import com.nhaarman.mockitokotlin2.*
 import io.ivana.api.impl.OwnerPermissionsUpdateException
+import io.ivana.api.impl.PeopleAlreadyOnPhotoException
 import io.ivana.api.impl.PhotoAlreadyUploadedException
 import io.ivana.api.impl.PhotoNotPresentInAlbumException
 import io.ivana.api.web.AbstractControllerTest
@@ -446,6 +447,60 @@ internal class PhotoControllerTest : AbstractControllerTest() {
     }
 
     @Nested
+    inner class getPeople {
+        private val photoId = UUID.randomUUID()
+        private val people = listOf(
+            Person(
+                id = UUID.randomUUID(),
+                lastName = "Leroy",
+                firstName = "Guillaume"
+            )
+        )
+        private val dto = people.map { it.toDto() }
+        private val method = HttpMethod.GET
+        private val uri = "$PhotoApiEndpoint/$photoId$PeopleEndpoint"
+
+        @Test
+        fun `should return 401 if user is anonymous`() {
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                status = HttpStatus.UNAUTHORIZED,
+                respDto = ErrorDto.Unauthorized
+            )
+        }
+
+        @Test
+        fun `should return 403 if user does not have permission`() = authenticated {
+            whenever(userPhotoAuthzRepo.fetch(principal.user.id, photoId))
+                .thenReturn(EnumSet.complementOf(EnumSet.of(Permission.Read)))
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                reqCookies = listOf(accessTokenCookie()),
+                status = HttpStatus.FORBIDDEN,
+                respDto = ErrorDto.Forbidden
+            )
+            verify(userPhotoAuthzRepo).fetch(principal.user.id, photoId)
+        }
+
+        @Test
+        fun `should return 200`() = authenticated {
+            whenever(userPhotoAuthzRepo.fetch(principal.user.id, photoId)).thenReturn(setOf(Permission.Read))
+            whenever(photoService.getPeople(photoId)).thenReturn(people)
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                reqCookies = listOf(accessTokenCookie()),
+                status = HttpStatus.OK,
+                respDto = dto
+            )
+            verify(userPhotoAuthzRepo).fetch(principal.user.id, photoId)
+            verify(photoService).getPeople(photoId)
+        }
+    }
+
+    @Nested
     inner class getPermissions {
         private val photoId = UUID.randomUUID()
         private val pageNo = 2
@@ -748,12 +803,12 @@ internal class PhotoControllerTest : AbstractControllerTest() {
         }
 
         @Test
-        fun `should return 204 (default)`() {
+        fun `should return 200 (default)`() {
             test(defaultDto, defaultPhoto, defaultRespDto)
         }
 
         @Test
-        fun `should return 204 (complete)`() {
+        fun `should return 200 (complete)`() {
             test(completeDto, completePhoto, completeRespDto)
         }
 
@@ -772,6 +827,98 @@ internal class PhotoControllerTest : AbstractControllerTest() {
             verify(userPhotoAuthzRepo).fetch(principal.user.id, photo.id)
             verify(photoService).update(photo.id, dto.shootingDate, source)
             verify(photoService).getPermissions(photo.id, principal.user.id)
+        }
+    }
+
+    @Nested
+    inner class updatePeople {
+        private val peopleToAdd = setOf(
+            Person(
+                id = UUID.randomUUID(),
+                lastName = "Leroy",
+                firstName = "Guillaume"
+            )
+        )
+        private val peopleToRemove = setOf(
+            Person(
+                id = UUID.randomUUID(),
+                lastName = "Leroy",
+                firstName = "Annie"
+            )
+        )
+        private val peopleIdsToAdd = peopleToAdd.map { it.id }.toSet()
+        private val peopleIdsToRemove = peopleToRemove.map { it.id }.toSet()
+        private val photoId = UUID.randomUUID()
+        private val dto = PhotoPeopleUpdateDto(
+            peopleToAdd = peopleIdsToAdd,
+            peopleToRemove = peopleIdsToRemove
+        )
+        private val method = HttpMethod.PUT
+        private val uri = "$PhotoApiEndpoint/$photoId$PeopleEndpoint"
+
+        @Test
+        fun `should return 401 if user is anonymous`() {
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                status = HttpStatus.UNAUTHORIZED,
+                respDto = ErrorDto.Unauthorized
+            )
+        }
+
+        @Test
+        fun `should return 403 if user does not have permission`() = authenticated {
+            whenever(userPhotoAuthzRepo.fetch(principal.user.id, photoId))
+                .thenReturn(EnumSet.complementOf(EnumSet.of(Permission.Update)))
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                reqCookies = listOf(accessTokenCookie()),
+                reqContent = mapper.writeValueAsString(dto),
+                status = HttpStatus.FORBIDDEN,
+                respDto = ErrorDto.Forbidden
+            )
+            verify(userPhotoAuthzRepo).fetch(principal.user.id, photoId)
+        }
+
+        @Test
+        fun `should return 409 if people are already on photo`() = authenticated {
+            whenever(userPhotoAuthzRepo.fetch(principal.user.id, photoId)).thenReturn(setOf(Permission.Update))
+            whenever(personService.getAllByIds(peopleIdsToAdd)).thenReturn(peopleToAdd)
+            whenever(personService.getAllByIds(peopleIdsToRemove)).thenReturn(peopleToRemove)
+            whenever(photoService.updatePeople(photoId, peopleToAdd, peopleToRemove, source)).thenAnswer {
+                throw PeopleAlreadyOnPhotoException(peopleIdsToAdd)
+            }
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                reqCookies = listOf(accessTokenCookie()),
+                reqContent = mapper.writeValueAsString(dto),
+                status = HttpStatus.CONFLICT,
+                respDto = ErrorDto.PeopleAlreadyOnPhotos(peopleIdsToAdd)
+            )
+            verify(userPhotoAuthzRepo).fetch(principal.user.id, photoId)
+            verify(personService).getAllByIds(peopleIdsToAdd)
+            verify(personService).getAllByIds(peopleIdsToRemove)
+            verify(photoService).updatePeople(photoId, peopleToAdd, peopleToRemove, source)
+        }
+
+        @Test
+        fun `should return 204`() = authenticated {
+            whenever(userPhotoAuthzRepo.fetch(principal.user.id, photoId)).thenReturn(setOf(Permission.Update))
+            whenever(personService.getAllByIds(peopleIdsToAdd)).thenReturn(peopleToAdd)
+            whenever(personService.getAllByIds(peopleIdsToRemove)).thenReturn(peopleToRemove)
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                reqCookies = listOf(accessTokenCookie()),
+                reqContent = mapper.writeValueAsString(dto),
+                status = HttpStatus.NO_CONTENT
+            )
+            verify(userPhotoAuthzRepo).fetch(principal.user.id, photoId)
+            verify(personService).getAllByIds(peopleIdsToAdd)
+            verify(personService).getAllByIds(peopleIdsToRemove)
+            verify(photoService).updatePeople(photoId, peopleToAdd, peopleToRemove, source)
         }
     }
 

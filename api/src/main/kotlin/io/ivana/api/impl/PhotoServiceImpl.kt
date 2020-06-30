@@ -32,6 +32,7 @@ class PhotoServiceImpl(
     override val authzRepo: UserPhotoAuthorizationRepository,
     private val eventRepo: PhotoEventRepository,
     private val albumRepo: AlbumRepository,
+    private val personRepo: PersonRepository,
     private val props: IvanaProperties
 ) : PhotoService, AbstractOwnableEntityService<Photo>() {
     internal companion object {
@@ -86,6 +87,11 @@ class PhotoServiceImpl(
         )
     }
 
+    override fun getPeople(id: UUID): List<Person> {
+        checkPhotoExists(id)
+        return personRepo.fetchOn(id)
+    }
+
     @Transactional
     override fun transform(id: UUID, transform: Transform, source: EventSource.User) {
         checkPhotoExists(id)
@@ -107,6 +113,27 @@ class PhotoServiceImpl(
         eventRepo.saveUpdateEvent(id, content, source)
         Logger.info("User ${source.id} (${source.ip}) updated photo $id")
         return getById(id)
+    }
+
+    @Transactional
+    override fun updatePeople(
+        id: UUID,
+        peopleToAdd: Set<Person>,
+        peopleToRemove: Set<Person>,
+        source: EventSource.User
+    ) {
+        checkPhotoExists(id)
+        val people = personRepo.fetchOn(id)
+        val duplicatePeople = people.intersect(peopleToAdd)
+        if (duplicatePeople.isNotEmpty()) {
+            throw PeopleAlreadyOnPhotoException(duplicatePeople.map { it.id }.toSet())
+        }
+        val content = PhotoEvent.UpdatePeople.Content(
+            peopleToAdd = peopleToAdd.map { it.id }.toSet(),
+            peopleToRemove = peopleToRemove.map { it.id }.toSet()
+        )
+        eventRepo.saveUpdatePeopleEvent(id, content, source)
+        Logger.info("User ${source.id} (${source.ip}) updated permissions of photo $id")
     }
 
     @Transactional

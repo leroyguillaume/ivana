@@ -49,11 +49,17 @@ internal abstract class AbstractRepositoryTest {
     // 3 users
     protected lateinit var userCreationEvents: List<UserEvent.Creation>
 
+    // 3 people
+    protected lateinit var personCreationEvents: List<PersonEvent.Creation>
+
     // 9 photos (3 by user)
     // User 1 can read photo 8
     // User 2 can read photo 1
     // User 2 can't read photo 2
+    // Person 1 on photo 1
+    // Person 3 on photo 1
     protected lateinit var photoUploadEvents: List<PhotoEvent.Upload>
+    protected lateinit var photoUpdatePeopleEvents: List<PhotoEvent.UpdatePeople>
     protected lateinit var photoUpdatePermissionsEvents: List<PhotoEvent.UpdatePermissions>
 
     // 9 albums (3 by user)
@@ -67,16 +73,13 @@ internal abstract class AbstractRepositoryTest {
     protected lateinit var albumUpdateEvents: List<AlbumEvent.Update>
     protected lateinit var albumUpdatePermissionsEvents: List<AlbumEvent.UpdatePermissions>
 
-    // 3 people
-    protected lateinit var personCreationEvents: List<PersonEvent.Creation>
-
     @BeforeEach
     fun beforeEach() {
         cleanDb()
         initUsers()
+        initPeople()
         initPhotos()
         initAlbums()
-        initPeople()
     }
 
     protected fun nextAlbumEventNumber() = nextEventNumber(AlbumEventRepositoryImpl.TableName)
@@ -127,6 +130,18 @@ internal abstract class AbstractRepositoryTest {
             permissionsToRemove = emptySet()
         ),
         source = albumCreationEvent.source
+    )
+
+    private fun addPeopleOnPhoto(
+        photoUploadEvent: PhotoEvent.Upload,
+        vararg personIds: UUID
+    ) = photoEventRepo.saveUpdatePeopleEvent(
+        photoId = photoUploadEvent.subjectId,
+        content = PhotoEvent.UpdatePeople.Content(
+            peopleToAdd = personIds.toSet(),
+            peopleToRemove = emptySet()
+        ),
+        source = photoUploadEvent.source
     )
 
     private fun addPermissionsOnPhoto(
@@ -240,6 +255,13 @@ internal abstract class AbstractRepositoryTest {
                 }
             }
             .flatten()
+
+        photoUpdatePeopleEvents = listOf(
+            addPeopleOnPhoto(
+                photoUploadEvent = photoUploadEvents[0],
+                personIds = *arrayOf(personCreationEvents[0].subjectId, personCreationEvents[2].subjectId)
+            )
+        )
 
         photoUpdatePermissionsEvents = listOf(
             addPermissionsOnPhoto(

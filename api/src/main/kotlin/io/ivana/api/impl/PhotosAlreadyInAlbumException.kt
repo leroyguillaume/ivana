@@ -2,6 +2,6 @@ package io.ivana.api.impl
 
 import java.util.*
 
-class AlbumAlreadyContainsPhotosException(
+class PhotosAlreadyInAlbumException(
     val photosIds: Set<UUID>
 ) : RuntimeException()

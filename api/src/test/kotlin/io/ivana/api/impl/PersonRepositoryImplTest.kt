@@ -150,6 +150,27 @@ internal class PersonRepositoryImplTest : AbstractRepositoryTest() {
     }
 
     @Nested
+    inner class fetchOn {
+        @Test
+        fun `should be empty if photo does not exist`() {
+            personRepo.fetchOn(UUID.randomUUID()).shouldBeEmpty()
+        }
+
+        @Test
+        fun `should be empty if no person on photo`() {
+            personRepo.fetchOn(photoUploadEvents[1].subjectId).shouldBeEmpty()
+        }
+
+        @Test
+        fun `should return all people on photo`() {
+            personRepo.fetchOn(photoUploadEvents[0].subjectId) shouldBe listOf(
+                personCreationEvents[2].toPerson(),
+                personCreationEvents[0].toPerson()
+            )
+        }
+    }
+
+    @Nested
     inner class suggest {
         @Test
         fun `should return empty list`() {

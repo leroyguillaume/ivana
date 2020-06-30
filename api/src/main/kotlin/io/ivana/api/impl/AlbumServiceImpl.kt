@@ -60,7 +60,7 @@ class AlbumServiceImpl(
         if (photosToAddIds.isNotEmpty()) {
             val duplicateIds = repo.fetchDuplicateIds(id, photosToAddIds)
             if (duplicateIds.isNotEmpty()) {
-                throw AlbumAlreadyContainsPhotosException(duplicateIds)
+                throw PhotosAlreadyInAlbumException(duplicateIds)
             }
         }
         eventRepo.saveUpdateEvent(id, content, source)
