@@ -14,6 +14,8 @@ import {Album} from '../album'
 import {NgbModal} from '@ng-bootstrap/ng-bootstrap'
 import {AlbumService} from '../album.service'
 import {Permission} from '../permission'
+import {Person} from '../person'
+import {PersonSelectionModalComponent} from '../person-selection-modal/person-selection-modal.component'
 
 @Component({
   selector: 'app-photo',
@@ -32,10 +34,12 @@ export class PhotoComponent implements OnDestroy, OnInit {
 
   baseUrl: string = environment.baseUrl
   loading: boolean = true
+  loadingPeople: boolean = true
 
   settingsPanelOpened: boolean = false
 
   photo: NavigablePhoto
+  people: Person[]
   currentAlbumId: string
 
   rotationDegrees: number = 0
@@ -91,6 +95,16 @@ export class PhotoComponent implements OnDestroy, OnInit {
     }
   }
 
+  fetchPeople(id: string): void {
+    this.loadingPeople = true
+    this.photoService.getPeople(id)
+      .pipe(finalize(() => this.loadingPeople = false))
+      .subscribe(
+        people => this.people = people,
+        error => handleError(error, this.stateService, this.router)
+      )
+  }
+
   fetchPhoto(id: string, albumId: string): void {
     this.loading = true
     this.photoService.get(id, albumId)
@@ -143,7 +157,9 @@ export class PhotoComponent implements OnDestroy, OnInit {
     this.route.queryParamMap.subscribe(queryParams => {
       this.currentAlbumId = queryParams.get('album')
       this.route.paramMap.subscribe(params => {
-        this.fetchPhoto(params.get('id'), this.currentAlbumId)
+        const id = params.get('id')
+        this.fetchPhoto(id, this.currentAlbumId)
+        this.fetchPeople(id)
       })
     })
   }
@@ -153,6 +169,18 @@ export class PhotoComponent implements OnDestroy, OnInit {
       this.albumService.update(album.id, album.name, [this.photo.id])
         .subscribe(
           updatedAlbum => this.stateService.sendSuccessEvent(`Photo ajoutée à l'album ${updatedAlbum.name} !`),
+          error => handleError(error, this.stateService, this.router)
+        )
+    })
+  }
+
+  openPersonSelectionModal(): void {
+    this.modalService.open(PersonSelectionModalComponent).result.then((person: Person) => {
+      this.loadingPeople = true
+      this.photoService.updatePeople(this.photo.id, [person.id])
+        .pipe(finalize(() => this.loadingPeople = false))
+        .subscribe(
+          () => this.fetchPeople(this.photo.id),
           error => handleError(error, this.stateService, this.router)
         )
     })
@@ -170,6 +198,18 @@ export class PhotoComponent implements OnDestroy, OnInit {
           }
         }
       )
+    }
+  }
+
+  removePerson(person: Person): void {
+    if (window.confirm(`Êtes-vous certain(e) de vouloir supprimer ${person.firstName} ${person.lastName} de cette photo ?`)) {
+      this.loadingPeople = true
+      this.photoService.updatePeople(this.photo.id, [], [person.id])
+        .pipe(finalize(() => this.loadingPeople = false))
+        .subscribe(
+          () => this.fetchPeople(this.photo.id),
+          error => handleError(error, this.stateService, this.router)
+        )
     }
   }
 

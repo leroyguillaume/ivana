@@ -13,6 +13,15 @@ img {
   z-index: 1;
 }
 
+.panel-content {
+  height: 80%;
+}
+
+.people {
+  overflow-y: auto;
+  height: 50%;
+}
+
 .photo-page {
   max-width: 100vw;
   max-height: 100vh;

@@ -1,0 +1,26 @@
+<div class="modal-header">
+  <h4 class="modal-title">Sélection d'une persone</h4>
+  <fa-icon class="clickable" [icon]="closeIcon" (click)="activeModal.dismiss()" size="2x"></fa-icon>
+</div>
+<div class="modal-body">
+  <div class="form-group">
+    <label for="person">Person</label>
+    <input id="person"
+           type="text"
+           class="form-control"
+           [ngbTypeahead]="suggest"
+           (keydown)="this.selectedPerson = null"
+           (selectItem)="selectPerson($event)"
+           [inputFormatter]="format"
+           [resultFormatter]="format">
+  </div>
+
+  <div class="text-right">
+    <button (click)="submit()"
+            class="btn btn-primary"
+            [disabled]="!selectedPerson"
+            [ngClass]="{'cursor-forbidden': !selectedPerson}">
+      <span> Sélectionner</span>
+    </button>
+  </div>
+</div>

@@ -19,14 +19,14 @@
     </div>
 
     <div *ngIf="settingsPanelOpened" class="settings-panel">
-      <div class="container mt-2">
+      <div class="container mt-2 panel-content">
         <div class="text-right mb-2">
           <fa-icon class="clickable" [icon]="closeIcon" (click)="settingsPanelOpened = false" size="2x"></fa-icon>
         </div>
 
         <app-error></app-error>
 
-        <div class="text-center">
+        <div class="text-center panel-content">
           <div *ngIf="updateAllowed">
             <h4>Rotations</h4>
             <button class="btn btn-secondary mr-2" (click)="rotateClockwise()">
@@ -52,6 +52,29 @@
             <fa-icon [icon]="trashIcon"></fa-icon>
             Supprimer
           </button>
+
+          <h4 class="mt-4">
+            Personnes
+            <button *ngIf="updateAllowed" class="btn btn-success btn-sm" (click)="openPersonSelectionModal()">
+              <fa-icon [icon]="plusIcon"></fa-icon>
+            </button>
+          </h4>
+          <div class="people">
+            <div *ngIf="loadingPeople; else personList">
+              <div class="text-center">
+                <fa-icon [icon]="spinnerIcon" spin="true" size="4x"></fa-icon>
+              </div>
+            </div>
+
+            <ng-template #personList>
+              <div *ngFor="let person of people">
+                {{person.firstName}} {{person.lastName}}
+                <button *ngIf="updateAllowed" class="btn btn-danger btn-sm" (click)="removePerson(person)">
+                  <fa-icon [icon]="trashIcon"></fa-icon>
+                </button>
+              </div>
+            </ng-template>
+          </div>
         </div>
       </div>
     </div>
