@@ -448,7 +448,7 @@ internal class AlbumServiceImplTest {
         fun `should throw exception if album already contains photos`() {
             every { albumRepo.existsById(expectedAlbum.id) } returns true
             every { albumRepo.fetchDuplicateIds(expectedAlbum.id, duplicateIds) } returns duplicateIds
-            val exception = assertThrows<AlbumAlreadyContainsPhotosException> {
+            val exception = assertThrows<PhotosAlreadyInAlbumException> {
                 service.update(expectedAlbum.id, event.content, event.source)
             }
             exception.photosIds shouldBe duplicateIds

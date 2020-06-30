@@ -13,6 +13,12 @@ interface PhotoEventRepository : EventRepository<PhotoEvent> {
         source: EventSource.User
     ): PhotoEvent.Update
 
+    fun saveUpdatePeopleEvent(
+        photoId: UUID,
+        content: PhotoEvent.UpdatePeople.Content,
+        source: EventSource.User
+    ): PhotoEvent.UpdatePeople
+
     fun saveUpdatePermissionsEvent(
         photoId: UUID,
         content: PhotoEvent.UpdatePermissions.Content,

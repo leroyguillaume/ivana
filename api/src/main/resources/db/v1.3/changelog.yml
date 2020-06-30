@@ -13,3 +13,7 @@ databaseChangeLog:
             path: 002-person.sql
             splitStatements: false
             relativeToChangelogFile: true
+        - sqlFile:
+            path: 003-update-people-on-photo.sql
+            splitStatements: false
+            relativeToChangelogFile: true

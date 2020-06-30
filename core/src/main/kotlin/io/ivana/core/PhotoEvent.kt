@@ -32,6 +32,19 @@ sealed class PhotoEvent : Event {
         )
     }
 
+    data class UpdatePeople(
+        override val date: OffsetDateTime,
+        override val subjectId: UUID,
+        override val number: Long,
+        override val source: EventSource.User,
+        val content: Content
+    ) : PhotoEvent() {
+        data class Content(
+            val peopleToAdd: Set<UUID>,
+            val peopleToRemove: Set<UUID>
+        )
+    }
+
     data class UpdatePermissions(
         override val date: OffsetDateTime,
         override val subjectId: UUID,

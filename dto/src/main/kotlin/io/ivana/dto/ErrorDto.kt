@@ -6,7 +6,6 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
 import java.net.URI
 import java.util.*
 
-private const val AlbumAlreadyContainsPhotosCodeValue = "album_already_contains_photos"
 private const val DuplicateResourceCodeValue = "duplicate_resource"
 private const val ForbiddenCodeValue = "forbidden"
 private const val InternalErrorCodeValue = "internal_error"
@@ -16,7 +15,9 @@ private const val MethodNotAllowedCodeValue = "method_not_allowed"
 private const val MissingParameterCodeValue = "missing_parameter"
 private const val NotFoundCodeValue = "not_found"
 private const val OwnerPermissionsUpdateCodeValue = "owner_permissions_update"
+private const val PeopleAlreadyOnPhotoCodeValue = "people_already_on_photo"
 private const val PhotoNotPresentInAlbumCodeValue = "photo_not_present_in_album"
+private const val PhotosAlreadyInAlbumCodeValue = "album_already_contains_photos"
 private const val ResourcesNotFoundCodeValue = "resources_not_found"
 private const val UnauthorizedCodeValue = "unauthorized"
 private const val UnsupportedMediaTypeCodeValue = "unsupported_media_type"
@@ -28,7 +29,6 @@ private const val ValidationErrorCodeValue = "validation_error"
     property = "code"
 )
 @JsonSubTypes(
-    JsonSubTypes.Type(value = ErrorDto.AlbumAlreadyContainsPhotos::class, name = AlbumAlreadyContainsPhotosCodeValue),
     JsonSubTypes.Type(value = ErrorDto.DuplicateResource::class, name = DuplicateResourceCodeValue),
     JsonSubTypes.Type(value = ErrorDto.Forbidden::class, name = ForbiddenCodeValue),
     JsonSubTypes.Type(value = ErrorDto.InternalError::class, name = InternalErrorCodeValue),
@@ -38,7 +38,9 @@ private const val ValidationErrorCodeValue = "validation_error"
     JsonSubTypes.Type(value = ErrorDto.MissingParameter::class, name = MissingParameterCodeValue),
     JsonSubTypes.Type(value = ErrorDto.NotFound::class, name = NotFoundCodeValue),
     JsonSubTypes.Type(value = ErrorDto.OwnerPermissionsUpdate::class, name = OwnerPermissionsUpdateCodeValue),
+    JsonSubTypes.Type(value = ErrorDto.PeopleAlreadyOnPhotos::class, name = PeopleAlreadyOnPhotoCodeValue),
     JsonSubTypes.Type(value = ErrorDto.PhotoNotPresentInAlbum::class, name = PhotoNotPresentInAlbumCodeValue),
+    JsonSubTypes.Type(value = ErrorDto.PhotosAlreadyInAlbum::class, name = PhotosAlreadyInAlbumCodeValue),
     JsonSubTypes.Type(value = ErrorDto.ResourcesNotFound::class, name = ResourcesNotFoundCodeValue),
     JsonSubTypes.Type(value = ErrorDto.Unauthorized::class, name = UnauthorizedCodeValue),
     JsonSubTypes.Type(value = ErrorDto.UnsupportedMediaType::class, name = UnsupportedMediaTypeCodeValue),
@@ -46,9 +48,6 @@ private const val ValidationErrorCodeValue = "validation_error"
 )
 sealed class ErrorDto {
     enum class Code {
-        @JsonProperty(AlbumAlreadyContainsPhotosCodeValue)
-        AlbumAlreadyContainsPhotos,
-
         @JsonProperty(DuplicateResourceCodeValue)
         DuplicateResource,
 
@@ -76,8 +75,14 @@ sealed class ErrorDto {
         @JsonProperty(OwnerPermissionsUpdateCodeValue)
         OwnerPermissionsUpdate,
 
+        @JsonProperty(PeopleAlreadyOnPhotoCodeValue)
+        PeopleAlreadyOnPhoto,
+
         @JsonProperty(PhotoNotPresentInAlbumCodeValue)
         PhotoNotPresentInAlbum,
+
+        @JsonProperty(PhotosAlreadyInAlbumCodeValue)
+        PhotosAlreadyInAlbum,
 
         @JsonProperty(ResourcesNotFoundCodeValue)
         ResourcesNotFound,
@@ -90,12 +95,6 @@ sealed class ErrorDto {
 
         @JsonProperty(ValidationErrorCodeValue)
         ValidationError
-    }
-
-    data class AlbumAlreadyContainsPhotos(
-        val photosIds: Set<UUID>
-    ) : ErrorDto() {
-        override val code = Code.AlbumAlreadyContainsPhotos
     }
 
     data class DuplicateResource(
@@ -153,10 +152,22 @@ sealed class ErrorDto {
         override fun equals(other: Any?) = other is OwnerPermissionsUpdate
     }
 
+    data class PeopleAlreadyOnPhotos(
+        val peopleIds: Set<UUID>
+    ) : ErrorDto() {
+        override val code = Code.PeopleAlreadyOnPhoto
+    }
+
     object PhotoNotPresentInAlbum : ErrorDto() {
         override val code = Code.PhotoNotPresentInAlbum
 
         override fun equals(other: Any?) = other is PhotoNotPresentInAlbum
+    }
+
+    data class PhotosAlreadyInAlbum(
+        val photosIds: Set<UUID>
+    ) : ErrorDto() {
+        override val code = Code.PhotosAlreadyInAlbum
     }
 
     data class ResourcesNotFound(

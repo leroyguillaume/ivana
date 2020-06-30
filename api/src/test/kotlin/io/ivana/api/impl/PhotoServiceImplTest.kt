@@ -41,6 +41,7 @@ internal class PhotoServiceImplTest {
     private lateinit var photoRepo: PhotoRepository
     private lateinit var userRepo: UserRepository
     private lateinit var albumRepo: AlbumRepository
+    private lateinit var personRepo: PersonRepository
     private lateinit var service: PhotoServiceImpl
 
     @BeforeEach
@@ -50,8 +51,9 @@ internal class PhotoServiceImplTest {
         photoRepo = mockk()
         userRepo = mockk()
         albumRepo = mockk()
+        personRepo = mockk()
 
-        service = PhotoServiceImpl(photoRepo, userRepo, authzRepo, photoEventRepo, albumRepo, Props)
+        service = PhotoServiceImpl(photoRepo, userRepo, authzRepo, photoEventRepo, albumRepo, personRepo, Props)
     }
 
     @Nested
@@ -581,6 +583,38 @@ internal class PhotoServiceImplTest {
     }
 
     @Nested
+    inner class getPeople {
+        private val photoId = UUID.randomUUID()
+        private val expectedPeople = listOf(
+            Person(
+                id = UUID.randomUUID(),
+                lastName = "Leroy",
+                firstName = "Guillaume"
+            )
+        )
+
+        @Test
+        fun `should throw exception if photo does not exist`() {
+            every { photoRepo.existsById(photoId) } returns false
+            val exception = assertThrows<EntityNotFoundException> { service.getPeople(photoId) }
+            exception shouldHaveMessage "Photo $photoId does not exist"
+            verify { photoRepo.existsById(photoId) }
+            confirmVerified(photoRepo)
+        }
+
+        @Test
+        fun `should return people on photo`() {
+            every { photoRepo.existsById(photoId) } returns true
+            every { personRepo.fetchOn(photoId) } returns expectedPeople
+            val people = service.getPeople(photoId)
+            people shouldBe expectedPeople
+            verify { photoRepo.existsById(photoId) }
+            verify { personRepo.fetchOn(photoId) }
+            confirmVerified(photoRepo, personRepo)
+        }
+    }
+
+    @Nested
     inner class getPermissions {
         private val userId = UUID.randomUUID()
         private val photoId = UUID.randomUUID()
@@ -850,6 +884,70 @@ internal class PhotoServiceImplTest {
             verify { photoEventRepo.saveUpdateEvent(event.subjectId, event.content, event.source) }
             verify { photoRepo.fetchById(event.subjectId) }
             confirmVerified(photoRepo, photoEventRepo)
+        }
+    }
+
+    @Nested
+    inner class updatePeople {
+        private val peopleToAdd = setOf(
+            Person(
+                id = UUID.randomUUID(),
+                lastName = "Leroy",
+                firstName = "Guillaume"
+            )
+        )
+        private val peopleToRemove = setOf(
+            Person(
+                id = UUID.randomUUID(),
+                lastName = "Leroy",
+                firstName = "Annie"
+            )
+        )
+        private val event = PhotoEvent.UpdatePeople(
+            date = OffsetDateTime.now(),
+            subjectId = UUID.randomUUID(),
+            number = 2,
+            source = EventSource.User(UUID.randomUUID(), InetAddress.getByName("127.0.0.1")),
+            content = PhotoEvent.UpdatePeople.Content(
+                peopleToAdd = peopleToAdd.map { it.id }.toSet(),
+                peopleToRemove = peopleToRemove.map { it.id }.toSet()
+            )
+        )
+
+        @Test
+        fun `should throw exception if photo does not exist`() {
+            every { photoRepo.existsById(event.subjectId) } returns false
+            val exception = assertThrows<EntityNotFoundException> {
+                service.updatePeople(event.subjectId, peopleToAdd, peopleToRemove, event.source)
+            }
+            exception shouldHaveMessage "Photo ${event.subjectId} does not exist"
+            verify { photoRepo.existsById(event.subjectId) }
+            confirmVerified(photoRepo)
+        }
+
+        @Test
+        fun `should throw exception if people are already on photo`() {
+            every { photoRepo.existsById(event.subjectId) } returns true
+            every { personRepo.fetchOn(event.subjectId) } returns (peopleToAdd + peopleToRemove).toList()
+            val exception = assertThrows<PeopleAlreadyOnPhotoException> {
+                service.updatePeople(event.subjectId, peopleToAdd, peopleToRemove, event.source)
+            }
+            exception.peopleIds shouldBe peopleToAdd.map { it.id }.toSet()
+            verify { photoRepo.existsById(event.subjectId) }
+            verify { personRepo.fetchOn(event.subjectId) }
+            confirmVerified(photoRepo, personRepo)
+        }
+
+        @Test
+        fun `should update people of photo`() {
+            every { photoRepo.existsById(event.subjectId) } returns true
+            every { personRepo.fetchOn(event.subjectId) } returns emptyList()
+            every { photoEventRepo.saveUpdatePeopleEvent(event.subjectId, event.content, event.source) } returns event
+            service.updatePeople(event.subjectId, peopleToAdd, peopleToRemove, event.source)
+            verify { photoRepo.existsById(event.subjectId) }
+            verify { personRepo.fetchOn(event.subjectId) }
+            verify { photoEventRepo.saveUpdatePeopleEvent(event.subjectId, event.content, event.source) }
+            confirmVerified(photoRepo, personRepo, photoEventRepo)
         }
     }
 

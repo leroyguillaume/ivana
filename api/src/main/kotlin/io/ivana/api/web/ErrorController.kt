@@ -45,13 +45,6 @@ class ErrorController(
     fun handleAccessDenied(exception: AccessDeniedException, req: HttpServletRequest, resp: HttpServletResponse) =
         CustomAccessDeniedHandler(mapper).handle(req, resp, exception)
 
-    @ExceptionHandler(AlbumAlreadyContainsPhotosException::class)
-    @ResponseStatus(HttpStatus.CONFLICT)
-    fun handleAlbumAlreadyContainsPhotos(exception: AlbumAlreadyContainsPhotosException): ErrorDto {
-        Logger.debug(exception.message, exception)
-        return ErrorDto.AlbumAlreadyContainsPhotos(exception.photosIds)
-    }
-
     @ExceptionHandler(ConstraintViolationException::class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     fun handleConstraintViolation(exception: ConstraintViolationException): ErrorDto {
@@ -126,6 +119,13 @@ class ErrorController(
         }
     }
 
+    @ExceptionHandler(MissingServletRequestParameterException::class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    fun handleMissingServletRequestParameter(exception: MissingServletRequestParameterException): ErrorDto {
+        Logger.debug(exception.message, exception)
+        return ErrorDto.MissingParameter(exception.parameterName)
+    }
+
     @ExceptionHandler(OwnerPermissionsUpdateException::class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     fun handleOwnerPermissionsUpdate(exception: OwnerPermissionsUpdateException): ErrorDto {
@@ -133,11 +133,18 @@ class ErrorController(
         return ErrorDto.OwnerPermissionsUpdate
     }
 
-    @ExceptionHandler(MissingServletRequestParameterException::class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    fun handleMissingServletRequestParameter(exception: MissingServletRequestParameterException): ErrorDto {
+    @ExceptionHandler(PeopleAlreadyOnPhotoException::class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    fun handlePeopleAlreadyOnPhoto(exception: PeopleAlreadyOnPhotoException): ErrorDto {
         Logger.debug(exception.message, exception)
-        return ErrorDto.MissingParameter(exception.parameterName)
+        return ErrorDto.PeopleAlreadyOnPhotos(exception.peopleIds)
+    }
+
+    @ExceptionHandler(PhotosAlreadyInAlbumException::class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    fun handlePhotosAlreadyInAlbum(exception: PhotosAlreadyInAlbumException): ErrorDto {
+        Logger.debug(exception.message, exception)
+        return ErrorDto.PhotosAlreadyInAlbum(exception.photosIds)
     }
 
     @ExceptionHandler(ResourcesNotFoundException::class)

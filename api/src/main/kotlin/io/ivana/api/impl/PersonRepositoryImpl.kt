@@ -17,6 +17,10 @@ class PersonRepositoryImpl(
         const val TableName = "person"
         const val LastNameColumnName = "last_name"
         const val FirstNameColumnName = "first_name"
+
+        const val PhotoPersonTableName = "photo_person"
+        const val PhotoIdColumnName = "photo_id"
+        const val PersonIdColumnName = "person_id"
     }
 
     override val tableName = TableName
@@ -33,6 +37,18 @@ class PersonRepositoryImpl(
     } catch (exception: EmptyResultDataAccessException) {
         null
     }
+
+    override fun fetchOn(photoId: UUID) = jdbc.query(
+        """
+        SELECT p.*
+        FROM $PhotoPersonTableName pp
+        JOIN $TableName p
+        ON p.$IdColumnName = pp.$PersonIdColumnName
+        WHERE pp.$PhotoIdColumnName = :photo_id
+        ORDER BY p.$LastNameColumnName, p.$FirstNameColumnName
+        """,
+        MapSqlParameterSource(mapOf("photo_id" to photoId))
+    ) { rs, _ -> rs.toEntity() }
 
     override fun suggest(name: String, count: Int) = jdbc.query(
         """

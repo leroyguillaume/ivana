@@ -7,7 +7,8 @@ enum class PhotoEventType(
     Transform("transform"),
     Update("update"),
     UpdatePermissions("update_permissions"),
-    Upload("upload");
+    Upload("upload"),
+    UpdatePeople("update_people");
 
     override val sqlType = "photo_event_type"
 }

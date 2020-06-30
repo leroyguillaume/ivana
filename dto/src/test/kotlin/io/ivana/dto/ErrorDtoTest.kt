@@ -6,15 +6,6 @@ import java.util.*
 
 internal class ErrorDtoTest {
     @Nested
-    inner class AlbumAlreadyContainsPhotos : JsonTest(
-        filename = "error/album-already-contains-photos.json",
-        expectedValue = ErrorDto.AlbumAlreadyContainsPhotos(
-            photosIds = setOf(UUID.fromString("61f11547-a340-441c-bce7-551234d5d361"))
-        ),
-        deserializeAs = typeOf<ErrorDto>()
-    )
-
-    @Nested
     inner class DuplicateResource : JsonTest(
         filename = "error/duplicate-resource.json",
         expectedValue = ErrorDto.DuplicateResource(URI("/v1/photo/61f11547-a340-441c-bce7-551234d5d361")),
@@ -81,9 +72,27 @@ internal class ErrorDtoTest {
     )
 
     @Nested
+    inner class PeopleAlreadyOnPhoto : JsonTest(
+        filename = "error/people-already-on-photo.json",
+        expectedValue = ErrorDto.PeopleAlreadyOnPhotos(
+            peopleIds = setOf(UUID.fromString("61f11547-a340-441c-bce7-551234d5d361"))
+        ),
+        deserializeAs = typeOf<ErrorDto>()
+    )
+
+    @Nested
     inner class PhotoNotPresentInAlbum : JsonTest(
         filename = "error/photo-not-present-in-album.json",
         expectedValue = ErrorDto.PhotoNotPresentInAlbum,
+        deserializeAs = typeOf<ErrorDto>()
+    )
+
+    @Nested
+    inner class PhotosAlreadyInAlbum : JsonTest(
+        filename = "error/photos-already-in-album.json",
+        expectedValue = ErrorDto.PhotosAlreadyInAlbum(
+            photosIds = setOf(UUID.fromString("61f11547-a340-441c-bce7-551234d5d361"))
+        ),
         deserializeAs = typeOf<ErrorDto>()
     )
 

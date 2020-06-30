@@ -1,0 +1,15 @@
+{
+  "source": {
+    "type": "user",
+    "id": "644465bf-a2d5-43aa-b79d-84b9aa543bad",
+    "ip": "127.0.0.1"
+  },
+  "content": {
+    "peopleToAdd": [
+      "a526a3f3-98dc-4cca-8d5b-43a20fe02963"
+    ],
+    "peopleToRemove": [
+      "faf7a32c-8211-4536-9a18-417a34aedf21"
+    ]
+  }
+}
