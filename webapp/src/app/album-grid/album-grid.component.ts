@@ -28,6 +28,9 @@ export class AlbumGridComponent implements OnInit {
   @Input()
   page: Page<Album>
 
+  @Input()
+  sharedView: boolean
+
   @Output()
   pageChange: EventEmitter<number> = new EventEmitter()
 

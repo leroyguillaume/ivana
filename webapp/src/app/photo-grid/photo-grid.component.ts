@@ -36,6 +36,9 @@ export class PhotoGridComponent implements OnInit {
   @Input()
   page: Page<Photo>
 
+  @Input()
+  sharedView: boolean
+
   @Output()
   pageChange: EventEmitter<number> = new EventEmitter()
 

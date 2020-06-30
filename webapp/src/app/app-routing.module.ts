@@ -24,7 +24,12 @@ const routes: Routes = [
     canActivate: [AnonymousGuard]
   },
   {
-    path: 'home',
+    path: 'photos',
+    component: HomeComponent,
+    canActivate: [AuthenticatedGuard]
+  },
+  {
+    path: 'photos/shared',
     component: HomeComponent,
     canActivate: [AuthenticatedGuard]
   },
@@ -69,7 +74,13 @@ const routes: Routes = [
     canActivate: [AuthenticatedGuard]
   },
   {
-    path: 'album',
+    path: 'albums',
+    pathMatch: 'full',
+    component: AlbumListComponent,
+    canActivate: [AuthenticatedGuard]
+  },
+  {
+    path: 'albums/shared',
     pathMatch: 'full',
     component: AlbumListComponent,
     canActivate: [AuthenticatedGuard]
@@ -94,7 +105,7 @@ const routes: Routes = [
   },
   {
     path: '**',
-    redirectTo: 'home'
+    redirectTo: 'photos'
   }
 ]
 

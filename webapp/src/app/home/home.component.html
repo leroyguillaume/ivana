@@ -19,6 +19,7 @@
 
   <div *ngIf="!loading && page.totalItems > 0">
     <app-photo-grid [page]="page"
+                    [sharedView]="shared"
                     (pageChange)="fetchPage($event)"
                     (selectedPhotosDelete)="deleteSelectedPhotos($event)">
     </app-photo-grid>

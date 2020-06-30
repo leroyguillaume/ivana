@@ -10,7 +10,7 @@ import {Album} from '../album'
 import {AlbumService} from '../album.service'
 import {NgbModal} from '@ng-bootstrap/ng-bootstrap'
 import {AlbumModalComponent} from '../album-modal/album-modal.component'
-import {forkJoin} from 'rxjs'
+import {forkJoin, Observable} from 'rxjs'
 
 export const AlbumPageSize = 12
 
@@ -25,6 +25,9 @@ export class AlbumListComponent implements OnInit {
   page: Page<Album>
   loading: boolean = true
   creating: boolean = false
+  shared: boolean = false
+
+  fetchAlbums: (no: number) => Observable<Page<Album>>
 
   constructor(
     private albumService: AlbumService,
@@ -50,7 +53,7 @@ export class AlbumListComponent implements OnInit {
 
   fetchPage(no: number): void {
     this.loading = true
-    this.albumService.getAll(no, AlbumPageSize)
+    this.fetchAlbums(no)
       .pipe(finalize(() => this.loading = false))
       .subscribe(
         page => {
@@ -68,7 +71,16 @@ export class AlbumListComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    fetchPageFromQueryParam(this.route, (no: number) => this.fetchPage(no))
+    this.route.url.subscribe(urlParts => {
+      if (urlParts[urlParts.length - 1].path === 'shared') {
+        this.fetchAlbums = (no: number) => this.albumService.getShared(no, AlbumPageSize)
+        this.shared = true
+      } else {
+        this.fetchAlbums = (no: number) => this.albumService.getAll(no, AlbumPageSize)
+        this.shared = false
+      }
+      fetchPageFromQueryParam(this.route, (no: number) => this.fetchPage(no))
+    })
   }
 
   openAlbumModal(): void {
