@@ -27,6 +27,15 @@ internal class PhotoRepositoryImplTest : AbstractRepositoryTest() {
     }
 
     @Nested
+    inner class countShared {
+        @Test
+        fun `should return count of shared photos of user`() {
+            val count = photoRepo.countShared(userCreationEvents[1].subjectId)
+            count shouldBe 2
+        }
+    }
+
+    @Nested
     inner class `count with owner id` {
         private lateinit var ownerId: UUID
 
@@ -366,6 +375,24 @@ internal class PhotoRepositoryImplTest : AbstractRepositoryTest() {
         fun `should be next photo (other owner)`() {
             val photo = photoRepo.fetchPreviousOf(3, userCreationEvents[1].subjectId, albumId)
             photo shouldBe photoUploadEvents[0].toPhoto()
+        }
+    }
+
+    @Nested
+    inner class fetchShared {
+        private lateinit var uploadedPhotos: List<Photo>
+        private lateinit var userId: UUID
+
+        @BeforeEach
+        fun beforeEach() {
+            userId = userCreationEvents[1].subjectId
+            uploadedPhotos = listOf(photoUploadEvents[0], photoUploadEvents[2]).map { it.toPhoto() }
+        }
+
+        @Test
+        fun `should return all photos in interval`() {
+            val photos = photoRepo.fetchShared(userId, 1, 10)
+            photos shouldBe uploadedPhotos.subList(1, 2)
         }
     }
 }

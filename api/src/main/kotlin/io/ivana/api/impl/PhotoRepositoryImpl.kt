@@ -42,6 +42,15 @@ class PhotoRepositoryImpl(
         MapSqlParameterSource(mapOf("owner_id" to ownerId))
     ) { rs, _ -> rs.getInt(1) }
 
+    override fun countShared(userId: UUID) = jdbc.queryForObject(
+        """
+        SELECT COUNT($IdColumnName)
+        FROM $tableName
+        WHERE $OwnerIdColumnName != :user_id AND user_can_read($IdColumnName, :user_id)
+        """,
+        MapSqlParameterSource(mapOf("user_id" to userId))
+    ) { rs, _ -> rs.getInt(1) }
+
     override fun fetchAll(ownerId: UUID, offset: Int, limit: Int) = jdbc.query(
         """
         SELECT *
@@ -72,6 +81,18 @@ class PhotoRepositoryImpl(
         LIMIT :limit
         """,
         MapSqlParameterSource(mapOf("album_id" to albumId, "user_id" to userId, "offset" to offset, "limit" to limit))
+    ) { rs, _ -> rs.toEntity() }
+
+    override fun fetchShared(userId: UUID, offset: Int, limit: Int) = jdbc.query(
+        """
+        SELECT *
+        FROM $TableName
+        WHERE $OwnerIdColumnName != :user_id AND user_can_read($IdColumnName, :user_id)
+        ORDER BY $NoColumnName
+        OFFSET :offset
+        LIMIT :limit
+        """,
+        MapSqlParameterSource(mapOf("user_id" to userId, "offset" to offset, "limit" to limit))
     ) { rs, _ -> rs.toEntity() }
 
     override fun fetchByHash(ownerId: UUID, hash: String) = fetchBy(

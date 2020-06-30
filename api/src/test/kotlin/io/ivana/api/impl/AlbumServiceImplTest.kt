@@ -376,6 +376,43 @@ internal class AlbumServiceImplTest {
     }
 
     @Nested
+    inner class getShared {
+        private val userId = UUID.randomUUID()
+        private val pageNo = 1
+        private val pageSize = 3
+        private val expectedPage = Page(
+            content = listOf(
+                Album(
+                    id = UUID.randomUUID(),
+                    ownerId = UUID.randomUUID(),
+                    name = "album1",
+                    creationDate = OffsetDateTime.now()
+                ),
+                Album(
+                    id = UUID.randomUUID(),
+                    ownerId = UUID.randomUUID(),
+                    name = "album2",
+                    creationDate = OffsetDateTime.now()
+                )
+            ),
+            no = pageNo,
+            totalItems = 2,
+            totalPages = 1
+        )
+
+        @Test
+        fun `should return page`() {
+            every { albumRepo.fetchShared(userId, pageNo - 1, pageSize) } returns expectedPage.content
+            every { albumRepo.countShared(userId) } returns 2
+            val page = service.getShared(userId, pageNo, pageSize)
+            page shouldBe expectedPage
+            verify { albumRepo.fetchShared(userId, pageNo - 1, pageSize) }
+            verify { albumRepo.countShared(userId) }
+            confirmVerified(albumRepo)
+        }
+    }
+
+    @Nested
     inner class suggest {
         private val expectedAlbums = listOf(
             Album(

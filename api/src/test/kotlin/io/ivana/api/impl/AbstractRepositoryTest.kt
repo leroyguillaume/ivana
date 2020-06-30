@@ -64,6 +64,7 @@ internal abstract class AbstractRepositoryTest {
 
     // 9 albums (3 by user)
     // Album 1 contains all photos of user 1
+    // User 1 can read album 7, 8, 9
     // User 2 can read album 1
     // User 2 can update album 2
     // User 2 can delete album 3
@@ -217,6 +218,21 @@ internal abstract class AbstractRepositoryTest {
                 albumCreationEvent = albumCreationEvents[6],
                 userId = userCreationEvents[1].subjectId,
                 permissions = *arrayOf(Permission.UpdatePermissions)
+            ),
+            addPermissionsOnAlbum(
+                albumCreationEvent = albumCreationEvents[6],
+                userId = userCreationEvents[0].subjectId,
+                permissions = *arrayOf(Permission.Read)
+            ),
+            addPermissionsOnAlbum(
+                albumCreationEvent = albumCreationEvents[7],
+                userId = userCreationEvents[0].subjectId,
+                permissions = *arrayOf(Permission.Read)
+            ),
+            addPermissionsOnAlbum(
+                albumCreationEvent = albumCreationEvents[8],
+                userId = userCreationEvents[0].subjectId,
+                permissions = *arrayOf(Permission.Read)
             )
         )
     }

@@ -138,6 +138,17 @@ class PhotoController(
         photoFileResponseEntity(file, photo.type)
     }
 
+    @GetMapping(SharedEndpoint)
+    @ResponseStatus(HttpStatus.OK)
+    fun getShared(
+        @RequestParam(name = PageParamName, required = false, defaultValue = "1") @Min(1) page: Int,
+        @RequestParam(name = SizeParamName, required = false, defaultValue = "10") @Min(1) size: Int,
+        auth: Authentication
+    ): PageDto<PhotoDto> {
+        val principal = auth.principal as UserPrincipal
+        return photoService.getShared(principal.user.id, page, size).toDto { it.toLightDto() }
+    }
+
     @Transactional
     @PutMapping("/{id:$UuidRegex}")
     @PreAuthorize("hasPermission(#id, '$PhotoTargetType', 'update')")

@@ -8,4 +8,6 @@ interface OwnableEntityService<E : OwnableEntity> : EntityService<E> {
     fun getAllPermissions(id: UUID, pageNo: Int, pageSize: Int): Page<SubjectPermissions>
 
     fun getPermissions(id: UUID, userId: UUID): Set<Permission>
+
+    fun getShared(userId: UUID, pageNo: Int, pageSize: Int): Page<E>
 }

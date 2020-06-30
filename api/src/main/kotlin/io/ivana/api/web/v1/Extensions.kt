@@ -23,6 +23,7 @@ const val PermissionsEndpoint = "/permissions"
 const val SuggestEndpoint = "/suggest"
 const val PersonApiEndpoint = "$RootEndpoint/person"
 const val PeopleEndpoint = "/people"
+const val SharedEndpoint = "/shared"
 
 const val FilesParamName = "files"
 const val NavigableParamName = "navigable"

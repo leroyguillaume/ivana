@@ -40,4 +40,15 @@ abstract class AbstractOwnableEntityService<E : OwnableEntity> : OwnableEntitySe
         }
         return authzRepo.fetch(userId, id) ?: emptySet()
     }
+
+    override fun getShared(userId: UUID, pageNo: Int, pageSize: Int): Page<E> {
+        val content = repo.fetchShared(userId, (pageNo - 1) * pageSize, pageSize)
+        val itemsNb = repo.countShared(userId)
+        return Page(
+            content = content,
+            no = pageNo,
+            totalItems = itemsNb,
+            totalPages = ceil(itemsNb.toDouble() / pageSize.toDouble()).toInt()
+        )
+    }
 }
