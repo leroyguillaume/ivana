@@ -668,6 +668,49 @@ internal class PhotoServiceImplTest {
     }
 
     @Nested
+    inner class getShared {
+        private val userId = UUID.randomUUID()
+        private val pageNo = 1
+        private val pageSize = 3
+        private val expectedPage = Page(
+            content = listOf(
+                Photo(
+                    id = UUID.randomUUID(),
+                    ownerId = userId,
+                    uploadDate = OffsetDateTime.now(),
+                    type = Photo.Type.Jpg,
+                    hash = "hash1",
+                    no = 1,
+                    version = 1
+                ),
+                Photo(
+                    id = UUID.randomUUID(),
+                    ownerId = userId,
+                    uploadDate = OffsetDateTime.now(),
+                    type = Photo.Type.Jpg,
+                    hash = "hash2",
+                    no = 2,
+                    version = 1
+                )
+            ),
+            no = pageNo,
+            totalItems = 2,
+            totalPages = 1
+        )
+
+        @Test
+        fun `should return page`() {
+            every { photoRepo.fetchShared(userId, pageNo - 1, pageSize) } returns expectedPage.content
+            every { photoRepo.countShared(userId) } returns expectedPage.totalItems
+            val page = service.getShared(userId, pageNo, pageSize)
+            page shouldBe expectedPage
+            verify { photoRepo.fetchShared(userId, pageNo - 1, pageSize) }
+            verify { photoRepo.countShared(userId) }
+            confirmVerified(photoRepo)
+        }
+    }
+
+    @Nested
     inner class transform {
         private val jpgPhoto = Photo(
             id = UUID.randomUUID(),

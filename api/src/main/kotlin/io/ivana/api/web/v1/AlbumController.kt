@@ -100,6 +100,17 @@ class AlbumController(
         return subjPerms.toDto { it.toDto(users.getValue(it.subjectId).name) }
     }
 
+    @GetMapping(SharedEndpoint)
+    @ResponseStatus(HttpStatus.OK)
+    fun getShared(
+        @RequestParam(name = PageParamName, required = false, defaultValue = "1") @Min(1) page: Int,
+        @RequestParam(name = SizeParamName, required = false, defaultValue = "10") @Min(1) size: Int,
+        auth: Authentication
+    ): PageDto<AlbumDto> {
+        val principal = auth.principal as UserPrincipal
+        return albumService.getShared(principal.user.id, page, size).toDto { it.toLightDto() }
+    }
+
     @GetMapping(SuggestEndpoint)
     @ResponseStatus(HttpStatus.OK)
     fun suggest(

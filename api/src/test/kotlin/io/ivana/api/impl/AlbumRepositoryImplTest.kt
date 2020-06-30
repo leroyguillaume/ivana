@@ -38,9 +38,25 @@ internal class AlbumRepositoryImplTest : AbstractRepositoryTest() {
         }
 
         @Test
-        fun `should return count of photos of user`() {
+        fun `should return count of albums of user`() {
             val count = albumRepo.count(ownerId)
             count shouldBe 3
+        }
+    }
+
+    @Nested
+    inner class countShared {
+        private lateinit var userId: UUID
+
+        @BeforeEach
+        fun beforeEach() {
+            userId = userCreationEvents[1].subjectId
+        }
+
+        @Test
+        fun `should return count of shared albums of user`() {
+            val count = albumRepo.countShared(userId)
+            count shouldBe 1
         }
     }
 
@@ -215,6 +231,28 @@ internal class AlbumRepositoryImplTest : AbstractRepositoryTest() {
         fun `should return order of photo in album`() {
             val order = albumRepo.fetchOrder(albumId, photoUploadEvents[1].subjectId)
             order shouldBe 2
+        }
+    }
+
+    @Nested
+    inner class fetchShared {
+        private lateinit var createdAlbums: List<Album>
+        private lateinit var userId: UUID
+
+        @BeforeEach
+        fun beforeEach() {
+            userId = userCreationEvents[0].subjectId
+            createdAlbums = listOf(
+                albumCreationEvents[6].toAlbum(),
+                albumCreationEvents[7].toAlbum(),
+                albumCreationEvents[8].toAlbum()
+            )
+        }
+
+        @Test
+        fun `should return all albums in interval`() {
+            val photos = albumRepo.fetchShared(userId, 1, 10)
+            photos shouldBe createdAlbums.subList(1, 3)
         }
     }
 

@@ -701,6 +701,84 @@ internal class PhotoControllerTest : AbstractControllerTest() {
     }
 
     @Nested
+    inner class getShared {
+        private val pageNo = 2
+        private val pageSize = 3
+        private val page = Page(
+            content = listOf(
+                Photo(
+                    id = UUID.randomUUID(),
+                    ownerId = userPrincipal.user.id,
+                    uploadDate = OffsetDateTime.now(),
+                    type = Photo.Type.Jpg,
+                    hash = "hash1",
+                    no = 1,
+                    version = 1
+                ),
+                Photo(
+                    id = UUID.randomUUID(),
+                    ownerId = userPrincipal.user.id,
+                    uploadDate = OffsetDateTime.now(),
+                    type = Photo.Type.Jpg,
+                    hash = "hash2",
+                    no = 2,
+                    version = 1
+                )
+            ),
+            no = pageNo,
+            totalItems = 2,
+            totalPages = 1
+        )
+        private val pageDto = page.toDto { it.toLightDto() }
+        private val method = HttpMethod.GET
+        private val uri = "$PhotoApiEndpoint$SharedEndpoint"
+
+        @Test
+        fun `should return 401 if user is anonymous`() {
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                status = HttpStatus.UNAUTHORIZED,
+                respDto = ErrorDto.Unauthorized
+            )
+        }
+
+        @Test
+        fun `should return 400 if parameters are lower than 1`() = authenticated {
+            callAndExpectDto(
+                method = method,
+                params = mapOf(
+                    PageParamName to listOf("-1"),
+                    SizeParamName to listOf("-1")
+                ),
+                uri = uri,
+                reqCookies = listOf(accessTokenCookie()),
+                status = HttpStatus.BAD_REQUEST,
+                respDto = ErrorDto.ValidationError(
+                    errors = listOf(minErrorDto(PageParamName, 1), minErrorDto(SizeParamName, 1))
+                )
+            )
+        }
+
+        @Test
+        fun `should return 200`() = authenticated {
+            whenever(photoService.getShared(principal.user.id, pageNo, pageSize)).thenReturn(page)
+            callAndExpectDto(
+                method = method,
+                params = mapOf(
+                    PageParamName to listOf(pageNo.toString()),
+                    SizeParamName to listOf(pageSize.toString())
+                ),
+                uri = uri,
+                reqCookies = listOf(accessTokenCookie()),
+                status = HttpStatus.OK,
+                respDto = pageDto
+            )
+            verify(photoService).getShared(principal.user.id, pageNo, pageSize)
+        }
+    }
+
+    @Nested
     inner class transform {
         private val id = UUID.randomUUID()
         private val method = HttpMethod.PUT

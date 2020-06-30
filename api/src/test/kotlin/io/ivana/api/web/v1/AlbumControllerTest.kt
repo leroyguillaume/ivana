@@ -467,6 +467,78 @@ internal class AlbumControllerTest : AbstractControllerTest() {
     }
 
     @Nested
+    inner class getShared {
+        private val pageNo = 2
+        private val pageSize = 3
+        private val page = Page(
+            content = listOf(
+                Album(
+                    id = UUID.randomUUID(),
+                    ownerId = userPrincipal.user.id,
+                    name = "album1",
+                    creationDate = OffsetDateTime.now()
+                ),
+                Album(
+                    id = UUID.randomUUID(),
+                    ownerId = userPrincipal.user.id,
+                    name = "album2",
+                    creationDate = OffsetDateTime.now()
+                )
+            ),
+            no = pageNo,
+            totalItems = 2,
+            totalPages = 1
+        )
+        private val pageDto = page.toDto { it.toLightDto() }
+        private val method = HttpMethod.GET
+        private val uri = "$AlbumApiEndpoint/$SharedEndpoint"
+
+        @Test
+        fun `should return 401 if user is anonymous`() {
+            callAndExpectDto(
+                method = method,
+                uri = uri,
+                status = HttpStatus.UNAUTHORIZED,
+                respDto = ErrorDto.Unauthorized
+            )
+        }
+
+        @Test
+        fun `should return 400 if parameters are lower than 1`() = authenticated {
+            callAndExpectDto(
+                method = method,
+                params = mapOf(
+                    PageParamName to listOf("-1"),
+                    SizeParamName to listOf("-1")
+                ),
+                uri = uri,
+                reqCookies = listOf(accessTokenCookie()),
+                status = HttpStatus.BAD_REQUEST,
+                respDto = ErrorDto.ValidationError(
+                    errors = listOf(minErrorDto(PageParamName, 1), minErrorDto(SizeParamName, 1))
+                )
+            )
+        }
+
+        @Test
+        fun `should return 200`() = authenticated {
+            whenever(albumService.getShared(principal.user.id, pageNo, pageSize)).thenReturn(page)
+            callAndExpectDto(
+                method = method,
+                params = mapOf(
+                    PageParamName to listOf(pageNo.toString()),
+                    SizeParamName to listOf(pageSize.toString())
+                ),
+                uri = uri,
+                reqCookies = listOf(accessTokenCookie()),
+                status = HttpStatus.OK,
+                respDto = pageDto
+            )
+            verify(albumService).getShared(principal.user.id, pageNo, pageSize)
+        }
+    }
+
+    @Nested
     inner class suggest {
         private val albums = listOf(
             Album(

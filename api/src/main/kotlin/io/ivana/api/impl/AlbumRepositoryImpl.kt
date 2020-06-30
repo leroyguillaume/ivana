@@ -33,6 +33,19 @@ class AlbumRepositoryImpl(
         MapSqlParameterSource(mapOf("owner_id" to ownerId))
     ) { rs, _ -> rs.getInt(1) }
 
+    override fun countShared(userId: UUID) = jdbc.queryForObject(
+        """
+        SELECT COUNT(a.$IdColumnName)
+        FROM $tableName a
+        JOIN ${UserAlbumAuthorizationRepositoryImpl.TableName} uaa
+        ON uaa.${UserAlbumAuthorizationRepositoryImpl.AlbumIdColumnName} = a.$IdColumnName
+        WHERE a.$OwnerIdColumnName != :user_id 
+            AND uaa.${UserAlbumAuthorizationRepositoryImpl.UserIdColumnName} = :user_id
+            AND uaa.${AbstractAuthorizationRepository.CanReadColumnName} IS TRUE
+        """,
+        MapSqlParameterSource(mapOf("user_id" to userId))
+    ) { rs, _ -> rs.getInt(1) }
+
     override fun fetchAll(ownerId: UUID, offset: Int, limit: Int) = jdbc.query(
         """
         SELECT *
@@ -68,6 +81,22 @@ class AlbumRepositoryImpl(
     } catch (exception: EmptyResultDataAccessException) {
         null
     }
+
+    override fun fetchShared(userId: UUID, offset: Int, limit: Int) = jdbc.query(
+        """
+        SELECT a.*
+        FROM $tableName a
+        JOIN ${UserAlbumAuthorizationRepositoryImpl.TableName} uaa
+        ON uaa.${UserAlbumAuthorizationRepositoryImpl.AlbumIdColumnName} = a.$IdColumnName
+        WHERE a.$OwnerIdColumnName != :user_id 
+            AND uaa.${UserAlbumAuthorizationRepositoryImpl.UserIdColumnName} = :user_id
+            AND uaa.${AbstractAuthorizationRepository.CanReadColumnName} IS TRUE
+        ORDER BY $CreationDateColumnName, $NameColumnName, $IdColumnName
+        OFFSET :offset
+        LIMIT :limit
+        """,
+        MapSqlParameterSource(mapOf("user_id" to userId, "offset" to offset, "limit" to limit))
+    ) { rs, _ -> rs.toEntity() }
 
     override fun fetchSize(id: UUID, userId: UUID) = jdbc.queryForObject(
         """
