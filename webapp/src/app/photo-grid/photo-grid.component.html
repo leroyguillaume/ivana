@@ -17,9 +17,13 @@
         <fa-icon [icon]="plusIcon"></fa-icon>
         <span> Ajouter à l'album...</span>
       </button>
-      <button class="btn btn-danger" (click)="emitSelectedPhotosDelete()" ngbDropdownItem>
+      <button *ngIf="!sharedView && albumUpdateAllowed"
+              class="btn btn-danger"
+              (click)="emitSelectedPhotosDelete()"
+              ngbDropdownItem>
         <fa-icon [icon]="trashIcon"></fa-icon>
-        <span> Supprimer</span>
+        <span *ngIf="currentAlbum"> Supprimer de l'album</span>
+        <span *ngIf="!currentAlbum"> Supprimer</span>
       </button>
     </div>
     <div class="btn-group">

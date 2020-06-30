@@ -46,6 +46,19 @@ export class AlbumService {
     )
   }
 
+  getAllPhotos(albumId: string, page: number, size: number): Observable<Page<Photo>> {
+    return this.http.get<Page<Photo>>(
+      `${this.baseUrl}/${albumId}/content`,
+      {
+        withCredentials: true,
+        params: {
+          page: page.toString(),
+          size: size.toString()
+        }
+      }
+    )
+  }
+
   getPermissions(id: string, page: number, size: number): Observable<Page<SubjectPermissions>> {
     return this.http.get<Page<SubjectPermissions>>(
       `${this.baseUrl}/${id}/permissions`,
@@ -59,9 +72,9 @@ export class AlbumService {
     )
   }
 
-  getAllPhotos(albumId: string, page: number, size: number): Observable<Page<Photo>> {
-    return this.http.get<Page<Photo>>(
-      `${this.baseUrl}/${albumId}/content`,
+  getShared(page: number, size: number): Observable<Page<Album>> {
+    return this.http.get<Page<Album>>(
+      `${this.baseUrl}/shared`,
       {
         withCredentials: true,
         params: {

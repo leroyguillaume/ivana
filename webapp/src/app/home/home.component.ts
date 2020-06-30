@@ -8,7 +8,7 @@ import {ActivatedRoute, Router} from '@angular/router'
 import {StateService} from '../state.service'
 import {IconDefinition} from '@fortawesome/fontawesome-common-types'
 import {fetchPageFromQueryParam, handleError} from '../util'
-import {forkJoin} from 'rxjs'
+import {forkJoin, Observable} from 'rxjs'
 
 export const PhotoPageSize: number = 12
 
@@ -23,6 +23,9 @@ export class HomeComponent implements OnInit {
   page: Page<Photo>
   loading: boolean = true
   uploading: boolean = false
+  shared: boolean = false
+
+  fetchPhotos: (no: number) => Observable<Page<Photo>>
 
   @ViewChild('files')
   filesInput: ElementRef
@@ -50,7 +53,7 @@ export class HomeComponent implements OnInit {
 
   fetchPage(no: number): void {
     this.loading = true
-    this.photoService.getAll(no, PhotoPageSize)
+    this.fetchPhotos(no)
       .pipe(finalize(() => this.loading = false))
       .subscribe(
         page => {
@@ -69,10 +72,19 @@ export class HomeComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    fetchPageFromQueryParam(this.route, (no: number) => this.fetchPage(no))
-    this.stateService.uploadingPhotos.subscribe(uploading => this.uploading = uploading)
-    this.stateService.photosUploaded.subscribe(() => this.fetchPage(this.page.no))
-    this.stateService.currentAlbum.next(null)
+    this.route.url.subscribe(urlParts => {
+      if (urlParts[urlParts.length - 1].path === 'shared') {
+        this.fetchPhotos = (no: number) => this.photoService.getShared(no, PhotoPageSize)
+        this.shared = true
+      } else {
+        this.fetchPhotos = (no: number) => this.photoService.getAll(no, PhotoPageSize)
+        this.shared = false
+      }
+      fetchPageFromQueryParam(this.route, (no: number) => this.fetchPage(no))
+      this.stateService.uploadingPhotos.subscribe(uploading => this.uploading = uploading)
+      this.stateService.photosUploaded.subscribe(() => this.fetchPage(this.page.no))
+      this.stateService.currentAlbum.next(null)
+    })
   }
 
   selectFiles(): void {

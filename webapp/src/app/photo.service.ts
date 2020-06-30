@@ -76,6 +76,19 @@ export class PhotoService {
     )
   }
 
+  getShared(page: number, size: number): Observable<Page<Photo>> {
+    return this.http.get<Page<Photo>>(
+      `${this.baseUrl}/shared`,
+      {
+        withCredentials: true,
+        params: {
+          page: page.toString(),
+          size: size.toString()
+        }
+      }
+    )
+  }
+
   rotate(id: string, degrees: number): Observable<void> {
     const dto = {
       type: 'rotation',

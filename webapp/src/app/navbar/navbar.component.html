@@ -6,11 +6,22 @@
 
   <div class="collapse navbar-collapse" [ngClass]="{'show': opened}">
     <ul class="navbar-nav mr-auto">
-      <li class="nav-item" [ngClass]="{'active': currentUrl.startsWith('/home')}">
-        <a class="nav-link" routerLink="/home">Mes photos</a>
+      <li class="nav-item dropdown" ngbDropdown display="dynamic">
+        <a class="nav-link dropdown-toggle clickable" ngbDropdownToggle>Photos</a>
+        <div ngbDropdownMenu>
+          <button class="btn btn-secondary" routerLink="/photos" ngbDropdownItem>Mes photos</button>
+          <button class="btn btn-secondary" routerLink="/photos/shared" ngbDropdownItem>
+            Photos partagées avec moi
+          </button>
+        </div>
       </li>
-      <li class="nav-item" [ngClass]="{'active': currentUrl.startsWith('/album')}">
-        <a class="nav-link" routerLink="/album">Mes albums</a>
+      <li class="nav-item dropdown" ngbDropdown display="dynamic">
+        <a class="nav-link dropdown-toggle clickable" ngbDropdownToggle>Albums</a>
+        <div ngbDropdownMenu>
+          <button class="btn btn-secondary" routerLink="/albums" ngbDropdownItem>Mes albums</button>
+          <button class="btn btn-secondary" routerLink="/albums/shared" ngbDropdownItem>Albums partagés avec moi
+          </button>
+        </div>
       </li>
       <li *ngIf="currentUserIsAdmin" class="nav-item" [ngClass]="{'active': currentUrl.startsWith('/admin')}">
         <a class="nav-link" routerLink="/admin">Administration</a>
